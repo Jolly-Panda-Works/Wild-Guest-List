@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Wild Guest List</title>
+        <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico" />
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TR:wght@400;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+    <body>
+
+        <div id="pageLayout">
+
+            <!-- LEFT SIDEBAR (desktop only) -->
+            <div id="leftSidebar">
+
+                <div id="leaderboard">
+                    <h3><span data-icon="leaderboard"></span> <span data-i18n="leaderboard">Leaderboard</span></h3>
+                    <div id="leaderboardRows"></div>
+                </div>
+
+                <div id="gameLog">
+                    <h3><span data-icon="gameLog"></span> <span data-i18n="gameLog">Game Log</span></h3>
+                    <div id="logEntries"></div>
+                </div>
+
+                <div id="chatPanel">
+                    <h3><span data-icon="chat"></span> <span data-i18n="chat">Chat</span></h3>
+                    <div class="comingSoon" data-i18n="comingSoon">Coming Soon</div>
+                </div>
+
+            </div>
+
+            <!-- GAME COLUMN -->
+            <div id="gameColumn">
+
+                <!-- TOP BAR -->
+                <div id="topBar">
+                    <div id="topBarContent">
+
+                        <div id="topLeft">
+                            <div class="turn-label" id="turnPlayer">Turn: You</div>
+                            <div class="turn-divider"></div>
+                            <div class="round-label" id="roundInfo">Round: 1</div>
+                        </div>
+
+                        <div id="topCenter">
+                            <picture>
+                                <source media="(max-width: 900px)" srcset="assets/img/Banner.png">
+                                <img src="assets/img/Banner.png" alt="Wild Guest List">
+                            </picture>
+                        </div>
+
+                        <div id="topRight">
+                            <button id="logBtn"  class="top-btn mobile-only-btn" data-title="Game Log" data-title-key="btnLog">
+                                <span data-icon="gameLog"></span>
+                            </button>
+                            <button id="helpBtn" class="top-btn" data-title="Help" data-title-key="btnHelp">
+                                <span data-icon="help"></span>
+                            </button>
+                            <button id="settingsBtn" class="top-btn" data-title="Settings" data-title-key="btnSettings">
+                                <span data-icon="settings"></span>
+                            </button>
+                            <button id="tutorialBtn" class="top-btn" data-title="Tutorial" data-title-key="btnTutorial">
+                                <span data-icon="tutorial"></span>
+                            </button>
+                            <button id="aboutBtn" class="top-btn" data-title="About Developer" data-title-key="btnAbout">
+                                <span data-icon="About Developer"></span>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- GAME BOARD -->
+                <div id="gameLayout">
+
+                    <!-- Mobile leaderboard -->
+                    <div id="mobileLeaderboard">
+                        <h4>🏆 Leaderboard</h4>
+                        <div id="mobileLeaderboardInline"></div>
+                    </div>
+
+                    <!-- Mobile tabs -->
+                    <div id="mobileTabs">
+                        <button id="partyTab"><span data-icon="party"></span> <span data-i18n="partyPanel">Party</span></button>
+                        <button id="trashTab"><span data-icon="trash"></span> <span data-i18n="trashPanel">Trash</span></button>
+                    </div>
+
+                    <!-- Party area -->
+                    <div id="partyArea">
+                        <div class="panel-header">
+                            <h3>
+                                <span data-icon="party"></span> <span data-i18n="partyPanel">Party</span>
+                                <span class="panel-info-btn" data-tooltip-key="partyTooltip" data-tooltip="The first 2 cards from each resolved queue join the owner's party. More power = higher score!">ℹ</span>
+                            </h3>
+                            <button class="panel-close mobile-only-btn icon-btn close"><span data-icon="close"></span></button>
+                        </div>
+                        <div id="partyCards"></div>
+                    </div>
+
+                    <!-- Center -->
+                    <div id="centerArea">
+
+                        <div id="otherPlayers">
+                            <div id="topPlayer"></div>
+                            <div id="leftPlayer"></div>
+                            <div id="rightPlayer"></div>
+                        </div>
+
+                        <div id="queueArea">
+                            <div id="queue"></div>
+                        </div>
+
+                        <div id="handArea">
+                            <div id="playerHand"></div>
+                            <div id="deckStack">
+                                <div class="deck-back">
+                                    <span id="deckCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Trash area -->
+                    <div id="trashArea">
+                        <div class="panel-header">
+                            <h3>
+                                <span data-icon="trash"></span> <span data-i18n="trashPanel">Trash</span>
+                                <span class="panel-info-btn" data-tooltip-key="trashTooltip" data-tooltip="When the queue hits 5, the last card is eliminated and sent to trash. These cards are out of the game!">ℹ</span>
+                            </h3>
+                            <button class="panel-close mobile-only-btn icon-btn close"><span data-icon="close"></span></button>
+                        </div>
+                        <div id="trashCards"></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ── MODALS ─────────────────────────────────────── -->
+
+        <!-- Help -->
+        <div id="helpModal" class="modal hidden">
+            <div class="modal-content help-layout">
+                <div class="help-header">
+                    <h1 data-i18n="helpModalTitle">Help</h1>
+                    <button id="closeHelp" class="icon-btn close"><span data-icon="close"></span></button>
+                </div>
+                <div class="help-text">
+                    <span data-i18n="helpIntro">Invite wild animals to the party queue!</span>
+                    <p data-i18n="helpWhenQueue">When the queue reaches 5 animals:</p>
+                    <ul>
+                        <li data-i18n="helpRule1">The first 2 guests make it into the party.</li>
+                        <li data-i18n="helpRule2">The last guest gets turned away and sent to the trash.</li>
+                        <li data-i18n="helpRule3">The remaining guests stay in line.</li>
+                    </ul>
+                    <span data-i18n="helpGoal">Gather the biggest party and become the ultimate host!</span>
+                </div>
+                <div class="help-divider"></div>
+                <h2 class="animal-guide-title" data-i18n="animalAbilities">Animal Abilities</h2>
+                <div id="animalGrid"></div>
+            </div>
+        </div>
+        <!-- Card detail -->
+        <div id="cardModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button id="cardBackBtn" class="icon-btn"><span data-icon="back"></span></button>
+                </div>
+                <div id="cardModalContent"></div>
+            </div>
+        </div>
+
+        <!-- Kangaroo -->
+        <div id="kangarooModal" class="modal hidden">
+            <div class="modal-content kangaroo-choice">
+                <div class="help-header">
+                    <h2><span data-icon="kangaroo"></span> <span data-i18n="kangarooTitle">Kangaroo Jump</span></h2>
+                </div>
+                <div class="help-text" data-i18n="kangarooChoose">Choose how many spaces to jump:</div>
+                <div class="kangaroo-buttons">
+                    <button id="jumpOneBtn" data-i18n="jumpOne">Jump 1</button>
+                    <button id="jumpTwoBtn" data-i18n="jumpTwo">Jump 2</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log (mobile) -->
+        <div id="logModal" class="modal hidden">
+            <div class="modal-content mobile-panel-content">
+                <div class="panel-header">
+                    <h2><span data-icon="gameLog"></span> <span data-i18n="logModalTitle">Game Log</span></h2>
+                    <button class="closeModal icon-btn"><span data-icon="close"></span></button>
+                </div>
+                <div id="mobileLogContent"></div>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div id="settingsModal" class="modal hidden">
+            <div class="modal-content small-popup">
+                <div class="help-header">
+                    <h3 data-i18n="settingsTitle">Settings</h3>
+                    <button id="closeSettings" class="icon-btn close"><span data-icon="close"></span></button>
+                </div>
+                <div class="settings-content">
+
+                    <div class="settings-row">
+                        <label class="settings-label"><span data-icon="sound"></span> <span data-i18n="settingsSound">Sound</span></label>
+                        <label class="switch-btn">
+                            <input type="checkbox" id="soundToggle" checked>
+                            <span class="switch-track"><span class="switch-thumb"></span></span>
+                        </label>
+                    </div>
+
+                    <div class="settings-divider"></div>
+
+                    <div class="settings-row settings-row-col">
+                        <label class="settings-label"><span data-i18n="settingsLanguage">Language</span></label>
+                        <div id="langSelector" class="lang-selector"></div>
+                    </div>
+
+                    <div class="settings-divider"></div>
+
+                    <div class="about-meta">
+                        <div><strong data-i18n="settingsVersion">Version</strong>: 1.9.0</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- About Developer -->
+        <div id="aboutModal" class="modal hidden">
+            <div class="modal-content small-popup">
+                <div class="help-header">
+                    <h3 data-i18n="aboutTitle">About Developer</h3>
+                    <button id="closeAbout" class="icon-btn close">
+                        <span data-icon="close"></span>
+                    </button>
+                </div>
+
+                <div class="about-content">
+                    <p>
+                        <span data-i18n="aboutText">This game was designed and developed by</span>
+                        <strong>Usef Farahmand</strong>.
+                    </p>
+
+                    <p data-i18n="aboutThanks">
+                        Thank you for playing and supporting my work.
+                    </p>
+
+                    <a href="https://www.useffarahmand.com/"
+                       target="_blank"
+                       class="website-link"
+                       data-i18n="aboutVisit">
+                        Visit Website
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- In-game Walkthrough Overlay -->
+        <div id="walkthroughOverlay" class="wt-overlay hidden">
+            <div id="walkthroughSpotlight" class="wt-spotlight"></div>
+            <div id="walkthroughBox" class="wt-box">
+                <div class="wt-step-label" id="wtStepLabel"></div>
+                <div class="wt-arrow" id="wtArrow"></div>
+                <h3 class="wt-title" id="wtTitle"></h3>
+                <p class="wt-text" id="wtText"></p>
+                <div class="wt-footer">
+                    <button class="wt-skip-btn" id="wtSkipBtn"></button>
+                    <button class="wt-next-btn" id="wtNextBtn"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Splash -->
+        <div id="splashScreen" class="screen-overlay">
+            <div class="screen-content">
+                <img src="assets/img/Logo-splash.png" alt="Wild Guest List" class="screen-logo">
+                <div class="player-name-row">
+                    <label class="player-name-label" data-i18n="playerNameLabel">Your Name</label>
+                    <input id="playerNameInput" class="player-name-input" type="text" maxlength="20"
+                           data-i18n-placeholder="playerNamePlaceholder" placeholder="Enter your name...">
+                </div>
+                <button id="startGameBtn" class="screen-btn" data-i18n="splashStart">Start Game</button>
+                <button id="splashSettingsBtn" class="splash-settings-btn" data-i18n="splashSettings">Settings</button>
+            </div>
+            <div class="creator">
+                Created by <a href="https://www.useffarahmand.com/" target="_blank">Usef Farahmand</a>
+            </div>
+        </div>
+
+        <!-- Difficulty Modal -->
+        <div id="difficultyModal" class="screen-overlay hidden">
+            <div class="screen-content difficulty-content">
+                <h2 data-i18n="diffTitle">🎮 Choose Bot Difficulty</h2>
+                <p class="diff-subtitle" data-i18n="diffSubtitle">Set how smart each opponent is</p>
+                <div id="difficultyPanel"></div>
+                <button id="confirmDiffBtn" class="screen-btn" data-i18n="diffConfirm">Let's Play!</button>
+            </div>
+        </div>
+
+        <!-- End Game -->
+        <div id="endGameScreen" class="screen-overlay hidden">
+            <div class="screen-content">
+                <h1 id="endGameTitle"></h1>
+                <p id="endGameText"></p>
+                <div id="finalScores"></div>
+                <button id="playAgainBtn" class="screen-btn" data-i18n="playAgain">Play Again</button>
+            </div>
+        </div>
+
+        <div id="tutorialModal" class="modal hidden" role="dialog" aria-labelledby="tutorialTitle" aria-modal="true">
+
+            <div class="modal-content tut-panel">
+
+                <!-- Header -->
+                <div class="tut-header">
+                    <div class="tut-header-left">
+                        <span class="tut-label" data-i18n="tutorialLabel">Tutorial</span>
+                        <span id="tutorialCounter" class="tut-counter">1 / 6</span>
+                    </div>
+                    <button id="closeTutorial" class="icon-btn tut-close" aria-label="Close tutorial">
+                        <span data-icon="close"></span>
+                    </button>
+                </div>
+
+                <!-- Progress bar -->
+                <div class="tut-progress-track">
+                    <div id="tutorialProgressBar" class="tut-progress-fill"></div>
+                </div>
+
+                <!-- Body -->
+                <div class="tut-body">
+
+                    <img
+                        id="tutorialImage"
+                        class="tut-image"
+                        alt="">
+
+                    <div class="tut-content">
+                        <h2 id="tutorialTitle" class="tut-title"></h2>
+                        <div id="tutorialText" class="tut-text"></div>
+                        <div id="tutorialDiagram" class="tut-diagram-wrap"></div>
+                        <div id="tutorialVideo" class="tut-video-wrap"></div>
+                    </div>
+
+                </div>
+
+                <!-- Footer -->
+                <div class="tut-footer">
+
+                    <button id="tutorialPrev" class="tut-nav-btn tut-prev" aria-label="Previous slide">
+                        <span data-icon="previous"></span>
+                    </button>
+
+                    <div id="tutorialDots" class="tut-dots"></div>
+
+                    <button id="tutorialNext" class="tut-nav-btn tut-next" aria-label="Next slide">
+                        <span data-icon="next"></span>
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <script type="module" src="js/main.js"></script>
+
+    </body>
+</html>

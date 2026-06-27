@@ -1,0 +1,36 @@
+{
+    "icons": {
+        "leaderboard": "assets/img/icons/Leaderboard.png",
+        "gameLog": "assets/img/icons/Log.png",
+        "chat": "assets/img/icons/Message.png",
+        "party": "assets/img/icons/Party.png",
+        "trash": "assets/img/icons/trash.png",
+        "settings": "assets/img/icons/setting.png",
+        "help": "assets/img/icons/Help.png",
+        "close": "assets/img/icons/close.png",
+        "back": "assets/img/icons/Back.png",
+        "kangaroo": "🦘",
+        "queueEntry": "",
+        "queueExit": "",
+        "sound":"assets/img/icons/Sound.png",
+        "About Developer": "assets/img/icons/About developer.png",
+        "tutorial": "assets/img/icons/Tutorial.png",
+        "previous":"assets/img/icons/previous.png",
+        "next":"assets/img/icons/next.png",
+        "play":"assets/img/icons/play.png",
+
+        "bot-easy": "assets/img/icons/Bot-easy.png",
+        "bot-medium": "assets/img/icons/Bot-normal.png",
+        "bot-hard": "assets/img/icons/Bot-hard.png"
+    },
+    "sounds": {
+        "playCard": "",
+        "queueFull": "",
+        "partyJoin": "",
+        "trashJoin": "",
+        "yourTurn": "",
+        "win": "",
+        "lose": "",
+        "background":"assets/sound/background.mp3"
+    }
+}

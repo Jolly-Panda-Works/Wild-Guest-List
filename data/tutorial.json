@@ -1,0 +1,188 @@
+{
+    "slides": [
+        {
+            "title": "Welcome to Wild Guest List!",
+            "text": "A wild party is about to begin!\n\nYour goal is to get more of your animals into the party than your opponents.\n\nBuild the strongest guest list and become the winner!",
+            "image": "",
+            "diagram": null,
+            "title_key": "tutSlide1Title",
+            "text_key": "tutSlide1Text"
+        },
+        {
+            "title": "These Are Your Animals",
+            "text": "Each player owns 12 unique animals.\n\nYou will only see a few cards in your hand at a time.\n\nEvery animal can only be played once during the entire game.",
+            "image": "",
+            "diagram": {
+                "type": "hand",
+                "label": "Your hand (a few cards at a time)",
+                "cards": [
+                    {
+                        "emoji": "🦁",
+                        "name": "Lion",
+                        "power": 12
+                    },
+                    {
+                        "emoji": "🐊",
+                        "name": "Croc",
+                        "power": 10
+                    },
+                    {
+                        "emoji": "🦛",
+                        "name": "Hippo",
+                        "power": 11
+                    },
+                    {
+                        "emoji": "🦓",
+                        "name": "Zebra",
+                        "power": 7
+                    }
+                ]
+            },
+            "title_key": "tutSlide2Title",
+            "text_key": "tutSlide2Text"
+        },
+        {
+            "title": "Play An Animal",
+            "text": "On your turn, choose one animal card.\n\nThe selected card is placed at the back of the queue.\n\nA smart move can completely change the outcome of the game.",
+            "image": "",
+            "diagram": {
+                "type": "queue-add",
+                "label": "You play Kangaroo → it joins the back of the queue",
+                "before": [
+                    {
+                        "emoji": "🦁",
+                        "name": "Lion",
+                        "power": 12
+                    },
+                    {
+                        "emoji": "🦛",
+                        "name": "Hippo",
+                        "power": 11
+                    },
+                    {
+                        "emoji": "🐒",
+                        "name": "Monkey",
+                        "power": 2
+                    }
+                ],
+                "added": {
+                    "emoji": "🦘",
+                    "name": "Kangaroo",
+                    "power": 3
+                }
+            },
+            "title_key": "tutSlide3Title",
+            "text_key": "tutSlide3Text"
+        },
+        {
+            "title": "Special Animal Powers",
+            "text": "Every animal has its own unique ability.\n\nSome animals move forward, some remove others, and some completely change the queue.\n\nLearning their powers is the key to victory.",
+            "image": "",
+            "diagram": {
+                "type": "ability-examples",
+                "label": "A few power examples",
+                "examples": [
+                    {
+                        "emoji": "🦁",
+                        "name": "Lion",
+                        "power": 12,
+                        "hint": "Rushes to the front!"
+                    },
+                    {
+                        "emoji": "🦭",
+                        "name": "Seal",
+                        "power": 6,
+                        "hint": "Reverses the queue!"
+                    },
+                    {
+                        "emoji": "🦘",
+                        "name": "Kangaroo",
+                        "power": 3,
+                        "hint": "Jumps 1–2 spots!"
+                    },
+                    {
+                        "emoji": "🐍",
+                        "name": "Snake",
+                        "power": 9,
+                        "hint": "Sorts by power!"
+                    }
+                ]
+            },
+            "title_key": "tutSlide4Title",
+            "text_key": "tutSlide4Text"
+        },
+        {
+            "title": "When The Queue Fills Up",
+            "text": "Whenever the queue reaches 5 animals, it is resolved.\n\nThe first 2 animals join the party.\n\nThe last animal is thrown into the trash.\n\nThe remaining animals stay in the queue.",
+            "image": "",
+            "diagram": {
+                "type": "resolve",
+                "label": "Queue of 5 → resolved!",
+                "queue": [
+                    {
+                        "emoji": "🦁",
+                        "name": "Lion",
+                        "power": 12
+                    },
+                    {
+                        "emoji": "🦛",
+                        "name": "Hippo",
+                        "power": 11
+                    },
+                    {
+                        "emoji": "🦘",
+                        "name": "Kangaroo",
+                        "power": 3
+                    },
+                    {
+                        "emoji": "🦓",
+                        "name": "Zebra",
+                        "power": 7
+                    },
+                    {
+                        "emoji": "🐒",
+                        "name": "Monkey",
+                        "power": 2
+                    }
+                ],
+                "party": [
+                    0,
+                    1
+                ],
+                "trash": [
+                    4
+                ],
+                "stay": [
+                    2,
+                    3
+                ]
+            },
+            "title_key": "tutSlide5Title",
+            "text_key": "tutSlide5Text"
+        },
+        {
+            "title": "How To Win",
+            "text": "The game ends when every player has used all 12 animals.\n\nThe player with the most animals in the party wins.\n\nGood luck and have fun!",
+            "image": "",
+            "diagram": {
+                "type": "scoreboard",
+                "label": "Most animals in the party wins!",
+                "players": [
+                    {
+                        "name": "You",
+                        "score": 5,
+                        "winner": true
+                    },
+                    {
+                        "name": "CPU",
+                        "score": 3,
+                        "winner": false
+                    }
+                ]
+            },
+            "video": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+            "title_key": "tutSlide6Title",
+            "text_key": "tutSlide6Text"
+        }
+    ]
+}
