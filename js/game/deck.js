@@ -1,5 +1,10 @@
 import { CARDS } from "../cards.js";
 
+// Monotonically increasing id so every card instance in play has a stable
+// identity the presentation layer can use to find its DOM node again
+// across turns (cards are plain data objects otherwise, and structuredClone
+// gives every player their own copies with no unique id of their own).
+let _nextUid = 1;
 
 export function createDeck(player){
 
@@ -12,6 +17,7 @@ export function createDeck(player){
             structuredClone(CARDS[i]);
 
         card.owner = player;
+        card.uid = _nextUid++;
 
         deck.push(card);
 

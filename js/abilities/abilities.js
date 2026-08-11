@@ -26,7 +26,20 @@ from "../services/logger.js";
 import { CARD_IDS }
 from "../constants/cardIds.js";
 
+import { emit, wasAnimated, EVENTS }
+from "../presentation/events.js";
+
 export async function resolveAbility(card, gameState) {
+
+    const queue = gameState.queue;
+    // Snapshot of card identity -> position before the ability runs, so we
+    // can tell afterwards which cards moved as a side-effect of this
+    // ability but never got an explicit CARD_JUMPED/CARD_ESCAPED/removal
+    // event of their own (e.g. Snake's full sort, Seal's full reverse,
+    // Lion's move-to-front, the queue closing around Crocodile after it
+    // eats). Those cards still need to visibly slide to their new spot
+    // instead of teleporting there on the next render.
+    const before = queue.map(c => c.uid);
 
     switch(card.power) {
 
@@ -46,6 +59,15 @@ export async function resolveAbility(card, gameState) {
     if(card.power !== 2) {
         gameState.lastAbility = card;
     }
+
+    // Settle pass: animate any remaining-in-queue card whose index changed
+    // but that no explicit event above already covers.
+    queue.forEach((c, toIndex) => {
+        if (wasAnimated(c.uid)) return;
+        const fromIndex = before.indexOf(c.uid);
+        if (fromIndex === -1 || fromIndex === toIndex) return;
+        emit({ type: EVENTS.CARD_MOVED, card: c, fromIndex, toIndex, reason: "settle" });
+    });
 }
 
 async function kangaroo(card, gameState) {
@@ -83,6 +105,7 @@ function hippo(card, gameState) {
         if(previous.id === CARD_IDS.SLOTH_BEAR) {
             queue[index] = previous;
             queue[index-1] = card;
+            emit({ type: EVENTS.CARD_ESCAPED, card: previous, fromIndex: index-1, toIndex: index });
             index--;
             passedCount++;
             continue;
@@ -91,6 +114,7 @@ function hippo(card, gameState) {
         if(previous.power < 11) {
             queue[index] = previous;
             queue[index-1] = card;
+            emit({ type: EVENTS.CARD_ESCAPED, card: previous, fromIndex: index-1, toIndex: index });
             index--;
             passedCount++;
         } else {
@@ -117,7 +141,7 @@ function crocodile(card, gameState) {
 
         if(previous.power < 10) {
             const eaten = queue[index - 1];
-            sendToTrash(eaten, gameState);
+            sendToTrash(eaten, gameState, "eaten");
             eatenList.push(eaten);
             index--;
         } else {
@@ -161,13 +185,13 @@ function lion(card, gameState) {
 
     const otherLion = queue.find(c => c !== card && c.id === CARD_IDS.LION);
     if(otherLion) {
-        sendToTrash(card, gameState);
+        sendToTrash(card, gameState, "blocked");
         addLog(gameState, card.owner, "logBlocked", { card: cardLabel(card), other: cardLabel(otherLion) });
         return;
     }
 
     const monkeys = queue.filter(c => c.id === CARD_IDS.MONKEY);
-    monkeys.forEach(monkey => { sendToTrash(monkey, gameState); });
+    monkeys.forEach(monkey => { sendToTrash(monkey, gameState, "scared"); });
 
     if(monkeys.length > 0) {
         addLog(gameState, card.owner, "logScaredMonkeys", { card: cardLabel(card), n: monkeys.length });
@@ -198,7 +222,7 @@ function monkey(card, gameState) {
     for(let i = queue.length - 1; i >= 0; i--) {
         if(queue[i].id === CARD_IDS.CROCODILE || queue[i].id === CARD_IDS.HIPPO) {
             removed.push(queue[i]);
-            sendToTrash(queue[i], gameState);
+            sendToTrash(queue[i], gameState, "scared");
         }
     }
 
@@ -210,12 +234,12 @@ function monkey(card, gameState) {
 function weasel(card, gameState) {
     const queue = gameState.queue;
     const targets = queue.filter(c => c !== card).sort((a,b) => b.power - a.power).slice(0, 2);
-    targets.forEach(target => { sendToTrash(target, gameState); });
+    targets.forEach(target => { sendToTrash(target, gameState, "weaker"); });
     addLog(gameState, card.owner, "logRemoved", { card: cardLabel(card), targets: targets.map(cardLabel).join(" and ") });
 }
 
 function parrot(card, gameState) {
     const targets = gameState.queue.filter(c => c !== card).sort((a,b) => b.power - a.power).slice(0, 2);
-    targets.forEach(target => { sendToTrash(target, gameState); });
+    targets.forEach(target => { sendToTrash(target, gameState, "weaker"); });
     addLog(gameState, card.owner, "logRemoved", { card: cardLabel(card), targets: targets.map(cardLabel).join(" and ") });
 }

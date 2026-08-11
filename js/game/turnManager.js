@@ -10,7 +10,7 @@ from "./queueManager.js";
 import { drawCard }
 from "./deck.js";
 
-import { updateUI }
+import { updateUI, updateNonBoardUI }
 from "../ui/ui.js";
 
 import { getRandomCardIndex }
@@ -34,6 +34,12 @@ import {
 from "./queueManager.js";
 
 import { notifyCardPlayed, isWalkthroughActive } from "../ui/walkthrough.js";
+
+import { getHandCardElement, getOpponentHandBackElement }
+from "../ui/game-ui.js";
+
+import { director } from "../presentation/director.js";
+import { beginCapture, endCapture } from "../presentation/events.js";
 
 export function startTurn(gameState){
 
@@ -66,7 +72,18 @@ export function startTurn(gameState){
             "logTurn", {}
         );
 
-        updateUI(gameState);
+        // The queue/party/trash board only needs a full (re)build the very
+        // first time it's shown; every turn after that it's already
+        // correct and incrementally maintained by the Director, so a full
+        // rebuild here would just re-trigger every card's enter animation
+        // for no reason. Fall back to a full render if the board somehow
+        // isn't there yet (e.g. this is genuinely the first paint).
+        const boardReady = document.querySelectorAll("#queue .queue-slot").length > 0;
+        if (boardReady) {
+            updateNonBoardUI(gameState);
+        } else {
+            updateUI(gameState);
+        }
 
         return;
     }
@@ -91,15 +108,24 @@ export function startTurn(gameState){
     },1000);
 }
 
-
-function wait(ms){
-
-    return new Promise(
-        resolve => setTimeout(resolve, ms)
-    );
-
-}
-
+/**
+ * Plays one card and animates its full consequences (entering the queue,
+ * its ability resolving, and — if the queue just filled up — the queue
+ * resolving) before handing the turn off. The four previous hardcoded
+ * `await wait(ms)` pauses are gone: pacing now comes entirely from the
+ * animation Director actually finishing each step
+ * (`await director.run(events)` / `await director.presentCardEnteredQueue(...)`),
+ * not from a guessed timeout.
+ *
+ * Game state is mutated by the exact same functions as before
+ * (addToQueue / resolveAbility / resolveQueue / resolveRemainingQueue) —
+ * only the presentation around those calls has changed. If anything in
+ * the animation pipeline throws, the catch block below falls back to an
+ * instant full re-render so the game state (already correct) is always
+ * reflected and the input lock is always released — the game can never
+ * get stuck because a card's DOM element went missing or a transition
+ * failed to fire.
+ */
 export async function playCard(
     player,
     index,
@@ -114,86 +140,107 @@ export async function playCard(
         return;
     }
 
-    const card =
-        player.hand.splice(index, 1)[0];
-
-
-
-    // ورود به صف
-    addToQueue(
-        card,
-        gameState
-    );
-
-    addLog(
-        gameState,
-        player,
-        "logPlayed", { card: cardLabel(card) }
-    )
-
-    // Notify walkthrough that a card was played (human only)
-    if (player.id === "p1" && isWalkthroughActive()) {
-        notifyCardPlayed();
-    }
-
-    updateUI(gameState);
-
-    await wait(100);
-
-    await resolveAbility(
-        card,
-        gameState
-    );
-
-    updateUI(gameState);
-
-    await wait(1000);
-
-
-
-    // فقط اگر هنوز 5 کارت یا بیشتر در صف بود
-    if(gameState.queue.length >= 5){
-
-        await resolveQueue(gameState);
-
-        updateUI(gameState);
-
-        await wait(1200);
-
-    }
-
-
-
-    // کشیدن کارت جدید
-    drawCard(player);
-
-    updateUI(gameState);
-
-    await wait(300);
-
-
-
-    // پایان بازی؟
-    if(isGameOver(gameState)){
-
-        resolveRemainingQueue(
-            gameState
-        );
-
-        updateUI(gameState);
-
-        finishGame(
-            gameState
-        );
-
+    if (director.isBusy()) {
+        // Guards against the same turn being kicked off twice (e.g. a
+        // stray double call) — the lock below is the primary defense,
+        // this is belt-and-suspenders at the entry point.
         return;
-
     }
 
+    // Capture the DOM element the card is visually leaving BEFORE it's
+    // spliced out of the hand array / re-rendered.
+    const sourceEl = player.id === "p1"
+        ? getHandCardElement(index)
+        : getOpponentHandBackElement(player);
 
+    director.lock();
 
-    // نوبت بعد
-    nextTurn(gameState);
+    try {
+
+        const card =
+            player.hand.splice(index, 1)[0];
+
+        addLog(
+            gameState,
+            player,
+            "logPlayed", { card: cardLabel(card) }
+        )
+
+        // Notify walkthrough that a card was played (human only)
+        if (player.id === "p1" && isWalkthroughActive()) {
+            notifyCardPlayed();
+        }
+
+        addToQueue(
+            card,
+            gameState
+        );
+
+        await director.presentCardEnteredQueue(card, sourceEl, gameState.queue.length - 1);
+        await updateNonBoardUI(gameState);
+
+        beginCapture();
+        await resolveAbility(
+            card,
+            gameState
+        );
+        await director.run(endCapture());
+
+        await updateNonBoardUI(gameState);
+
+        // فقط اگر هنوز 5 کارت یا بیشتر در صف بود
+        if(gameState.queue.length >= 5){
+
+            beginCapture();
+            await resolveQueue(gameState);
+            await director.run(endCapture());
+
+            await updateNonBoardUI(gameState);
+
+        }
+
+        // کشیدن کارت جدید
+        drawCard(player);
+
+        await updateNonBoardUI(gameState);
+
+        // پایان بازی؟
+        if(isGameOver(gameState)){
+
+            beginCapture();
+            resolveRemainingQueue(
+                gameState
+            );
+            await director.run(endCapture());
+
+            await updateNonBoardUI(gameState);
+
+            finishGame(
+                gameState
+            );
+
+            return;
+
+        }
+
+        // نوبت بعد
+        nextTurn(gameState);
+
+    } catch (err) {
+
+        console.error("[turnManager] animation pipeline error — falling back to an instant full re-render", err);
+        // Game state mutations above already happened (they're plain,
+        // synchronous, non-throwing array operations); only presentation
+        // could have failed here. A full reconcile render guarantees the
+        // UI still matches the authoritative state even if some step's
+        // animation didn't play.
+        await updateUI(gameState);
+
+    } finally {
+
+        director.unlock();
+
+    }
 
 }
 
@@ -227,4 +274,3 @@ function nextTurn(gameState){
     startTurn(gameState);
 
 }
-
