@@ -126,7 +126,13 @@
         "wt9Text": "When the queue hits 5 animals:\n🎉 First 2 join the Party\n🗑️ Last one goes to Trash\n⏳ Middle ones stay and wait",
         "wt10Title": "Goal",
         "wt10Text": "Get the most animals into the party to win! Use your animals' abilities wisely to push to the front.",
-        "wt9TextDynamic": "The queue has 5 animals! Here's what happens:\n🎉 {card1} → joins the Party\n🎉 {card2} → joins the Party\n⏳ {card3} → stays in queue\n⏳ {card4} → stays in queue\n🗑️ {card5} → goes to Trash"
+        "wt9TextDynamic": "The queue has 5 animals! Here's what happens:\n🎉 {card1} → joins the Party\n🎉 {card2} → joins the Party\n⏳ {card3} → stays in queue\n⏳ {card4} → stays in queue\n🗑️ {card5} → goes to Trash",
+        "settingsStepGuidance": "Step-by-step Guidance",
+        "guideContinue": "Continue",
+        "guidePromptTitle": "Show step-by-step help?",
+        "guidePromptText": "We can explain each animal's ability the first time you play it this game.",
+        "guidePromptYes": "Yes, guide me",
+        "guidePromptNo": "No thanks"
     },
     "fa": {
         "dir": "rtl",
@@ -255,7 +261,13 @@
         "wt9Text": "وقتی صف به ۵ حیوان رسید:\n🎉 دوتای اول میرن به مهمانی\n🗑️ آخری میره سطل زباله\n⏳ بقیه می‌مانند و صبر می‌کنند",
         "wt10Title": "هدف بازی",
         "wt10Text": "بیشترین حیوان رو به مهمانی برسون تا برنده بشی! از توانایی حیوانات خودت هوشمندانه استفاده کن.",
-        "wt9TextDynamic": "صف به ۵ حیوان رسید! اینجاست چه اتفاقی می‌افته:\n🎉 {card1} ← میره به مهمانی\n🎉 {card2} ← میره به مهمانی\n⏳ {card3} ← تو صف می‌مونه\n⏳ {card4} ← تو صف می‌مونه\n🗑️ {card5} ← میره سطل زباله"
+        "wt9TextDynamic": "صف به ۵ حیوان رسید! اینجاست چه اتفاقی می‌افته:\n🎉 {card1} ← میره به مهمانی\n🎉 {card2} ← میره به مهمانی\n⏳ {card3} ← تو صف می‌مونه\n⏳ {card4} ← تو صف می‌مونه\n🗑️ {card5} ← میره سطل زباله",
+        "settingsStepGuidance": "راهنمای گام‌به‌گام",
+        "guideContinue": "ادامه",
+        "guidePromptTitle": "راهنمای گام‌به‌گام نمایش داده شود؟",
+        "guidePromptText": "می‌توانیم توانایی هر حیوان را اولین باری که در این بازی آن را بازی می‌کنید توضیح دهیم.",
+        "guidePromptYes": "بله، راهنمایی کن",
+        "guidePromptNo": "نه، ممنون"
     },
     "ar": {
         "dir": "rtl",
@@ -384,7 +396,13 @@
         "wt9Text": "عندما يصل الصف إلى 5 حيوانات:\n🎉 أول اثنين يدخلان الحفلة\n🗑️ الأخير يذهب للقمامة\n⏳ الباقون ينتظرون",
         "wt10Title": "الهدف",
         "wt10Text": "أوصل أكبر عدد من الحيوانات إلى الحفلة لتفوز! استخدم قدرات حيواناتك بذكاء.",
-        "wt9TextDynamic": "الصف وصل 5 حيوانات! إليك ما سيحدث:\n🎉 {card1} ← يدخل الحفلة\n🎉 {card2} ← يدخل الحفلة\n⏳ {card3} ← يبقى في الصف\n⏳ {card4} ← يبقى في الصف\n🗑️ {card5} ← يذهب للقمامة"
+        "wt9TextDynamic": "الصف وصل 5 حيوانات! إليك ما سيحدث:\n🎉 {card1} ← يدخل الحفلة\n🎉 {card2} ← يدخل الحفلة\n⏳ {card3} ← يبقى في الصف\n⏳ {card4} ← يبقى في الصف\n🗑️ {card5} ← يذهب للقمامة",
+        "settingsStepGuidance": "إرشاد خطوة بخطوة",
+        "guideContinue": "متابعة",
+        "guidePromptTitle": "هل تريد عرض إرشاد خطوة بخطوة؟",
+        "guidePromptText": "يمكننا شرح قدرة كل حيوان في أول مرة تلعبه فيها خلال هذه اللعبة.",
+        "guidePromptYes": "نعم، أرشدني",
+        "guidePromptNo": "لا شكراً"
     },
     "tr": {
         "dir": "ltr",
@@ -513,6 +531,12 @@
         "wt9Text": "Sıra 5 hayvana ulaşınca:\n🎉 İlk 2'si partiye girer\n🗑️ Sonuncusu çöpe gider\n⏳ Ortakiler bekler",
         "wt10Title": "Hedef",
         "wt10Text": "En fazla hayvanı partiye götür ve kazan! Hayvanlarının yeteneklerini akıllıca kullan.",
-        "wt9TextDynamic": "Sırada 5 hayvan var! İşte ne olacak:\n🎉 {card1} → Partiye giriyor\n🎉 {card2} → Partiye giriyor\n⏳ {card3} → Sırada kalıyor\n⏳ {card4} → Sırada kalıyor\n🗑️ {card5} → Çöpe gidiyor"
+        "wt9TextDynamic": "Sırada 5 hayvan var! İşte ne olacak:\n🎉 {card1} → Partiye giriyor\n🎉 {card2} → Partiye giriyor\n⏳ {card3} → Sırada kalıyor\n⏳ {card4} → Sırada kalıyor\n🗑️ {card5} → Çöpe gidiyor",
+        "settingsStepGuidance": "Adım Adım Rehberlik",
+        "guideContinue": "Devam",
+        "guidePromptTitle": "Adım adım yardım gösterilsin mi?",
+        "guidePromptText": "Bu oyunda her hayvanın yeteneğini ilk oynadığınızda açıklayabiliriz.",
+        "guidePromptYes": "Evet, yol göster",
+        "guidePromptNo": "Hayır, teşekkürler"
     }
 }

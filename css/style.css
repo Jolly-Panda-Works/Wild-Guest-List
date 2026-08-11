@@ -2533,6 +2533,173 @@ body.gameplay-locked #playerHand .card {
     .confetti-layer { display: none; }
 }
 
+/* Guidance prompt (asked once per new game, before it starts) */
+.guide-prompt-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.guide-prompt-no {
+    background: rgba(255,255,255,0.08);
+    color: inherit;
+}
+
+/* ============================================================
+   CONTEXTUAL CARD GUIDANCE
+   (js/ui/cardGuidance-ui.js — popup shown after a played card's ability
+   resolves, explaining that specific ability with the real before/after
+   queue.)
+============================================================ */
+
+.guide-modal-content {
+    width: min(480px, 92vw);
+    text-align: left;
+}
+[dir="rtl"] .guide-modal-content { text-align: right; }
+
+.guide-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 10px;
+}
+
+.guide-visual-img {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+    background: rgba(255,255,255,0.06);
+}
+.guide-visual-emoji { font-size: 40px; line-height: 1; }
+
+.guide-title-block h3 { margin: 0 0 2px; font-size: 18px; }
+.guide-ability-title {
+    font-size: 13px;
+    font-weight: 700;
+    opacity: 0.75;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.guide-desc {
+    font-size: 14px;
+    line-height: 1.55;
+    opacity: 0.92;
+    margin: 6px 0 16px;
+}
+
+.guide-diagram {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.guide-queue-block {
+    flex: 1 1 140px;
+    min-width: 120px;
+}
+
+.guide-queue-label {
+    font-size: 11px;
+    opacity: 0.6;
+    margin-bottom: 6px;
+    text-align: center;
+}
+
+.guide-queue-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    min-height: 44px;
+}
+
+.guide-queue-empty {
+    opacity: 0.4;
+    font-size: 12px;
+}
+
+.guide-diagram-arrow {
+    font-size: 20px;
+    opacity: 0.5;
+    flex: 0 0 auto;
+}
+[dir="rtl"] .guide-diagram-arrow { transform: scaleX(-1); }
+
+.guide-chip {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+}
+.guide-chip-img { width: 26px; height: 26px; object-fit: contain; }
+.guide-chip-emoji { font-size: 18px; line-height: 1; }
+.guide-chip-power {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    font-size: 9px;
+    font-weight: 700;
+    background: var(--accent, #22c55e);
+    color: #06210c;
+    border-radius: 50%;
+    width: 15px;
+    height: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.guide-chip-badge {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+}
+
+.guide-chip-affected { border-width: 2px; }
+.guide-chip-removed  { border-color: #ef4444; box-shadow: 0 0 0 2px rgba(239,68,68,0.35); }
+.guide-chip-jumped   { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.35); }
+.guide-chip-escaped  { border-color: #eab308; box-shadow: 0 0 0 2px rgba(234,179,8,0.35); }
+.guide-chip-none     { border-color: #facc15; box-shadow: 0 0 0 2px rgba(250,204,21,0.35); }
+
+.guide-destination { flex-basis: 100%; }
+.guide-destination .guide-queue-row { justify-content: flex-start; }
+
+.guide-continue-btn { width: 100%; margin-top: 4px; }
+
+@media (max-width: 600px) {
+    .guide-modal-content { padding: 18px; }
+    .guide-visual-img, .guide-visual-emoji { width: 48px; height: 48px; }
+    .guide-chip { width: 34px; height: 34px; }
+    .guide-diagram { gap: 6px; }
+    .guide-queue-block { flex-basis: 100%; }
+    .guide-diagram-arrow { flex-basis: 100%; text-align: center; transform: rotate(90deg); }
+    [dir="rtl"] .guide-diagram-arrow { transform: rotate(90deg) scaleX(-1); }
+}
+
+.guide-continue-btn:focus-visible,
+#stepGuidanceToggle:focus-visible + .switch-track {
+    outline: 2px solid var(--accent, #22c55e);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .guide-reduced-motion .guide-chip { transition: none !important; }
+}
+
 /* Slot numbers */
 .slot-number {
     position: absolute; top: 50%; left: 50%;

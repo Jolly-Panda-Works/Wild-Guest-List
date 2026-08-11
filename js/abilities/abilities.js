@@ -39,7 +39,13 @@ export async function resolveAbility(card, gameState) {
     // Lion's move-to-front, the queue closing around Crocodile after it
     // eats). Those cards still need to visibly slide to their new spot
     // instead of teleporting there on the next render.
-    const before = queue.map(c => c.uid);
+    //
+    // The same snapshot (by reference, not just uid) is also handed back
+    // to the caller — turnManager uses it to build the contextual
+    // "before queue / after queue" guidance popup without having to
+    // re-derive it from the animation events.
+    const beforeQueue = [...queue];
+    const before = beforeQueue.map(c => c.uid);
 
     switch(card.power) {
 
@@ -68,6 +74,8 @@ export async function resolveAbility(card, gameState) {
         if (fromIndex === -1 || fromIndex === toIndex) return;
         emit({ type: EVENTS.CARD_MOVED, card: c, fromIndex, toIndex, reason: "settle" });
     });
+
+    return { beforeQueue, afterQueue: [...queue] };
 }
 
 async function kangaroo(card, gameState) {

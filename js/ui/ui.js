@@ -27,6 +27,8 @@ from "./icon-ui.js"
 
 import { initSoundToggle } from "../services/soundManager.js"
 
+import { initStepGuidanceToggle } from "./cardGuidance-ui.js"
+
 import {
     initializeModals
 }
@@ -41,6 +43,7 @@ export async function initializeUI(){
 
     initializeModals();
     initSoundToggle();
+    initStepGuidanceToggle();
 
     // Re-render everything when language changes
     window.addEventListener("langchange", () => {

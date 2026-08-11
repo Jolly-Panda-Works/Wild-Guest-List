@@ -221,6 +221,16 @@
 
                     <div class="settings-divider"></div>
 
+                    <div class="settings-row">
+                        <label class="settings-label"><span data-i18n="settingsStepGuidance">Step-by-step Guidance</span></label>
+                        <label class="switch-btn">
+                            <input type="checkbox" id="stepGuidanceToggle">
+                            <span class="switch-track"><span class="switch-thumb"></span></span>
+                        </label>
+                    </div>
+
+                    <div class="settings-divider"></div>
+
                     <div class="settings-row settings-row-col">
                         <label class="settings-label"><span data-i18n="settingsLanguage">Language</span></label>
                         <div id="langSelector" class="lang-selector"></div>
@@ -233,6 +243,28 @@
                     </div>
 
                 </div>
+            </div>
+        </div>
+
+        <!-- Contextual card guidance (shown after a card's ability resolves,
+             for first-time players or when Step-by-step Guidance is on) -->
+        <div id="cardGuidanceModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="guideCardName">
+            <div class="modal-content small-popup guide-modal-content">
+                <div class="guide-header">
+                    <div class="guide-visual" id="guideVisual"></div>
+                    <div class="guide-title-block">
+                        <h3 id="guideCardName"></h3>
+                        <div class="guide-ability-title" id="guideAbilityTitle"></div>
+                    </div>
+                </div>
+
+                <p class="guide-desc" id="guideDesc"></p>
+
+                <div class="guide-diagram" id="guideDiagram"></div>
+
+                <button id="guideContinueBtn" class="screen-btn guide-continue-btn" type="button">
+                    <span data-i18n="guideContinue">Continue</span>
+                </button>
             </div>
         </div>
 
@@ -305,6 +337,18 @@
                 <p class="diff-subtitle" data-i18n="diffSubtitle">Set how smart each opponent is</p>
                 <div id="difficultyPanel"></div>
                 <button id="confirmDiffBtn" class="screen-btn" data-i18n="diffConfirm">Let's Play!</button>
+            </div>
+        </div>
+
+        <!-- Guidance prompt — asked once per new game, before it starts -->
+        <div id="guidancePromptModal" class="screen-overlay hidden">
+            <div class="screen-content guide-prompt-content">
+                <h2 data-i18n="guidePromptTitle">Show step-by-step help?</h2>
+                <p class="diff-subtitle" data-i18n="guidePromptText">We can explain each animal's ability the first time you play it this game.</p>
+                <div class="guide-prompt-actions">
+                    <button id="guidancePromptYesBtn" class="screen-btn" type="button" data-i18n="guidePromptYes">Yes, guide me</button>
+                    <button id="guidancePromptNoBtn" class="screen-btn guide-prompt-no" type="button" data-i18n="guidePromptNo">No thanks</button>
+                </div>
             </div>
         </div>
 

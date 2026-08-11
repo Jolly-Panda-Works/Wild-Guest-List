@@ -41,6 +41,9 @@ from "../ui/game-ui.js";
 import { director } from "../presentation/director.js";
 import { beginCapture, endCapture } from "../presentation/events.js";
 
+import { shouldShowGuidance, buildGuidancePayload, showCardGuidance }
+from "../ui/cardGuidance-ui.js";
+
 export function startTurn(gameState){
 
     const player =
@@ -180,13 +183,25 @@ export async function playCard(
         await updateNonBoardUI(gameState);
 
         beginCapture();
-        await resolveAbility(
+        const { beforeQueue, afterQueue } = await resolveAbility(
             card,
             gameState
         );
-        await director.run(endCapture());
+        const abilityEvents = endCapture();
+        await director.run(abilityEvents);
 
         await updateNonBoardUI(gameState);
+
+        // Contextual "here's what that ability did" popup — first-time
+        // players / Step-by-step Guidance in Settings, human plays only,
+        // at most once per ability. Shown AFTER the ability has already
+        // animated (see js/ui/cardGuidance-ui.js) so the player sees the
+        // real result before it's explained, then confirms understanding
+        // before the turn continues.
+        if (player.id === "p1" && shouldShowGuidance(card)) {
+            const payload = buildGuidancePayload(card, beforeQueue, afterQueue, abilityEvents);
+            await showCardGuidance(payload);
+        }
 
         // فقط اگر هنوز 5 کارت یا بیشتر در صف بود
         if(gameState.queue.length >= 5){

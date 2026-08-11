@@ -11,6 +11,7 @@ import { playBackgroundMusic } from "./services/soundManager.js"
 import { initializeTutorial, openTutorial } from "./ui/tutorial-ui.js";
 import { startWalkthrough, shouldShowWalkthrough } from "./ui/walkthrough.js";
 import { loadI18n, t, setLang, buildLangSelector } from "./i18n.js";
+import { setStepGuidanceEnabled } from "./ui/cardGuidance-ui.js";
 
 // ── i18n boot — runs before anything else ─────────────────
 await loadI18n();
@@ -143,13 +144,34 @@ document.getElementById("closeSettings")?.addEventListener("click", () => {
     document.getElementById("settingsModal")?.classList.add("hidden");
 });
 
-// ── Wire up splash → difficulty panel → start ─────────────
+// ── Wire up splash → difficulty panel → guidance prompt → start ──
 document.getElementById("startGameBtn")?.addEventListener("click", () => {
     document.getElementById("splashScreen").classList.add("hidden");
     document.getElementById("difficultyModal")?.classList.remove("hidden");
 });
 
-document.getElementById("confirmDiffBtn")?.addEventListener("click", startGame);
+document.getElementById("confirmDiffBtn")?.addEventListener("click", () => {
+    document.getElementById("difficultyModal")?.classList.add("hidden");
+    document.getElementById("guidancePromptModal")?.classList.remove("hidden");
+    document.getElementById("guidancePromptYesBtn")?.focus();
+});
+
+// Asked once per new game, right before it starts. The answer both
+// persists to the same setting the Settings modal's toggle reads/writes
+// (js/ui/cardGuidance-ui.js) and directly decides whether contextual
+// per-card popups show for this playthrough — see shouldShowGuidance().
+function answerGuidancePrompt(enabled) {
+    setStepGuidanceEnabled(enabled);
+    document.getElementById("guidancePromptModal")?.classList.add("hidden");
+    startGame();
+}
+
+document.getElementById("guidancePromptYesBtn")?.addEventListener("click", () => answerGuidancePrompt(true));
+document.getElementById("guidancePromptNoBtn")?.addEventListener("click", () => answerGuidancePrompt(false));
+
+document.getElementById("guidancePromptModal")?.addEventListener("keydown", e => {
+    if (e.key === "Escape") answerGuidancePrompt(false); // safe default: don't force guidance on
+});
 
 buildDifficultyPanel();
 playBackgroundMusic();
