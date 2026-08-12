@@ -133,6 +133,12 @@ function renderHand(gameState) {
 
     player.hand.forEach((card, index) => {
         const cardEl = createCard(card);
+        // createCard() already wired the long-press-to-Card-Info gesture
+        // and its affordance badge (see wireCardHelpLongPress) — reuse
+        // that exact handle here instead of attaching a second gesture,
+        // so hand cards just layer click-to-play + keyboard on top of it.
+        const longPress = cardEl._helpLongPress;
+        handLongPressHandles.push(longPress);
 
         // Accessible focus target: same info long-press reveals should
         // also be reachable via keyboard, without changing what Enter/
@@ -144,19 +150,6 @@ function renderHand(gameState) {
         // about the hold-for-info interaction too — the visual hint/affordance
         // below is never the only way to find out about it.
         cardEl.setAttribute("aria-label", `${cardName} — ${t("cardHelpHintLabel")}`);
-
-        // Returning-player affordance: a small info badge that only fades
-        // in on hover/focus/touch, instead of a permanent label/icon on
-        // every card. Reuses the same "help" icon as the Help button
-        // (js/ui/icon-ui.js), so it matches the existing visual language
-        // rather than introducing a new icon. Purely visual — pointer-events
-        // disabled so it can never intercept a tap meant for the card.
-        const affordance = document.createElement("span");
-        affordance.className = "card-help-affordance";
-        affordance.setAttribute("data-icon", "help");
-        affordance.setAttribute("title", t("cardHelpHintLabel"));
-        affordance.setAttribute("aria-hidden", "true");
-        cardEl.appendChild(affordance);
 
         const playThisCard = async () => {
             if (!isMyTurn) {
@@ -173,18 +166,6 @@ function renderHand(gameState) {
             await playCard(player, index, gameState);
             playSound("playCard");
         };
-
-        const longPress = attachLongPress(cardEl, {
-            // Long-press must not fire while the player doesn't have
-            // control — e.g. mid-animation/AI turn — matching the same
-            // director.isBusy() gate normal play already respects.
-            isDisabled: () => director.isBusy(),
-            onLongPress: () => {
-                dismissCardHelpHintOnSuccess();
-                openCardInfoByPower(card.power);
-            },
-        });
-        handLongPressHandles.push(longPress);
 
         cardEl.onclick = () => {
             // A long-press that just fired also produces a trailing
@@ -346,7 +327,58 @@ export function createCard(card) {
             <div class="card-power">${card.power}</div>
         </div>
     `;
+
+    wireCardHelpLongPress(div, card);
+
     return div;
+}
+
+/**
+ * Wires the "hold to open Card Information" gesture onto a card element.
+ * Called from createCard() itself, so EVERY face-up card the game ever
+ * renders — hand, queue, party, and trash alike — gets it for free,
+ * instead of only the player's hand (the original, narrower wiring lived
+ * inline in renderHand() below). Opponents' face-down card-backs are
+ * never passed through createCard() at all, so there's nothing to hold
+ * there — there's no card identity to reveal yet.
+ *
+ * The returned handle is also stashed on the element itself
+ * (`el._helpLongPress`) so a caller that layers extra behavior on top —
+ * currently only renderHand(), for click-to-play + keyboard parity —
+ * can reuse this exact gesture instead of attaching a second, competing
+ * one to the same element.
+ */
+function wireCardHelpLongPress(cardEl, card) {
+    // Returning-player affordance: a small info badge that only fades in
+    // on hover/focus/touch, instead of a permanent label/icon on every
+    // card. Reuses the same "help" icon as the Help button
+    // (js/ui/icon-ui.js), so it matches the existing visual language
+    // rather than introducing a new icon. Purely visual — pointer-events
+    // disabled so it can never intercept a tap meant for the card.
+    const affordance = document.createElement("span");
+    affordance.className = "card-help-affordance";
+    affordance.setAttribute("data-icon", "help");
+    affordance.setAttribute("title", t("cardHelpHintLabel"));
+    affordance.setAttribute("aria-hidden", "true");
+    cardEl.appendChild(affordance);
+    // Resolve this specific badge's icon right away — self-contained, so
+    // every call site (queue/party/trash/hand, plus the presentation
+    // layer's own createCard() calls) gets a rendered icon without each
+    // one having to remember to call loadIcons() itself.
+    loadIcons(cardEl);
+
+    const longPress = attachLongPress(cardEl, {
+        // Long-press must not fire while the player doesn't have
+        // control — e.g. mid-animation/AI turn — matching the same
+        // director.isBusy() gate normal play already respects.
+        isDisabled: () => director.isBusy(),
+        onLongPress: () => {
+            dismissCardHelpHintOnSuccess();
+            openCardInfoByPower(card.power);
+        },
+    });
+    cardEl._helpLongPress = longPress;
+    return longPress;
 }
 
 // ── Turn label ────────────────────────────────────────────
