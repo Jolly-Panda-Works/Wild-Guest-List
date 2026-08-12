@@ -3660,38 +3660,38 @@ body.gameplay-locked #playerHand .card {
 .player-row { border-left-color: var(--p1, #4ade80); }
 
 /* ── Player avatar trigger (Choose Bot Difficulty screen) ──
-   Round portrait button showing the player's currently chosen
-   avatar; clicking it opens a popover to pick between the available
-   options. Same interaction shape as .color-trigger just above, and
-   takes the .bot-avatar row slot the plain emoji icon used to sit in. */
-.avatar-trigger-mount { flex-shrink: 0; }
+   Borderless portrait button showing the player's currently chosen
+   avatar, sized to match the bot avatar icons in the rows below it;
+   clicking it opens a popover to pick between the available options.
+   Same interaction shape as .color-trigger just above, and takes the
+   .bot-avatar row slot the plain emoji icon used to sit in. */
+.avatar-trigger-mount { flex-shrink: 0; width: 52px; text-align: center; }
 
 .avatar-trigger { position: relative; }
 
 .avatar-trigger-btn {
-    width: 52px;
-    height: 52px;
+    width: 72px;
+    height: 72px;
     padding: 0;
-    border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.25);
-    background: rgba(255,255,255,0.06);
+    border-radius: 0;
+    border: none;
+    background: transparent;
     cursor: pointer;
-    overflow: hidden;
-    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    overflow: visible;
+    transition: transform 0.15s ease, filter 0.15s ease;
 }
 
 .avatar-trigger-btn img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     display: block;
 }
 
 .avatar-trigger-btn:hover { transform: scale(1.06); }
 
 .avatar-trigger-btn.open {
-    border-color: #fff;
-    box-shadow: 0 0 0 3px rgba(255,255,255,0.18);
+    filter: drop-shadow(0 0 6px rgba(255,255,255,0.55));
 }
 
 .avatar-trigger-popover {
