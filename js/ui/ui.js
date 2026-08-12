@@ -36,6 +36,8 @@ import {
 }
 from "./modal-ui.js"
 
+import { initializePause } from "./pause-ui.js"
+
 let _lastGameState = null;
 
 export async function initializeUI(){
@@ -44,6 +46,7 @@ export async function initializeUI(){
     initMobileUI();
 
     initializeModals();
+    initializePause();
     initSoundToggle();
     initStepGuidanceToggle();
     await initCardColorPicker();

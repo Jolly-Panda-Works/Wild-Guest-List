@@ -20,6 +20,9 @@ import { TURN_TIMER_SECONDS } from "../constants/turnTimer.js";
  */
 
 let intervalId = null;
+let pausedSecondsLeft = null;
+let activeOnTick = null;
+let activeOnExpire = null;
 
 /**
  * @param {Object} options
@@ -32,6 +35,10 @@ let intervalId = null;
  */
 export function startTurnTimer({ onTick, onExpire } = {}) {
     stopTurnTimer();
+
+    activeOnTick = onTick;
+    activeOnExpire = onExpire;
+    pausedSecondsLeft = null;
 
     let secondsLeft = TURN_TIMER_SECONDS;
     onTick?.(secondsLeft);
@@ -46,6 +53,7 @@ export function startTurnTimer({ onTick, onExpire } = {}) {
             return;
         }
 
+        pausedSecondsLeft = secondsLeft;
         onTick?.(secondsLeft);
     }, 1000);
 }
@@ -56,4 +64,44 @@ export function stopTurnTimer() {
         clearInterval(intervalId);
         intervalId = null;
     }
+}
+
+/**
+ * Freezes the countdown at whatever second it's currently on, without
+ * losing that value — unlike stopTurnTimer(), which is meant for a turn
+ * genuinely ending. Used by the Pause panel so the countdown can never
+ * expire (and auto-play a random card) while the player is looking at
+ * the pause overlay instead of the board. Safe to call when no timer is
+ * running or the timer is already paused.
+ */
+export function pauseTurnTimer() {
+    if (intervalId === null) return;
+    clearInterval(intervalId);
+    intervalId = null;
+}
+
+/**
+ * Resumes a countdown previously frozen by pauseTurnTimer(), continuing
+ * from the exact second it was paused at rather than restarting from
+ * TURN_TIMER_SECONDS. No-op if nothing was paused.
+ */
+export function resumeTurnTimer() {
+    if (pausedSecondsLeft === null || intervalId !== null) return;
+
+    let secondsLeft = pausedSecondsLeft;
+
+    intervalId = setInterval(() => {
+        secondsLeft -= 1;
+
+        if (secondsLeft <= 0) {
+            stopTurnTimer();
+            pausedSecondsLeft = null;
+            activeOnTick?.(0);
+            activeOnExpire?.();
+            return;
+        }
+
+        pausedSecondsLeft = secondsLeft;
+        activeOnTick?.(secondsLeft);
+    }, 1000);
 }

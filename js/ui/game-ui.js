@@ -12,6 +12,7 @@ import { LONG_PRESS_DURATION_MS } from "../constants/longPress.js";
 import { TURN_TIMER_SECONDS } from "../constants/turnTimer.js";
 import { dismissCardHelpHintOnSuccess } from "./cardHelpHint.js";
 import { loadIcons } from "./icon-ui.js";
+import { isPaused } from "./pause-ui.js";
 
 // ── Warning toast ─────────────────────────────────────────
 function showWarning(message) {
@@ -155,6 +156,7 @@ function renderHand(gameState) {
         cardEl.setAttribute("aria-label", `${cardName} — ${t("cardHelpHintLabel")}`);
 
         const playThisCard = async () => {
+            if (isPaused()) return;
             if (!isMyTurn) {
                 showWarning(t("notYourTurn"));
                 return;

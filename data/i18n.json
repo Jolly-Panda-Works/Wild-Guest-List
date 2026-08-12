@@ -159,7 +159,12 @@
         "feedbackRatingRequired": "Please pick a rating before sending.",
         "feedbackToastText": "Enjoying the game? We'd love your feedback!",
         "feedbackToastYes": "Give feedback",
-        "feedbackToastLater": "Later"
+        "feedbackToastLater": "Later",
+        "btnPause": "Pause",
+        "pauseTitle": "Paused",
+        "pauseResume": "Resume",
+        "pauseSettings": "Settings",
+        "pauseRestart": "Restart"
     },
     "fa": {
         "dir": "rtl",
@@ -321,7 +326,12 @@
         "feedbackRatingRequired": "لطفاً قبل از ارسال یک امتیاز انتخاب کنید.",
         "feedbackToastText": "از بازی لذت می‌برید؟ خوشحال می‌شویم نظرتان را بدانیم!",
         "feedbackToastYes": "ثبت نظر",
-        "feedbackToastLater": "بعداً"
+        "feedbackToastLater": "بعداً",
+        "btnPause": "توقف",
+        "pauseTitle": "بازی متوقف شد",
+        "pauseResume": "ادامه",
+        "pauseSettings": "تنظیمات",
+        "pauseRestart": "شروع مجدد"
     },
     "ar": {
         "dir": "rtl",
@@ -483,7 +493,12 @@
         "feedbackRatingRequired": "يرجى اختيار تقييم قبل الإرسال.",
         "feedbackToastText": "هل تستمتع باللعبة؟ يسعدنا معرفة رأيك!",
         "feedbackToastYes": "إرسال رأي",
-        "feedbackToastLater": "لاحقاً"
+        "feedbackToastLater": "لاحقاً",
+        "btnPause": "إيقاف مؤقت",
+        "pauseTitle": "اللعبة متوقفة",
+        "pauseResume": "متابعة",
+        "pauseSettings": "الإعدادات",
+        "pauseRestart": "إعادة البدء"
     },
     "tr": {
         "dir": "ltr",
@@ -645,6 +660,11 @@
         "feedbackRatingRequired": "Göndermeden önce lütfen bir puan seçin.",
         "feedbackToastText": "Oyunun tadını çıkarıyor musunuz? Geri bildiriminizi almak isteriz!",
         "feedbackToastYes": "Geri bildirim ver",
-        "feedbackToastLater": "Daha sonra"
+        "feedbackToastLater": "Daha sonra",
+        "btnPause": "Duraklat",
+        "pauseTitle": "Oyun Duraklatıldı",
+        "pauseResume": "Devam Et",
+        "pauseSettings": "Ayarlar",
+        "pauseRestart": "Yeniden Başlat"
     }
 }

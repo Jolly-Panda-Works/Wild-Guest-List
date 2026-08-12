@@ -382,6 +382,32 @@ body {
     line-height: 1.6;
 }
 
+/* ==========================================================
+   PAUSE PANEL
+========================================================== */
+
+.pause-panel .help-header {
+    justify-content: center;
+}
+
+.pause-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.pause-actions .screen-btn {
+    margin-top: 0;
+    width: 100%;
+}
+
+.pause-btn-secondary {
+    background: rgba(255,255,255,0.08);
+    color: inherit;
+}
+
 #topBar {
     text-align: center;
 

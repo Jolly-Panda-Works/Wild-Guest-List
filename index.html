@@ -61,6 +61,9 @@
                             <button id="logBtn"  class="top-btn mobile-only-btn" data-title="Game Log" data-title-key="btnLog">
                                 <span data-icon="gameLog"></span>
                             </button>
+                            <button id="pauseBtn" class="top-btn" data-title="Pause" data-title-key="btnPause">
+                                <span data-icon="pause"></span>
+                            </button>
                             <button id="helpBtn" class="top-btn" data-title="Help" data-title-key="btnHelp">
                                 <span data-icon="help"></span>
                             </button>
@@ -251,6 +254,20 @@
                         <div><strong data-i18n="settingsVersion">Version</strong>: 1.9.0</div>
                     </div>
 
+                </div>
+            </div>
+        </div>
+
+        <!-- Pause -->
+        <div id="pauseModal" class="modal hidden">
+            <div class="modal-content small-popup pause-panel">
+                <div class="help-header">
+                    <h3 data-i18n="pauseTitle">Paused</h3>
+                </div>
+                <div class="pause-actions">
+                    <button id="pauseResumeBtn" class="screen-btn" data-i18n="pauseResume">Resume</button>
+                    <button id="pauseSettingsBtn" class="screen-btn pause-btn-secondary" data-i18n="pauseSettings">Settings</button>
+                    <button id="pauseRestartBtn" class="screen-btn pause-btn-secondary" data-i18n="pauseRestart">Restart</button>
                 </div>
             </div>
         </div>
