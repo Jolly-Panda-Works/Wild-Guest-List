@@ -10,6 +10,7 @@ import { loadIcons } from "./ui/icon-ui.js"
 import { playBackgroundMusic } from "./services/soundManager.js"
 import { initializeTutorial, openTutorial } from "./ui/tutorial-ui.js";
 import { startWalkthrough, shouldShowWalkthrough } from "./ui/walkthrough.js";
+import { maybeShowCardHelpHint } from "./ui/cardHelpHint.js";
 import { loadI18n, t, setLang, buildLangSelector } from "./i18n.js";
 import {
     setStepGuidanceEnabled, isStepGuidanceEnabled, initStepGuidanceToggle,
@@ -152,12 +153,23 @@ async function startGame() {
     initHelp();
     initMobileUI();
     initMobileTabs();
-    updateUI(gameState);
+    await updateUI(gameState);
     startTurn(gameState);
 
     // In-game walkthrough (first time only)
     if (shouldShowWalkthrough()) {
-        startWalkthrough();
+        // The card-help hint would only compete for the player's
+        // attention if shown during the walkthrough (isWalkthroughActive()
+        // already guards against that), so it's held off entirely and
+        // shown only once the walkthrough fully finishes, right before
+        // the player's next real move — never mid-walkthrough.
+        startWalkthrough().then(() => {
+            maybeShowCardHelpHint(document.getElementById("playerHand"));
+        });
+    } else {
+        // No walkthrough this game — show the discoverability hint right
+        // at the start, before the player's first move.
+        maybeShowCardHelpHint(document.getElementById("playerHand"));
     }
 }
 

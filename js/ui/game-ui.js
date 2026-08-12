@@ -10,7 +10,7 @@ import { attachLongPress } from "./longPress.js";
 import { openCardInfoByPower } from "../game/help.js";
 import { LONG_PRESS_DURATION_MS } from "../constants/longPress.js";
 import { TURN_TIMER_SECONDS } from "../constants/turnTimer.js";
-import { maybeShowCardHelpHint, dismissCardHelpHintOnSuccess } from "./cardHelpHint.js";
+import { dismissCardHelpHintOnSuccess } from "./cardHelpHint.js";
 
 let _config = null;
 async function getConfig() {
@@ -233,8 +233,12 @@ function renderHand(gameState) {
     loadIcons(hand);
 
     // First-time discoverability hint — no-ops instantly once it has
-    // already been shown/dismissed (see js/ui/cardHelpHint.js).
-    maybeShowCardHelpHint(hand);
+    // already been shown/dismissed (see js/ui/cardHelpHint.js). Not
+    // triggered from here: the game-start flow in main.js calls it
+    // explicitly at the right moment (immediately, or after the in-game
+    // walkthrough finishes if one is running) so it can never appear
+    // mid-walkthrough or get missed on a render that happens to run
+    // while the walkthrough is still active.
 }
 
 /** The specific hand-card DOM element at `index`, captured before the
