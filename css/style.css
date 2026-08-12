@@ -392,20 +392,38 @@ body {
 
 .pause-actions {
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    gap: clamp(20px, 6vw, 36px);
     margin-top: 8px;
 }
 
-.pause-actions .screen-btn {
-    margin-top: 0;
-    width: 100%;
+.pause-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
+    font-family: inherit;
 }
 
-.pause-btn-secondary {
+/* Icon box reuses the exact dimensions of the gameplay top-bar
+   buttons (.top-btn, css/style.css #topRight) so the pause panel's
+   icons read as the same UI element, just in a different context. */
+.pause-action-icon.top-btn {
     background: rgba(255,255,255,0.08);
-    color: inherit;
+}
+
+.pause-action-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
 }
 
 #topBar {

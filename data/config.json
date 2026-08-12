@@ -27,6 +27,7 @@
         "rankGold": "assets/img/icons/1st.png",
         "rankSilver": "assets/img/icons/2nd.png",
         "rankBronze": "assets/img/icons/3rd.png",
+        "rankFourth": "assets/img/icons/4th.png",
         "partyEmoji": "🎉",
         "power": "assets/img/icons/Power.png",
         "trashEmoji": "🗑️",
@@ -40,7 +41,9 @@
         "videoPlay": "▶",
         "videoPause": "⏸",
         "pause": "assets/img/icons/Pause.png",
-        "feedback": "assets/img/icons/Feedback.png"
+        "feedback": "assets/img/icons/Feedback.png",
+        "pauseResume": "▶️",
+        "pauseRestart": "🔄"
     },
     "sounds": {
         "playCard": "",

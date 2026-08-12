@@ -1,7 +1,7 @@
 import { t, playerDisplayName } from "../i18n.js";
 import { loadIcons } from "./icon-ui.js";
 
-const RANK_ICON = ["rankGold", "rankSilver", "rankBronze"];
+const RANK_ICON = ["rankGold", "rankSilver", "rankBronze", "rankFourth"];
 
 export function renderLeaderboard(gameState) {
 

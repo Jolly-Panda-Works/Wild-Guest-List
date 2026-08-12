@@ -67,9 +67,6 @@
                             <button id="helpBtn" class="top-btn" data-title="Help" data-title-key="btnHelp">
                                 <span data-icon="help"></span>
                             </button>
-                            <button id="settingsBtn" class="top-btn" data-title="Settings" data-title-key="btnSettings">
-                                <span data-icon="settings"></span>
-                            </button>
                             <button id="tutorialBtn" class="top-btn" data-title="Tutorial" data-title-key="btnTutorial">
                                 <span data-icon="tutorial"></span>
                             </button>
@@ -271,9 +268,18 @@
                     <h3 data-i18n="pauseTitle">Paused</h3>
                 </div>
                 <div class="pause-actions">
-                    <button id="pauseResumeBtn" class="screen-btn" data-i18n="pauseResume">Resume</button>
-                    <button id="pauseSettingsBtn" class="screen-btn pause-btn-secondary" data-i18n="pauseSettings">Settings</button>
-                    <button id="pauseRestartBtn" class="screen-btn pause-btn-secondary" data-i18n="pauseRestart">Restart</button>
+                    <button id="pauseResumeBtn" class="pause-action">
+                        <span class="pause-action-icon top-btn" data-icon="pauseResume"></span>
+                        <span class="pause-action-label" data-i18n="pauseResume">Resume</span>
+                    </button>
+                    <button id="pauseSettingsBtn" class="pause-action">
+                        <span class="pause-action-icon top-btn" data-icon="settings"></span>
+                        <span class="pause-action-label" data-i18n="pauseSettings">Settings</span>
+                    </button>
+                    <button id="pauseRestartBtn" class="pause-action">
+                        <span class="pause-action-icon top-btn" data-icon="pauseRestart"></span>
+                        <span class="pause-action-label" data-i18n="pauseRestart">Restart</span>
+                    </button>
                 </div>
             </div>
         </div>
