@@ -46,7 +46,7 @@ export async function initializeUI(){
     initializeModals();
     initSoundToggle();
     initStepGuidanceToggle();
-    initCardColorPicker();
+    await initCardColorPicker();
 
     // Re-render everything when language changes
     window.addEventListener("langchange", () => {

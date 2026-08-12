@@ -3582,6 +3582,57 @@ body.gameplay-locked #playerHand .card {
 .diff-btn.active[data-diff="medium"] { background: rgba(245,158,11,0.2); border-color: #f59e0b; color: #f59e0b; }
 .diff-btn.active[data-diff="hard"]   { background: rgba(239,68,68,0.2);  border-color: #ef4444; color: #ef4444; }
 
+/* Player's own row on the Choose Bot Difficulty screen — same shape as
+   a bot row, just without a difficulty toggle, and its left border
+   reflects the player's own card color instead of a bot's. */
+.player-row { border-left-color: var(--p1, #4ade80); }
+
+/* ── Per-seat color trigger (Choose Bot Difficulty screen) ──
+   A small circle showing the seat's current card color; clicking it
+   opens a popover with the full palette. Same underlying color state
+   as the Settings → Player Colors picker (js/ui/cardColor-ui.js). */
+.color-trigger-mount { flex-shrink: 0; }
+
+.color-trigger { position: relative; }
+
+.color-trigger-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.25);
+    background: var(--swatch-color);
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.color-trigger-btn:hover { transform: scale(1.08); }
+
+.color-trigger-btn.open {
+    border-color: #fff;
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.18);
+}
+
+.color-trigger-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    display: none;
+    min-width: 150px;
+    padding: 10px;
+    background: rgba(10,31,15,0.92);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+    z-index: 20;
+}
+
+.color-trigger-popover.open { display: block; }
+
+[dir="rtl"] .color-trigger-popover { right: auto; left: 0; }
+
 /* ============================================================
    SETTINGS — sound switch
 ============================================================ */

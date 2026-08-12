@@ -25,7 +25,7 @@
  * identity or color).
  */
 
-import { CARD_COLOR_PALETTE, DEFAULT_PLAYER_COLORS } from "../constants/cardColors.js";
+import { CARD_COLOR_PALETTE, DEFAULT_PLAYER_COLORS, loadCardColors } from "../constants/cardColors.js";
 import { t } from "../i18n.js";
 
 const STORAGE_KEY = "wgl_playerColors";
@@ -143,7 +143,8 @@ function renderAll(container) {
 }
 
 /** Wires the Settings picker. Call once during UI init (and again on langchange). */
-export function initCardColorPicker() {
+export async function initCardColorPicker() {
+    await loadCardColors(); // pull the palette from data/cardColors.json first
     applyCardColors(); // make sure the stored/default assignment is already live
 
     const container = document.getElementById("playerColorPicker");
@@ -155,4 +156,111 @@ export function initCardColorPicker() {
         window.addEventListener("langchange", () => renderAll(container));
         container._langchangeWired = true;
     }
+}
+
+/* ─────────────────────────────────────────
+   Compact "click to open" trigger + popover
+   ─────────────────────────────────────────
+   Used on the Choose Bot Difficulty screen: a small circle showing the
+   seat's *current* color, which opens a popover with the same palette
+   on click instead of always showing every swatch (there isn't room
+   for a full row next to each bot's difficulty buttons).
+
+   This reads and writes through the exact same getPlayerColors() /
+   setPlayerColor() state as the Settings picker above — it's a second
+   view onto one shared color setting, not a separate one. Whichever
+   screen changes it last is what both screens (and the live cards)
+   show next time they're opened.
+───────────────────────────────────────── */
+
+function closeAllTriggerPopovers() {
+    document.querySelectorAll(".color-trigger-popover.open")
+        .forEach(p => p.classList.remove("open"));
+    document.querySelectorAll(".color-trigger-btn.open")
+        .forEach(b => b.classList.remove("open"));
+}
+
+if (!document._colorTriggerOutsideClickWired) {
+    document.addEventListener("click", e => {
+        if (!e.target.closest(".color-trigger")) closeAllTriggerPopovers();
+    });
+    document.addEventListener("keydown", e => {
+        if (e.key === "Escape") closeAllTriggerPopovers();
+    });
+    document._colorTriggerOutsideClickWired = true;
+}
+
+function renderTrigger(container, playerId, onAnyChange) {
+    const colors    = getPlayerColors();
+    const activeHex = hexFor(colors[playerId]);
+
+    container.innerHTML = `
+        <div class="color-trigger" data-player="${playerId}">
+            <button type="button"
+                    class="color-trigger-btn"
+                    style="--swatch-color:${activeHex}"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                    aria-label="${t("settingsPlayerColors")}"></button>
+            <div class="color-trigger-popover" role="menu">
+                <div class="color-swatch-row">
+                    ${CARD_COLOR_PALETTE.map(c => `
+                        <button type="button"
+                                class="color-swatch${c.id === colors[playerId] ? " active" : ""}"
+                                data-player="${playerId}"
+                                data-color="${c.id}"
+                                style="--swatch-color:${c.hex}"
+                                aria-label="${c.id}"
+                                aria-pressed="${c.id === colors[playerId]}"></button>
+                    `).join("")}
+                </div>
+            </div>
+        </div>
+    `;
+
+    const btn = container.querySelector(".color-trigger-btn");
+    const pop = container.querySelector(".color-trigger-popover");
+
+    btn.addEventListener("click", e => {
+        e.stopPropagation();
+        const isOpen = pop.classList.contains("open");
+        closeAllTriggerPopovers();
+        if (!isOpen) {
+            pop.classList.add("open");
+            btn.classList.add("open");
+            btn.setAttribute("aria-expanded", "true");
+        }
+    });
+
+    container.querySelectorAll(".color-swatch").forEach(sw => {
+        sw.addEventListener("click", e => {
+            e.stopPropagation();
+            closeAllTriggerPopovers();
+            if (sw.classList.contains("active")) return;
+            setPlayerColor(sw.dataset.player, sw.dataset.color);
+            onAnyChange?.(); // a swap can change another seat's swatch too
+        });
+    });
+}
+
+/**
+ * Mounts a click-to-open color trigger into each given container.
+ * `containers` is `{ p1: el, p2: el, p3: el, p4: el }` — any seat
+ * without a matching element (or with a null one) is simply skipped.
+ *
+ * Returns a `refresh()` function that re-renders every trigger (call it
+ * after a language change, since the mounted markup gets replaced).
+ */
+export async function initColorTriggers(containers) {
+    await loadCardColors();
+    applyCardColors();
+
+    const refresh = () => {
+        Object.entries(containers).forEach(([pid, el]) => {
+            if (el) renderTrigger(el, pid, refresh);
+        });
+    };
+
+    refresh();
+    return refresh;
 }

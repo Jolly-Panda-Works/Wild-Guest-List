@@ -17,7 +17,7 @@ import {
     hasExplainedHistory, resetExplainedAbilities,
     isGuidancePromptHidden, setGuidancePromptHidden,
 } from "./ui/cardGuidance-ui.js";
-import { initCardColorPicker } from "./ui/cardColor-ui.js";
+import { initCardColorPicker, initColorTriggers } from "./ui/cardColor-ui.js";
 
 // ── i18n boot — runs before anything else ─────────────────
 await loadI18n();
@@ -26,7 +26,10 @@ buildLangSelector(document.getElementById("langSelector"));
 // Card color picker: wired at boot (like the language selector above)
 // rather than only inside initializeUI(), so it already works from the
 // splash screen's Settings modal, before a game has even started.
-initCardColorPicker();
+// Awaited because it loads the palette from data/cardColors.json first —
+// buildDifficultyPanel() (below) reuses that same loaded palette for the
+// color triggers on the Choose Bot Difficulty screen.
+await initCardColorPicker();
 
 // Step-by-step Guidance toggle: same reasoning — wired at boot so
 // turning it on from the splash screen's Settings modal (before
@@ -51,7 +54,21 @@ async function buildDifficultyPanel() {
     if (!panel) return;
 
     function renderPanel(){
-        panel.innerHTML = BOT_DEFS.map(bot => `
+        // Player's own row — same seat/color system as the bots below,
+        // just without a difficulty toggle (the human has none).
+        const playerRow = `
+            <div class="bot-row player-row" id="playerColorRow">
+                <div class="bot-avatar">
+                    <span>🙋</span>
+                </div>
+                <div class="bot-info">
+                    <div class="bot-name">${t("you")}</div>
+                </div>
+                <div class="color-trigger-mount" id="colorTrigger_p1"></div>
+            </div>
+        `;
+
+        const botRows = BOT_DEFS.map(bot => `
             <div class="bot-row" id="botRow_${bot.id}">
                 <div class="bot-avatar" id="botAvatar_${bot.id}">
                     <span data-icon="bot-easy"></span>
@@ -68,14 +85,31 @@ async function buildDifficultyPanel() {
                         `).join("")}
                     </div>
                 </div>
+                <div class="color-trigger-mount" id="colorTrigger_${bot.id}"></div>
             </div>
         `).join("");
+
+        panel.innerHTML = playerRow + botRows;
+    }
+
+    // Mounts/re-mounts the color trigger buttons — must run after every
+    // renderPanel() call, since that call replaces the markup the
+    // triggers were mounted into (panel.innerHTML = ...).
+    async function wireColorTriggers() {
+        await initColorTriggers({
+            p1: document.getElementById("colorTrigger_p1"),
+            p2: document.getElementById("colorTrigger_p2"),
+            p3: document.getElementById("colorTrigger_p3"),
+            p4: document.getElementById("colorTrigger_p4"),
+        });
     }
 
     renderPanel();
+    await wireColorTriggers();
     window.addEventListener("langchange", async () => {
         renderPanel();
         await loadIcons(panel);
+        await wireColorTriggers();
     });
 
     // store selections

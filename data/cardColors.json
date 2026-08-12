@@ -1,0 +1,18 @@
+{
+    "palette": [
+        { "id": "blue",   "hex": "#3b82f6" },
+        { "id": "green",  "hex": "#22c55e" },
+        { "id": "orange", "hex": "#f97316" },
+        { "id": "purple", "hex": "#a855f7" },
+        { "id": "red",    "hex": "#ef4444" },
+        { "id": "yellow", "hex": "#eab308" },
+        { "id": "pink",   "hex": "#ec4899" },
+        { "id": "teal",   "hex": "#14b8a6" }
+    ],
+    "defaults": {
+        "p1": "blue",
+        "p2": "green",
+        "p3": "orange",
+        "p4": "purple"
+    }
+}
