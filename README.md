@@ -667,6 +667,16 @@ Players need to think about:
 
 ---
 
+## 🔖 Version
+
+**Current version:** 1.10.0
+
+The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen in the Settings modal (`data-app-version` in `index.html`, populated at runtime by `js/ui/icon-ui.js`). Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
+
+See `AGENTS.md` for the rule that keeps this number (and this README) current as work is done.
+
+---
+
 ## 👨‍💻 Credits
 
 **Wild Guest List**
