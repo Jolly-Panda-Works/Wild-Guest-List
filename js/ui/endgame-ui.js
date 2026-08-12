@@ -1,6 +1,7 @@
 import { t, playerDisplayName } from "../i18n.js";
 import { playSound } from "../services/soundManager.js";
 import { loadIcons } from "./icon-ui.js";
+import { autoOpenFeedbackAfterGame } from "./feedback-ui.js";
 
 const RANK_ICON = ["rankGold", "rankSilver", "rankBronze"];
 
@@ -52,6 +53,10 @@ export function showEndGame(gameState) {
 
     loadIcons(finalScores);
     screen.classList.remove("hidden");
+
+    // Ask for feedback once results are visible — the player sees how
+    // the game turned out before the form shows up over it.
+    autoOpenFeedbackAfterGame();
 }
 
 export function hideEndGame() {

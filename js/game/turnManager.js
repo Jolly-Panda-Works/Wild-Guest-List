@@ -55,6 +55,8 @@ from "../ui/cardGuidance-ui.js";
 
 import { playSound } from "../services/soundManager.js";
 
+import { maybeOfferFeedbackToast } from "../ui/feedback-ui.js";
+
 export function startTurn(gameState){
 
     const player =
@@ -344,6 +346,11 @@ function nextTurn(gameState){
         gameState.currentPlayer = 0;
 
         gameState.round++;
+
+        // Random, non-blocking nudge to give feedback — checked once per
+        // new round, shows at most once per playthrough. Never pauses
+        // the game itself.
+        maybeOfferFeedbackToast(gameState);
 
     }
 

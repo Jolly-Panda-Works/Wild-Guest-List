@@ -1,7 +1,10 @@
 import { buildLangSelector } from "../i18n.js";
 import { openTutorial } from "./tutorial-ui.js"
+import { initFeedback } from "./feedback-ui.js"
 
 export function initializeModals(){
+
+    initFeedback();
 
     document
         .getElementById("settingsBtn")

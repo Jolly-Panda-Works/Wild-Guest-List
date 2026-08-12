@@ -38,7 +38,8 @@
         "star": "⭐",
         "tip": "💡",
         "videoPlay": "▶",
-        "videoPause": "⏸"
+        "videoPause": "⏸",
+        "feedback": "💬"
     },
     "sounds": {
         "playCard": "",

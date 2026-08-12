@@ -303,6 +303,78 @@
                        data-i18n="aboutVisit">
                         Visit Website
                     </a>
+
+                    <button id="aboutFeedbackBtn" type="button" class="feedback-link-btn">
+                        <span data-icon="feedback"></span>
+                        <span data-i18n="aboutFeedbackBtn">Give Feedback</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback / Survey -->
+        <div id="feedbackModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle">
+            <div class="modal-content small-popup feedback-modal-content">
+                <div class="help-header">
+                    <h3 id="feedbackTitle" data-i18n="feedbackTitle">Give Feedback</h3>
+                    <button id="closeFeedback" class="icon-btn close">
+                        <span data-icon="close"></span>
+                    </button>
+                </div>
+
+                <p class="feedback-subtitle" data-i18n="feedbackSubtitle">We'd love to hear what you think of the game.</p>
+
+                <form id="feedbackForm" class="feedback-form" novalidate>
+
+                    <div class="feedback-field">
+                        <label class="feedback-label" data-i18n="feedbackRatingLabel">How would you rate the game?</label>
+                        <div id="feedbackStars" class="feedback-stars" role="radiogroup" aria-label="Rating">
+                            <button type="button" class="feedback-star" data-value="1" aria-label="1">★</button>
+                            <button type="button" class="feedback-star" data-value="2" aria-label="2">★</button>
+                            <button type="button" class="feedback-star" data-value="3" aria-label="3">★</button>
+                            <button type="button" class="feedback-star" data-value="4" aria-label="4">★</button>
+                            <button type="button" class="feedback-star" data-value="5" aria-label="5">★</button>
+                        </div>
+                        <input type="hidden" id="feedbackRatingInput" name="rating" value="">
+                    </div>
+
+                    <div class="feedback-field">
+                        <label class="feedback-label" for="feedbackMessage" data-i18n="feedbackMessageLabel">Your comments or suggestions</label>
+                        <textarea id="feedbackMessage" name="message" class="feedback-textarea" rows="4"
+                                  data-i18n-placeholder="feedbackMessagePlaceholder"
+                                  placeholder="What did you like? What should we improve?"></textarea>
+                    </div>
+
+                    <div class="feedback-field">
+                        <label class="feedback-label" for="feedbackName" data-i18n="feedbackNameLabel">Name (optional)</label>
+                        <input type="text" id="feedbackName" name="name" class="feedback-input" maxlength="40"
+                               data-i18n-placeholder="feedbackNamePlaceholder" placeholder="Your name">
+                    </div>
+
+                    <div class="feedback-field">
+                        <label class="feedback-label" for="feedbackEmail" data-i18n="feedbackEmailLabel">Email (optional, if you'd like a reply)</label>
+                        <input type="email" id="feedbackEmail" name="email" class="feedback-input" maxlength="80"
+                               data-i18n-placeholder="feedbackEmailPlaceholder" placeholder="you@example.com">
+                    </div>
+
+                    <p id="feedbackStatus" class="feedback-status" aria-live="polite"></p>
+
+                    <button id="feedbackSubmitBtn" type="submit" class="screen-btn feedback-submit-btn" data-i18n="feedbackSubmitBtn">
+                        Send Feedback
+                    </button>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- Random in-game feedback nudge (non-blocking toast) -->
+        <div id="feedbackToast" class="feedback-toast hidden" role="status" aria-live="polite">
+            <div class="feedback-toast-bubble">
+                <span class="feedback-toast-icon" data-icon="feedback"></span>
+                <p class="feedback-toast-text" data-i18n="feedbackToastText">Enjoying the game? We'd love your feedback!</p>
+                <div class="feedback-toast-actions">
+                    <button id="feedbackToastYesBtn" type="button" class="feedback-toast-yes" data-i18n="feedbackToastYes">Give feedback</button>
+                    <button id="feedbackToastLaterBtn" type="button" class="feedback-toast-later" data-i18n="feedbackToastLater">Later</button>
                 </div>
             </div>
         </div>
@@ -386,6 +458,10 @@
                 <p id="endGameText"></p>
                 <div id="finalScores"></div>
                 <button id="playAgainBtn" class="screen-btn" data-i18n="playAgain">Play Again</button>
+                <button id="endgameFeedbackBtn" type="button" class="feedback-link-btn endgame-feedback-btn">
+                    <span data-icon="feedback"></span>
+                    <span data-i18n="endgameFeedbackBtn">Give Feedback</span>
+                </button>
             </div>
         </div>
 

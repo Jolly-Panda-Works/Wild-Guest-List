@@ -5263,3 +5263,240 @@ body.gameplay-locked #playerHand .card {
         box-shadow: 0 0 0 3px color-mix(in srgb, var(--bot-color) 55%, transparent);
     }
 }
+
+/* ══════════════════════════════════════════════════════════
+   Feedback / survey form
+   ══════════════════════════════════════════════════════════ */
+
+.feedback-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    margin-top: 14px;
+
+    padding: 10px 20px;
+
+    border-radius: 10px;
+    border: 1px solid var(--border);
+
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-main);
+
+    font-weight: 600;
+    font-size: 14px;
+
+    cursor: pointer;
+    transition: .2s;
+}
+
+.feedback-link-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateY(-2px);
+}
+
+.endgame-feedback-btn {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+.feedback-modal-content {
+    text-align: left;
+}
+
+:lang(fa) .feedback-modal-content,
+:lang(ar) .feedback-modal-content {
+    text-align: right;
+}
+
+.feedback-subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin: 4px 0 18px;
+}
+
+.feedback-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.feedback-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.feedback-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.feedback-stars {
+    display: flex;
+    gap: 6px;
+}
+
+.feedback-star {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 28px;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.25);
+    transition: transform .15s, color .15s;
+    padding: 2px;
+}
+
+.feedback-star:hover {
+    transform: scale(1.15);
+}
+
+.feedback-star.active {
+    color: #facc15;
+}
+
+.feedback-textarea,
+.feedback-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.feedback-textarea:focus,
+.feedback-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.feedback-status {
+    min-height: 18px;
+    font-size: 13px;
+    margin: 0;
+}
+
+.feedback-status.is-error {
+    color: #ef4444;
+}
+
+.feedback-status.is-success {
+    color: #22c55e;
+}
+
+.feedback-submit-btn {
+    width: 100%;
+    margin-top: 0;
+}
+
+/* ── Random in-game toast ── */
+
+.feedback-toast {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 1500;
+
+    max-width: 320px;
+
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity .25s ease, transform .25s ease;
+
+    pointer-events: none;
+}
+
+:lang(fa) .feedback-toast,
+:lang(ar) .feedback-toast {
+    right: auto;
+    left: 16px;
+}
+
+.feedback-toast.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.feedback-toast-bubble {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+
+    background: rgba(10, 31, 15, 0.92);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .5);
+}
+
+.feedback-toast-icon {
+    font-size: 20px;
+}
+
+.feedback-toast-text {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-main);
+    line-height: 1.4;
+}
+
+.feedback-toast-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.feedback-toast-yes,
+.feedback-toast-later {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: .2s;
+}
+
+.feedback-toast-yes {
+    background: var(--accent);
+    color: white;
+}
+
+.feedback-toast-yes:hover {
+    opacity: .85;
+}
+
+.feedback-toast-later {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+}
+
+.feedback-toast-later:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+@media (max-width: 600px) {
+    .feedback-toast {
+        left: 12px;
+        right: 12px;
+        max-width: none;
+    }
+
+    :lang(fa) .feedback-toast,
+    :lang(ar) .feedback-toast {
+        left: 12px;
+        right: 12px;
+    }
+}
