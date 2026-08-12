@@ -30,8 +30,9 @@ import { isWalkthroughActive } from "./walkthrough.js";
 import { EVENTS } from "../presentation/events.js";
 import { isReducedMotion } from "../presentation/flip.js";
 
-const SETTING_KEY   = "wgl_stepGuidance";
-const EXPLAINED_KEY = "wgl_explainedAbilities";
+const SETTING_KEY     = "wgl_stepGuidance";
+const EXPLAINED_KEY   = "wgl_explainedAbilities";
+const HIDE_PROMPT_KEY = "wgl_hideGuidancePrompt";
 
 /* ─────────────────────────────────────────
    Settings persistence (localStorage — same mechanism the rest of the
@@ -108,12 +109,39 @@ function markExplained(cardId) {
     }
 }
 
+/** Whether at least one ability has already been marked "explained" —
+ *  used by the pre-game prompt (main.js) to decide whether it's even
+ *  worth asking "start over from the beginning?". With no history yet,
+ *  guidance is already going to show for every card, so asking would be
+ *  a no-op question. */
+export function hasExplainedHistory() {
+    return getExplainedIds().length > 0;
+}
+
 /** Clears "already explained" history so every ability's guidance can
  *  show again. Called automatically when the setting is turned on —
- *  see setStepGuidanceEnabled() above — but also exported in case it's
- *  ever useful on its own. */
+ *  see setStepGuidanceEnabled() above — and also when the player
+ *  explicitly chooses to start the step-by-step guidance over from the
+ *  beginning at the pre-game prompt (main.js). Also exported in case
+ *  it's ever useful on its own. */
 export function resetExplainedAbilities() {
     localStorage.removeItem(EXPLAINED_KEY);
+}
+
+/* ─────────────────────────────────────────
+   "Don't ask again" for the pre-game guidance prompt
+───────────────────────────────────────── */
+
+/** Whether the pre-game "Show step-by-step help?" prompt should be
+ *  skipped from now on (player checked "Don't show this again"). When
+ *  hidden, main.js goes straight to startGame() using whatever
+ *  isStepGuidanceEnabled() already holds, instead of asking every game. */
+export function isGuidancePromptHidden() {
+    return localStorage.getItem(HIDE_PROMPT_KEY) === "true";
+}
+
+export function setGuidancePromptHidden(hidden) {
+    localStorage.setItem(HIDE_PROMPT_KEY, hidden ? "true" : "false");
 }
 
 /* ─────────────────────────────────────────

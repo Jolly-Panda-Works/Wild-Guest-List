@@ -11,7 +11,11 @@ import { playBackgroundMusic } from "./services/soundManager.js"
 import { initializeTutorial, openTutorial } from "./ui/tutorial-ui.js";
 import { startWalkthrough, shouldShowWalkthrough } from "./ui/walkthrough.js";
 import { loadI18n, t, setLang, buildLangSelector } from "./i18n.js";
-import { setStepGuidanceEnabled, isStepGuidanceEnabled, initStepGuidanceToggle } from "./ui/cardGuidance-ui.js";
+import {
+    setStepGuidanceEnabled, isStepGuidanceEnabled, initStepGuidanceToggle,
+    hasExplainedHistory, resetExplainedAbilities,
+    isGuidancePromptHidden, setGuidancePromptHidden,
+} from "./ui/cardGuidance-ui.js";
 import { initCardColorPicker } from "./ui/cardColor-ui.js";
 
 // ── i18n boot — runs before anything else ─────────────────
@@ -179,6 +183,15 @@ document.getElementById("startGameBtn")?.addEventListener("click", () => {
 
 document.getElementById("confirmDiffBtn")?.addEventListener("click", () => {
     document.getElementById("difficultyModal")?.classList.add("hidden");
+
+    // If the player previously checked "Don't show this again", skip the
+    // prompt entirely and just go with whatever guidance setting is
+    // already saved — same as answering it the same way every game.
+    if (isGuidancePromptHidden()) {
+        proceedAfterGuidanceChoice(isStepGuidanceEnabled());
+        return;
+    }
+
     document.getElementById("guidancePromptModal")?.classList.remove("hidden");
     document.getElementById("guidancePromptYesBtn")?.focus();
 });
@@ -188,8 +201,32 @@ document.getElementById("confirmDiffBtn")?.addEventListener("click", () => {
 // (js/ui/cardGuidance-ui.js) and directly decides whether contextual
 // per-card popups show for this playthrough — see shouldShowGuidance().
 function answerGuidancePrompt(enabled) {
+    const dontShowAgain = document.getElementById("guidancePromptDontShowAgain")?.checked;
+    setGuidancePromptHidden(!!dontShowAgain);
+
     setStepGuidanceEnabled(enabled);
     document.getElementById("guidancePromptModal")?.classList.add("hidden");
+    proceedAfterGuidanceChoice(enabled);
+}
+
+// Once guidance is turned on (whether just now or already on from a
+// previous game) and some abilities have already been explained before,
+// ask whether to start the guidance over from the beginning (show every
+// card's guidance again) or keep only showing it for cards not seen yet.
+// With no history at all, guidance already shows for every card, so
+// there's nothing to ask.
+function proceedAfterGuidanceChoice(guidanceEnabled) {
+    if (guidanceEnabled && hasExplainedHistory()) {
+        document.getElementById("guidanceRestartModal")?.classList.remove("hidden");
+        document.getElementById("guidanceRestartYesBtn")?.focus();
+        return;
+    }
+    startGame();
+}
+
+function answerGuidanceRestart(startOver) {
+    if (startOver) resetExplainedAbilities();
+    document.getElementById("guidanceRestartModal")?.classList.add("hidden");
     startGame();
 }
 
@@ -201,6 +238,14 @@ document.getElementById("guidancePromptModal")?.addEventListener("keydown", e =>
     // Settings modal moments earlier) instead of unconditionally forcing
     // it off — Escape should mean "close this prompt", not "opt out".
     if (e.key === "Escape") answerGuidancePrompt(isStepGuidanceEnabled());
+});
+
+document.getElementById("guidanceRestartYesBtn")?.addEventListener("click", () => answerGuidanceRestart(true));
+document.getElementById("guidanceRestartNoBtn")?.addEventListener("click", () => answerGuidanceRestart(false));
+
+document.getElementById("guidanceRestartModal")?.addEventListener("keydown", e => {
+    // Escape = keep existing progress, same as "Just new ones".
+    if (e.key === "Escape") answerGuidanceRestart(false);
 });
 
 buildDifficultyPanel();

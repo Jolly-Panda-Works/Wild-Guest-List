@@ -356,6 +356,24 @@
                     <button id="guidancePromptYesBtn" class="screen-btn" type="button" data-i18n="guidePromptYes">Yes, guide me</button>
                     <button id="guidancePromptNoBtn" class="screen-btn guide-prompt-no" type="button" data-i18n="guidePromptNo">No thanks</button>
                 </div>
+                <label class="guide-prompt-dontshow">
+                    <input type="checkbox" id="guidancePromptDontShowAgain">
+                    <span data-i18n="guidePromptDontShowAgain">Don't show this again</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Restart-from-beginning prompt — asked only when the player
+             chooses step-by-step guidance and some abilities have already
+             been explained in an earlier game -->
+        <div id="guidanceRestartModal" class="screen-overlay hidden">
+            <div class="screen-content guide-prompt-content">
+                <h2 data-i18n="guideRestartTitle">Start the guide over?</h2>
+                <p class="diff-subtitle" data-i18n="guideRestartText">You've already seen some animals explained. Show them all again from the beginning, or only the ones you haven't seen yet?</p>
+                <div class="guide-prompt-actions">
+                    <button id="guidanceRestartYesBtn" class="screen-btn" type="button" data-i18n="guideRestartYes">Start over</button>
+                    <button id="guidanceRestartNoBtn" class="screen-btn guide-prompt-no" type="button" data-i18n="guideRestartNo">Just new ones</button>
+                </div>
             </div>
         </div>
 
