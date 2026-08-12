@@ -9,6 +9,7 @@ import { ANTICIPATION, DEFAULT_ANTICIPATION, REACTION, DEFAULT_REACTION } from "
 import { attachLongPress } from "./longPress.js";
 import { openCardInfoByPower } from "../game/help.js";
 import { LONG_PRESS_DURATION_MS } from "../constants/longPress.js";
+import { TURN_TIMER_SECONDS } from "../constants/turnTimer.js";
 import { maybeShowCardHelpHint, dismissCardHelpHintOnSuccess } from "./cardHelpHint.js";
 
 let _config = null;
@@ -401,6 +402,33 @@ function renderCurrentTurn(gameState) {
     const roundEl = document.getElementById("roundInfo");
     if (turnEl)  turnEl.textContent  = `${t("topTurn")}: ${playerDisplayName(player)}`;
     if (roundEl) roundEl.textContent = `${t("topRound")}: ${gameState.round}`;
+}
+
+// ── Turn timer ────────────────────────────────────────────
+function lerpChannel(from, to, t) {
+    return Math.round(from + (to - from) * t);
+}
+
+// text-main (#e5e7eb) at full time → a red matching the rest of the
+// game's existing "danger" color (e.g. the hard-bot avatar) at zero.
+const TURN_TIMER_SAFE_RGB   = [229, 231, 235];
+const TURN_TIMER_DANGER_RGB = [239, 68, 68];
+
+/** Called every tick of the countdown in js/game/turnTimer.js — updates
+ *  the displayed number and smoothly shifts its color from the default
+ *  text color toward red as `secondsLeft` approaches 0, with an added
+ *  pulse in the final few seconds for extra urgency at a glance. */
+export function renderTurnTimer(secondsLeft) {
+    const el = document.getElementById("turnTimer");
+    if (!el) return;
+
+    el.textContent = secondsLeft;
+
+    const fraction = Math.max(0, Math.min(1, secondsLeft / TURN_TIMER_SECONDS));
+    const t = 1 - fraction; // 0 = full time left, 1 = out of time
+    const [r, g, b] = TURN_TIMER_SAFE_RGB.map((c, i) => lerpChannel(c, TURN_TIMER_DANGER_RGB[i], t));
+    el.style.color = `rgb(${r}, ${g}, ${b})`;
+    el.classList.toggle("turn-timer-critical", secondsLeft <= 3);
 }
 
 // ============================================================

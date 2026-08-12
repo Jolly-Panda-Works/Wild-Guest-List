@@ -35,8 +35,10 @@ from "./queueManager.js";
 
 import { notifyCardPlayed, isWalkthroughActive } from "../ui/walkthrough.js";
 
-import { getHandCardElement, getOpponentHandBackElement }
+import { getHandCardElement, getOpponentHandBackElement, renderTurnTimer }
 from "../ui/game-ui.js";
+
+import { startTurnTimer, stopTurnTimer } from "./turnTimer.js";
 
 import { director } from "../presentation/director.js";
 import { beginCapture, endCapture } from "../presentation/events.js";
@@ -69,13 +71,28 @@ export function startTurn(gameState){
         return;
     }
 
-    if(player.id === "p1"){
+    addLog(
+        gameState,
+        player,
+        "logTurn", {}
+    );
 
-        addLog(
-            gameState,
-            player,
-            "logTurn", {}
-        );
+    // Every turn — human and AI alike — is capped by the same countdown
+    // (see js/game/turnTimer.js): if nobody has played a card by the
+    // time it reaches 0, one is chosen at random for them, exactly like
+    // the AI's own fallback below. For the AI this is mostly a safety
+    // net, since its "thinking" delay normally plays a card well inside
+    // the window; for the human it's the actual clock.
+    startTurnTimer({
+        onTick: renderTurnTimer,
+        onExpire: () => {
+            if (director.isBusy()) return; // a play is already underway
+            const index = getRandomCardIndex(player, gameState);
+            playCard(player, index, gameState);
+        },
+    });
+
+    if(player.id === "p1"){
 
         // The queue/party/trash board only needs a full (re)build the very
         // first time it's shown; every turn after that it's already
@@ -92,12 +109,6 @@ export function startTurn(gameState){
 
         return;
     }
-
-    addLog(
-        gameState,
-        player,
-        "logTurn", {}
-    );
 
     // Reflect the turn hand-off immediately — before the "thinking" delay
     // and before any card is played — so the current-turn highlight (see
@@ -149,6 +160,7 @@ export async function playCard(
         index === -1 ||
         player.hand.length === 0
     ){
+        stopTurnTimer();
         nextTurn(gameState);
         return;
     }
@@ -159,6 +171,13 @@ export async function playCard(
         // this is belt-and-suspenders at the entry point.
         return;
     }
+
+    // A card is definitely being played now — stop the countdown right
+    // away so it never keeps visibly ticking (or fires a redundant
+    // random pick) during the animation that follows, regardless of
+    // whether this play came from a human click, the AI's own decision,
+    // or the timer's own onExpire fallback calling back into here.
+    stopTurnTimer();
 
     // Capture the DOM element the card is visually leaving BEFORE it's
     // spliced out of the hand array / re-rendered.
