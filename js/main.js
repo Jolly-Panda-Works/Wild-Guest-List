@@ -18,6 +18,7 @@ import {
     isGuidancePromptHidden, setGuidancePromptHidden,
 } from "./ui/cardGuidance-ui.js";
 import { initCardColorPicker, initColorTriggers } from "./ui/cardColor-ui.js";
+import { initAvatarTrigger } from "./ui/playerAvatar-ui.js";
 
 // ── i18n boot — runs before anything else ─────────────────
 await loadI18n();
@@ -58,9 +59,7 @@ async function buildDifficultyPanel() {
         // just without a difficulty toggle (the human has none).
         const playerRow = `
             <div class="bot-row player-row" id="playerColorRow">
-                <div class="bot-avatar">
-                    <span data-icon="player"></span>
-                </div>
+                <div class="avatar-trigger-mount" id="avatarTrigger_p1"></div>
                 <div class="bot-info">
                     <div class="bot-name">${t("you")}</div>
                 </div>
@@ -104,12 +103,21 @@ async function buildDifficultyPanel() {
         });
     }
 
+    // Avatar trigger for the player's own row — same click-to-open
+    // popover pattern as the color triggers above, just for the
+    // player's portrait (js/ui/playerAvatar-ui.js).
+    function wireAvatarTrigger() {
+        initAvatarTrigger(document.getElementById("avatarTrigger_p1"));
+    }
+
     renderPanel();
     await wireColorTriggers();
+    wireAvatarTrigger();
     window.addEventListener("langchange", async () => {
         renderPanel();
         await loadIcons(panel);
         await wireColorTriggers();
+        wireAvatarTrigger();
     });
 
     // store selections
