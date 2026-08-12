@@ -82,14 +82,27 @@ function hexFor(id) {
     return (CARD_COLOR_PALETTE.find(c => c.id === id) || CARD_COLOR_PALETTE[0]).hex;
 }
 
+function hexToRgbTriplet(hex) {
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!m) return "0, 0, 0";
+    const [r, g, b] = m.slice(1).map(h => parseInt(h, 16));
+    return `${r}, ${g}, ${b}`;
+}
+
 /**
  * Paints the current per-seat assignment onto the shared --p1..--p4
- * variables. Safe to call any time (boot, settings change, mid-game).
+ * variables (plus their --p1-rgb..--p4-rgb companions, used wherever a
+ * translucent player color is needed — see css/style.css). Safe to
+ * call any time (boot, settings change, mid-game).
  */
 export function applyCardColors() {
     const colors = getPlayerColors();
     const root   = document.documentElement.style;
-    PLAYER_IDS.forEach(pid => root.setProperty(`--${pid}`, hexFor(colors[pid])));
+    PLAYER_IDS.forEach(pid => {
+        const hex = hexFor(colors[pid]);
+        root.setProperty(`--${pid}`, hex);
+        root.setProperty(`--${pid}-rgb`, hexToRgbTriplet(hex));
+    });
 }
 
 /* ─────────────────────────────────────────

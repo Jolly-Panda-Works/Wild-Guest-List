@@ -11,6 +11,14 @@
     --p3: #f97316;
     --p4: #a855f7;
 
+    /* RGB triplets of the above, kept in sync by
+       js/ui/cardColor-ui.js applyCardColors() — lets rgba(var(--pN-rgb), a)
+       be used anywhere a translucent player color is needed. */
+    --p1-rgb: 59, 130, 246;
+    --p2-rgb: 34, 197, 94;
+    --p3-rgb: 249, 115, 22;
+    --p4-rgb: 168, 85, 247;
+
     /* Base colors */
     --bg-main: #0a1f0f;
     --bg-panel: rgba(255, 255, 255, 0.06);
@@ -1100,14 +1108,18 @@ body {
     line-height: 1.2;
 }
 
-/* Player card themes */
+/* Player card themes.
+   Driven by --p1..--p4-rgb (set alongside --p1..--p4 in
+   js/ui/cardColor-ui.js applyCardColors()) rather than a fixed color,
+   so a picked color actually repaints these — previously hardcoded
+   here, this block silently ignored any player-color choice. */
 
 .card[data-player="p1"] {
 
     background:
         linear-gradient(
             145deg,
-            rgba(59,130,246,.25),
+            rgba(var(--p1-rgb), .25),
             #111827
         );
 }
@@ -1118,7 +1130,7 @@ body {
     background:
         linear-gradient(
             145deg,
-            rgba(34,197,94,.25),
+            rgba(var(--p2-rgb), .25),
             #111827
         );
 }
@@ -1129,7 +1141,7 @@ body {
     background:
         linear-gradient(
             145deg,
-            rgba(249,115,22,.25),
+            rgba(var(--p3-rgb), .25),
             #111827
         );
 }
@@ -1140,7 +1152,7 @@ body {
     background:
         linear-gradient(
             145deg,
-            rgba(168,85,247,.25),
+            rgba(var(--p4-rgb), .25),
             #111827
         );
 }
@@ -2443,11 +2455,12 @@ body {
     transform: translate(-50%,-50%) scale(1);
 }
 
-/* Turn pulse */
+/* Turn pulse — always the human seat's hand (p1), so it follows
+   whatever color p1 is currently assigned via --p1-rgb. */
 @keyframes turnPulse {
-    0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0.7); }
-    70%  { box-shadow: 0 0 0 10px rgba(59,130,246,0); }
-    100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+    0%   { box-shadow: 0 0 0 0 rgba(var(--p1-rgb), 0.7); }
+    70%  { box-shadow: 0 0 0 10px rgba(var(--p1-rgb), 0); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--p1-rgb), 0); }
 }
 #playerHand.my-turn .card { animation: turnPulse 1.5s infinite; cursor: pointer; }
 #playerHand.my-turn .card:hover { transform: translateY(-8px) scale(1.06); }
