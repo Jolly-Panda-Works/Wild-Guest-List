@@ -75,11 +75,11 @@ export function attachLongPress(el, options = {}) {
         el.classList.toggle("long-press-active", on);
     }
 
-    /** Fully resets gesture state. Safe to call multiple times. */
+    /** Fully resets gesture state. Safe to call multiple times.
+     *  Deliberately does NOT touch `fired` — see end() below for why. */
     function reset() {
         clearTimer();
         active = false;
-        fired = false;
         activePointerId = null;
         setPressingVisual(false);
     }
@@ -114,8 +114,15 @@ export function attachLongPress(el, options = {}) {
     }
 
     function end() {
-        // If it already fired, onLongPress has run — just clear state so
-        // the pointerup that follows can't also be read as a click/play.
+        // Deliberately leaves `fired` as-is here (reset() no longer
+        // touches it). The browser dispatches pointerup/touchend BEFORE
+        // the trailing click event, so if reset() cleared `fired` right
+        // here, consumeSuppressedClick() below would always see `false`
+        // by the time the click handler asks — the suppression it exists
+        // for would silently never fire, and a completed hold would
+        // still play/select the card right after. `fired` now only gets
+        // cleared in start() (the next press) or by consumeSuppressedClick()
+        // itself once a caller has actually read it.
         reset();
     }
 
@@ -205,14 +212,17 @@ export function attachLongPress(el, options = {}) {
      * True if the element's most recent press ended by reaching the
      * long-press threshold. Callers use this to swallow the click/tap
      * that the browser fires right after a long touch/mouse press, so
-     * long-press never also plays the card. Clears itself after being
-     * read once the following pointerdown/touchstart starts a new press.
+     * long-press never also plays the card / selects it into the queue.
+     * Read-and-clear: consuming it here resets `fired` immediately,
+     * instead of waiting for the next press to start it — so a hold
+     * that isn't followed by a click (e.g. Escape, or no onclick wired
+     * on this element at all) can't leave a stale `true` sitting around
+     * to wrongly suppress some unrelated later click.
      */
     function consumeSuppressedClick() {
-        // `fired` is reset to false as soon as the NEXT press starts, so
-        // it correctly reflects "did the press that just ended fire?"
-        // right up until then.
-        return fired;
+        const wasFired = fired;
+        fired = false;
+        return wasFired;
     }
 
     function destroy() {

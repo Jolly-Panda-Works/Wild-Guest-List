@@ -2503,11 +2503,16 @@ body {
    (js/presentation/director.js + js/ui/game-ui.js presenter)
 ============================================================ */
 
-/* Input lock: dim + disable the hand while the Director is animating a
-   turn, so a card can't be played mid-sequence. */
-body.gameplay-locked #playerHand {
-    pointer-events: none;
-}
+/* Input lock: dim the hand while the Director is animating a turn, so
+   it visually reads as "not interactive right now". Deliberately does
+   NOT set pointer-events:none any more — that used to also block the
+   hold-to-info long-press gesture (js/ui/longPress.js) any time it
+   wasn't this player's turn (director.isBusy() is true for most of an
+   opponent's turn), even though holding is meant to work regardless of
+   whose turn it is. Actually preventing a card from being PLAYED
+   mid-sequence is already handled in JS — see playThisCard()'s own
+   director.isBusy() / isMyTurn checks in game-ui.js — so this class only
+   needs to carry the visual "locked" look now. */
 body.gameplay-locked #playerHand .card {
     opacity: 0.82;
     filter: saturate(0.85);

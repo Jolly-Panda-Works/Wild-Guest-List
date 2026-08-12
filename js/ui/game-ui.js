@@ -120,7 +120,16 @@ let handLongPressHandles = [];
 function renderHand(gameState) {
     const hand = document.getElementById("playerHand");
 
-    handLongPressHandles.forEach(h => h.destroy());
+    // Only tear down handles whose element is still actually sitting in
+    // the hand DOM. A card that has since been played and moved (not
+    // cloned — same DOM node, see flip.js) into the queue/party/trash by
+    // the Director must keep its long-press wiring; destroying it here
+    // would silently strip hold-to-show-help from every card that ever
+    // left the hand.
+    handLongPressHandles.forEach(h => {
+        if (h.el && !hand.contains(h.el)) return;
+        h.destroy();
+    });
     handLongPressHandles = [];
 
     hand.innerHTML = "";
@@ -138,6 +147,7 @@ function renderHand(gameState) {
         // that exact handle here instead of attaching a second gesture,
         // so hand cards just layer click-to-play + keyboard on top of it.
         const longPress = cardEl._helpLongPress;
+        longPress.el = cardEl;
         handLongPressHandles.push(longPress);
 
         // Accessible focus target: same info long-press reveals should
@@ -205,6 +215,7 @@ function renderHand(gameState) {
         // Piggyback on the same handles array so a mid-render teardown
         // also clears any pending key-hold timer, not just pointer state.
         handLongPressHandles.push({
+            el: cardEl,
             destroy() {
                 clearTimeout(keyHoldTimer);
                 cardEl.removeEventListener("keydown", onKeyDown);
