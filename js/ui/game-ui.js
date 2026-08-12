@@ -261,8 +261,9 @@ async function renderOtherPlayers(gameState) {
     const right = document.getElementById("rightPlayer");
     [top, left, right].forEach(el => { if(el) el.innerHTML = ""; });
 
-    const others    = gameState.players.filter(p => p.id !== "p1");
-    const positions = [top, left, right];
+    const others       = gameState.players.filter(p => p.id !== "p1");
+    const positions    = [top, left, right];
+    const currentId    = gameState.players[gameState.currentPlayer]?.id;
 
     others.forEach((player, i) => {
         const box = positions[i];
@@ -270,13 +271,14 @@ async function renderOtherPlayers(gameState) {
 
         const diff   = player.difficulty || AI_DIFFICULTY.EASY;
         const avatar = BOT_AVATARS[diff] || BOT_AVATARS.easy;
+        const isCurrentTurn = player.id === currentId;
 
         const handCards = player.hand.map(() =>
             `<div class="card-back" data-player="${player.id}"></div>`
         ).join("");
 
         box.innerHTML = `
-            <div class="other-player-row"
+            <div class="other-player-row${isCurrentTurn ? " current-turn" : ""}"
                 data-player="${player.id}"
                 style="--bot-color:${avatar.color}">
 

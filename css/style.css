@@ -3769,6 +3769,30 @@ body.gameplay-locked #playerHand .card {
     background: rgba(255,255,255,0.03);
     box-sizing: border-box;
     margin-bottom: 4px;
+    /* Outline (not border) so the current-turn frame below never shifts
+       layout by changing box size — it just switches from invisible to
+       visible/pulsing. */
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    transition: outline-color .2s ease, background-color .2s ease;
+}
+
+/* Whose turn it is, for opponents: a glowing frame in that player's own
+   identity color (--bot-color, same one already used for the resting
+   left border/avatar), so at a glance the active seat is unmistakable —
+   mirrors the pulse already used for the human player's own hand
+   (#playerHand.my-turn) but as a full frame around the row instead of
+   per-card, since opponents' cards are face-down placeholders. */
+.other-player-row.current-turn {
+    outline-color: var(--bot-color);
+    background: color-mix(in srgb, var(--bot-color) 14%, rgba(255,255,255,0.03));
+    animation: turnPulseRow 1.5s infinite;
+}
+
+@keyframes turnPulseRow {
+    0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--bot-color) 55%, transparent); }
+    70%  { box-shadow: 0 0 0 8px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
 }
 
 .other-player-left {
@@ -5081,5 +5105,12 @@ body.gameplay-locked #playerHand .card {
 @media (max-width: 600px) {
     .card-help-hint {
         max-width: min(80vw, 240px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .other-player-row.current-turn {
+        animation: none;
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--bot-color) 55%, transparent);
     }
 }
