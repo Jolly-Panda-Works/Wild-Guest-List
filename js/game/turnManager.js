@@ -45,6 +45,8 @@ import { dismissCardHelpHint } from "../ui/cardHelpHint.js";
 import { getHandCardElement, getOpponentHandBackElement, renderTurnTimer }
 from "../ui/game-ui.js";
 
+import { isPaused } from "../ui/pause-ui.js";
+
 import { startTurnTimer, stopTurnTimer } from "./turnTimer.js";
 
 import { director } from "../presentation/director.js";
@@ -95,6 +97,7 @@ export function startTurn(gameState){
     startTurnTimer({
         onTick: renderTurnTimer,
         onExpire: () => {
+            if (isPaused()) return; // frozen by pauseTurnTimer(); nothing to expire
             if (director.isBusy()) return; // a play is already underway
             const index = getRandomCardIndex(player, gameState);
             playCard(player, index, gameState);
@@ -128,6 +131,14 @@ export function startTurn(gameState){
     updateNonBoardUI(gameState);
 
     setTimeout(async ()=>{
+
+        // Don't let the AI's move land while the game is paused — wait
+        // (re-checking periodically) until pause-ui.js reports resumed,
+        // instead of playing behind the pause overlay and surprising
+        // the player with an already-changed board once they resume.
+        while (isPaused()) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+        }
 
         const index =
             getRandomCardIndex(player, gameState);
