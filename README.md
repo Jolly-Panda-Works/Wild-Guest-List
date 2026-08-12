@@ -364,13 +364,22 @@ WildGuestList/
 │       └── walkthrough.js
 │
 └── assets/
+    ├── fonts/
+    │   ├── files/          (self-hosted .woff2 files)
+    │   └── fonts.css
+    ├── sound/
+    │   └── background.mp3
     └── img/
-        ├── Banner.png
-        ├── Gorilla.png
-        ├── favicon.ico
-        ├── Card avatars/
-        └── icons/
+        ├── branding/        (banner, favicon, logos)
+        ├── cards/           (01-weasel.png … 12-lion.png)
+        ├── avatars/         (boy.png, girl.png)
+        └── icons/           (UI icons, referenced via data/config.json)
 ```
+
+All folder and file names under `assets/` use lowercase kebab-case with no
+spaces, so every path is safe to reference directly in code/URLs. Icon and
+card image paths are never hardcoded in JS — they're looked up from
+`data/config.json` (`icons`) and `data/cardInfo.json` (`image`) respectively.
 
 ---
 
@@ -669,7 +678,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.10.0
+**Current version:** 1.10.1
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen in the Settings modal (`data-app-version` in `index.html`, populated at runtime by `js/ui/icon-ui.js`). Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

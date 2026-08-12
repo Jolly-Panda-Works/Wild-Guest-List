@@ -1,314 +1,314 @@
 [
-  {
-    "power": 1,
-    "name": "Weasel",
-    "emoji": "🦡",
-    "description": "Clean Strong. Removes the two strongest cards in the queue.",
-    "example": "Lion > Hippo > Monkey > Weasel\nMonkey > Weasel (Lion and Hippo are removed)",
-    "image": "assets/img/Card avatars/1 Weasel.png",
-    "id": 1,
-    "translations": {
-      "fa": {
-        "name": "راسو",
-        "description": "پاک‌کننده قوی. دو کارت قوی‌ترین صف را حذف می‌کند.",
-        "example": "شیر > اسب‌آبی > میمون > راسو\nمیمون > راسو (شیر و اسب‌آبی حذف شدند)"
-      },
-      "ar": {
-        "name": "ابن عرس",
-        "description": "منظف قوي. يزيل أقوى بطاقتين في الصف.",
-        "example": "الأسد > فرس النهر > القرد > ابن عرس\nالقرد > ابن عرس (الأسد وفرس النهر أُزيلا)"
-      },
-      "tr": {
-        "name": "Gelincik",
-        "description": "Güçlü Temizleyici. Sıradaki en güçlü iki kartı kaldırır.",
-        "example": "Aslan > Su Aygırı > Maymun > Gelincik\nMaymun > Gelincik (Aslan ve Su Aygırı kaldırıldı)"
-      }
-    }
-  },
-  {
-    "power": 2,
-    "name": "Monkey",
-    "emoji": "🐒",
-    "description": "Group Effect. If this is the second Monkey in the queue, it triggers a global effect that removes all Crocodiles and Hippos and moves them to the front.",
-    "example": "Hippo > Lion > Monkey > Crocodile > Monkey\nHippo > Crocodile > Lion > Monkey > Monkey",
-    "image": "assets/img/Card avatars/2 Monkey.png",
-    "id": 2,
-    "translations": {
-      "fa": {
-        "name": "میمون",
-        "description": "اثر گروهی. اگر این دومین میمون در صف باشد، اثر کلی اعمال می‌شود و همه تمساح‌ها و اسب‌آبی‌ها حذف و به جلو منتقل می‌شوند.",
-        "example": "اسب‌آبی > شیر > میمون > تمساح > میمون\nاسب‌آبی > تمساح > شیر > میمون > میمون"
-      },
-      "ar": {
-        "name": "قرد",
-        "description": "تأثير جماعي. إذا كان هذا القرد الثاني في الصف، يُطلق تأثيراً يزيل جميع التماسيح وأفراس النهر ويضعهم في المقدمة.",
-        "example": "فرس النهر > الأسد > قرد > تمساح > قرد\nفرس النهر > تمساح > الأسد > قرد > قرد"
-      },
-      "tr": {
-        "name": "Maymun",
-        "description": "Grup Etkisi. Sıradaki ikinci Maymunsa, tüm Timsahları ve Su Aygırlarını kaldıran ve öne taşıyan genel bir etki tetiklenir.",
-        "example": "Su Aygırı > Aslan > Maymun > Timsah > Maymun\nSu Aygırı > Timsah > Aslan > Maymun > Maymun"
-      }
-    }
-  },
-  {
-    "power": 3,
-    "name": "Kangaroo",
-    "emoji": "🦘",
-    "description": "Jump. Moves forward by jumping 1 or 2 positions depending on space.",
-    "example": "Lion > Zebra > Kangaroo\nAfter (2-step jump): Kangaroo > Lion > Zebra",
-    "image": "assets/img/Card avatars/3 Kangaroo.png",
-    "id": 3,
-    "translations": {
-      "fa": {
-        "name": "کانگورو",
-        "description": "پرش. با پریدن ۱ یا ۲ خانه به جلو می‌رود.",
-        "example": "شیر > گورخر > کانگورو\nبعد از پرش ۲ خانه: کانگورو > شیر > گورخر"
-      },
-      "ar": {
-        "name": "كنغر",
-        "description": "قفز. يتحرك للأمام بالقفز خطوة أو خطوتين.",
-        "example": "الأسد > الحمار الوحشي > كنغر\nبعد القفز: كنغر > الأسد > الحمار الوحشي"
-      },
-      "tr": {
-        "name": "Kanguru",
-        "description": "Zıplama. 1 veya 2 pozisyon öne atlayarak ilerler.",
-        "example": "Aslan > Zebra > Kanguru\n2 adım zıpladıktan sonra: Kanguru > Aslan > Zebra"
-      }
-    }
-  },
-  {
-    "power": 4,
-    "name": "Parrot",
-    "emoji": "🦜",
-    "description": "Remove Strongest. Removes the two strongest cards in the queue. Parrot stays.",
-    "example": "Lion > Hippo > Zebra > Parrot\nZebra > Parrot (Lion and Hippo are removed)",
-    "image": "assets/img/Card avatars/4 Parrot.png",
-    "id": 4,
-    "translations": {
-      "fa": {
-        "name": "طوطی",
-        "description": "حذف قوی‌ترین‌ها. دو کارت قوی‌ترین صف را حذف می‌کند. طوطی می‌ماند.",
-        "example": "شیر > اسب‌آبی > گورخر > طوطی\nگورخر > طوطی (شیر و اسب‌آبی حذف شدند)"
-      },
-      "ar": {
-        "name": "ببغاء",
-        "description": "إزالة الأقوياء. يزيل أقوى بطاقتين في الصف. الببغاء يبقى.",
-        "example": "الأسد > فرس النهر > الحمار الوحشي > ببغاء\nالحمار الوحشي > ببغاء (الأسد وفرس النهر أُزيلا)"
-      },
-      "tr": {
-        "name": "Papağan",
-        "description": "En Güçlüleri Kaldır. Sıradaki en güçlü iki kartı kaldırır. Papağan kalır.",
-        "example": "Aslan > Su Aygırı > Zebra > Papağan\nZebra > Papağan (Aslan ve Su Aygırı kaldırıldı)"
-      }
-    }
-  },
-  {
-    "power": 5,
-    "name": "Sloth Bear",
-    "emoji": "🦥",
-    "description": "Sticky. Does not move. If a Lion or Hippo passes over it, it attaches behind that card.",
-    "example": "Sloth Bear > Lion\nLion > Sloth Bear",
-    "image": "assets/img/Card avatars/5 Sloth bear.png",
-    "id": 5,
-    "translations": {
-      "fa": {
-        "name": "خرس تنبل",
-        "description": "چسبنده. حرکت نمی‌کند. اگر شیر یا اسب‌آبی از رویش رد شود، پشت آن کارت می‌چسبد.",
-        "example": "خرس تنبل > شیر\nشیر > خرس تنبل"
-      },
-      "ar": {
-        "name": "دب كسول",
-        "description": "لاصق. لا يتحرك. إذا تجاوزه الأسد أو فرس النهر، يلتصق خلف تلك البطاقة.",
-        "example": "دب كسول > الأسد\nالأسد > دب كسول"
-      },
-      "tr": {
-        "name": "Tembel Ayı",
-        "description": "Yapışkan. Hareket etmez. Aslan veya Su Aygırı üzerinden geçerse, o kartın arkasına yapışır.",
-        "example": "Tembel Ayı > Aslan\nAslan > Tembel Ayı"
-      }
-    }
-  },
-  {
-    "power": 6,
-    "name": "Seal",
-    "emoji": "🦭",
-    "description": "Reverse World. Reverses the entire queue order.",
-    "example": "Lion > Hippo > Zebra > Seal\nSeal > Zebra > Hippo > Lion",
-    "image": "assets/img/Card avatars/6 Seal.png",
-    "id": 6,
-    "translations": {
-      "fa": {
-        "name": "فک",
-        "description": "دنیای معکوس. ترتیب کل صف را معکوس می‌کند.",
-        "example": "شیر > اسب‌آبی > گورخر > فک\nفک > گورخر > اسب‌آبی > شیر"
-      },
-      "ar": {
-        "name": "فقمة",
-        "description": "عالم معكوس. يعكس ترتيب الصف بأكمله.",
-        "example": "الأسد > فرس النهر > الحمار الوحشي > فقمة\nفقمة > الحمار الوحشي > فرس النهر > الأسد"
-      },
-      "tr": {
-        "name": "Fok",
-        "description": "Ters Dünya. Sıranın tamamını ters çevirir.",
-        "example": "Aslan > Su Aygırı > Zebra > Fok\nFok > Zebra > Su Aygırı > Aslan"
-      }
-    }
-  },
-  {
-    "power": 7,
-    "name": "Zebra",
-    "emoji": "🦓",
-    "description": "Barrier. Blocks Hippo and Crocodile from passing.",
-    "example": "Lion > Zebra > Hippo\nLion > Zebra > Hippo (Hippo cannot pass)",
-    "image": "assets/img/Card avatars/7 Zebra.png",
-    "id": 7,
-    "translations": {
-      "fa": {
-        "name": "گورخر",
-        "description": "سد. جلوی عبور اسب‌آبی و تمساح را می‌گیرد.",
-        "example": "شیر > گورخر > اسب‌آبی\nشیر > گورخر > اسب‌آبی (اسب‌آبی نمی‌تواند رد شود)"
-      },
-      "ar": {
-        "name": "حمار وحشي",
-        "description": "حاجز. يمنع فرس النهر والتمساح من التجاوز.",
-        "example": "الأسد > الحمار الوحشي > فرس النهر\nالأسد > الحمار الوحشي > فرس النهر (فرس النهر لا يمكنه المرور)"
-      },
-      "tr": {
+    {
+        "power": 1,
+        "name": "Weasel",
+        "emoji": "🦡",
+        "description": "Clean Strong. Removes the two strongest cards in the queue.",
+        "example": "Lion > Hippo > Monkey > Weasel\nMonkey > Weasel (Lion and Hippo are removed)",
+        "image": "assets/img/cards/01-weasel.png",
+        "id": 1,
+        "translations": {
+            "fa": {
+                "name": "راسو",
+                "description": "پاک‌کننده قوی. دو کارت قوی‌ترین صف را حذف می‌کند.",
+                "example": "شیر > اسب‌آبی > میمون > راسو\nمیمون > راسو (شیر و اسب‌آبی حذف شدند)"
+            },
+            "ar": {
+                "name": "ابن عرس",
+                "description": "منظف قوي. يزيل أقوى بطاقتين في الصف.",
+                "example": "الأسد > فرس النهر > القرد > ابن عرس\nالقرد > ابن عرس (الأسد وفرس النهر أُزيلا)"
+            },
+            "tr": {
+                "name": "Gelincik",
+                "description": "Güçlü Temizleyici. Sıradaki en güçlü iki kartı kaldırır.",
+                "example": "Aslan > Su Aygırı > Maymun > Gelincik\nMaymun > Gelincik (Aslan ve Su Aygırı kaldırıldı)"
+            }
+        }
+    },
+    {
+        "power": 2,
+        "name": "Monkey",
+        "emoji": "🐒",
+        "description": "Group Effect. If this is the second Monkey in the queue, it triggers a global effect that removes all Crocodiles and Hippos and moves them to the front.",
+        "example": "Hippo > Lion > Monkey > Crocodile > Monkey\nHippo > Crocodile > Lion > Monkey > Monkey",
+        "image": "assets/img/cards/02-monkey.png",
+        "id": 2,
+        "translations": {
+            "fa": {
+                "name": "میمون",
+                "description": "اثر گروهی. اگر این دومین میمون در صف باشد، اثر کلی اعمال می‌شود و همه تمساح‌ها و اسب‌آبی‌ها حذف و به جلو منتقل می‌شوند.",
+                "example": "اسب‌آبی > شیر > میمون > تمساح > میمون\nاسب‌آبی > تمساح > شیر > میمون > میمون"
+            },
+            "ar": {
+                "name": "قرد",
+                "description": "تأثير جماعي. إذا كان هذا القرد الثاني في الصف، يُطلق تأثيراً يزيل جميع التماسيح وأفراس النهر ويضعهم في المقدمة.",
+                "example": "فرس النهر > الأسد > قرد > تمساح > قرد\nفرس النهر > تمساح > الأسد > قرد > قرد"
+            },
+            "tr": {
+                "name": "Maymun",
+                "description": "Grup Etkisi. Sıradaki ikinci Maymunsa, tüm Timsahları ve Su Aygırlarını kaldıran ve öne taşıyan genel bir etki tetiklenir.",
+                "example": "Su Aygırı > Aslan > Maymun > Timsah > Maymun\nSu Aygırı > Timsah > Aslan > Maymun > Maymun"
+            }
+        }
+    },
+    {
+        "power": 3,
+        "name": "Kangaroo",
+        "emoji": "🦘",
+        "description": "Jump. Moves forward by jumping 1 or 2 positions depending on space.",
+        "example": "Lion > Zebra > Kangaroo\nAfter (2-step jump): Kangaroo > Lion > Zebra",
+        "image": "assets/img/cards/03-kangaroo.png",
+        "id": 3,
+        "translations": {
+            "fa": {
+                "name": "کانگورو",
+                "description": "پرش. با پریدن ۱ یا ۲ خانه به جلو می‌رود.",
+                "example": "شیر > گورخر > کانگورو\nبعد از پرش ۲ خانه: کانگورو > شیر > گورخر"
+            },
+            "ar": {
+                "name": "كنغر",
+                "description": "قفز. يتحرك للأمام بالقفز خطوة أو خطوتين.",
+                "example": "الأسد > الحمار الوحشي > كنغر\nبعد القفز: كنغر > الأسد > الحمار الوحشي"
+            },
+            "tr": {
+                "name": "Kanguru",
+                "description": "Zıplama. 1 veya 2 pozisyon öne atlayarak ilerler.",
+                "example": "Aslan > Zebra > Kanguru\n2 adım zıpladıktan sonra: Kanguru > Aslan > Zebra"
+            }
+        }
+    },
+    {
+        "power": 4,
+        "name": "Parrot",
+        "emoji": "🦜",
+        "description": "Remove Strongest. Removes the two strongest cards in the queue. Parrot stays.",
+        "example": "Lion > Hippo > Zebra > Parrot\nZebra > Parrot (Lion and Hippo are removed)",
+        "image": "assets/img/cards/04-parrot.png",
+        "id": 4,
+        "translations": {
+            "fa": {
+                "name": "طوطی",
+                "description": "حذف قوی‌ترین‌ها. دو کارت قوی‌ترین صف را حذف می‌کند. طوطی می‌ماند.",
+                "example": "شیر > اسب‌آبی > گورخر > طوطی\nگورخر > طوطی (شیر و اسب‌آبی حذف شدند)"
+            },
+            "ar": {
+                "name": "ببغاء",
+                "description": "إزالة الأقوياء. يزيل أقوى بطاقتين في الصف. الببغاء يبقى.",
+                "example": "الأسد > فرس النهر > الحمار الوحشي > ببغاء\nالحمار الوحشي > ببغاء (الأسد وفرس النهر أُزيلا)"
+            },
+            "tr": {
+                "name": "Papağan",
+                "description": "En Güçlüleri Kaldır. Sıradaki en güçlü iki kartı kaldırır. Papağan kalır.",
+                "example": "Aslan > Su Aygırı > Zebra > Papağan\nZebra > Papağan (Aslan ve Su Aygırı kaldırıldı)"
+            }
+        }
+    },
+    {
+        "power": 5,
+        "name": "Sloth Bear",
+        "emoji": "🦥",
+        "description": "Sticky. Does not move. If a Lion or Hippo passes over it, it attaches behind that card.",
+        "example": "Sloth Bear > Lion\nLion > Sloth Bear",
+        "image": "assets/img/cards/05-sloth-bear.png",
+        "id": 5,
+        "translations": {
+            "fa": {
+                "name": "خرس تنبل",
+                "description": "چسبنده. حرکت نمی‌کند. اگر شیر یا اسب‌آبی از رویش رد شود، پشت آن کارت می‌چسبد.",
+                "example": "خرس تنبل > شیر\nشیر > خرس تنبل"
+            },
+            "ar": {
+                "name": "دب كسول",
+                "description": "لاصق. لا يتحرك. إذا تجاوزه الأسد أو فرس النهر، يلتصق خلف تلك البطاقة.",
+                "example": "دب كسول > الأسد\nالأسد > دب كسول"
+            },
+            "tr": {
+                "name": "Tembel Ayı",
+                "description": "Yapışkan. Hareket etmez. Aslan veya Su Aygırı üzerinden geçerse, o kartın arkasına yapışır.",
+                "example": "Tembel Ayı > Aslan\nAslan > Tembel Ayı"
+            }
+        }
+    },
+    {
+        "power": 6,
+        "name": "Seal",
+        "emoji": "🦭",
+        "description": "Reverse World. Reverses the entire queue order.",
+        "example": "Lion > Hippo > Zebra > Seal\nSeal > Zebra > Hippo > Lion",
+        "image": "assets/img/cards/06-seal.png",
+        "id": 6,
+        "translations": {
+            "fa": {
+                "name": "فک",
+                "description": "دنیای معکوس. ترتیب کل صف را معکوس می‌کند.",
+                "example": "شیر > اسب‌آبی > گورخر > فک\nفک > گورخر > اسب‌آبی > شیر"
+            },
+            "ar": {
+                "name": "فقمة",
+                "description": "عالم معكوس. يعكس ترتيب الصف بأكمله.",
+                "example": "الأسد > فرس النهر > الحمار الوحشي > فقمة\nفقمة > الحمار الوحشي > فرس النهر > الأسد"
+            },
+            "tr": {
+                "name": "Fok",
+                "description": "Ters Dünya. Sıranın tamamını ters çevirir.",
+                "example": "Aslan > Su Aygırı > Zebra > Fok\nFok > Zebra > Su Aygırı > Aslan"
+            }
+        }
+    },
+    {
+        "power": 7,
         "name": "Zebra",
-        "description": "Bariyer. Su Aygırı ve Timsahın geçmesini engeller.",
-        "example": "Aslan > Zebra > Su Aygırı\nAslan > Zebra > Su Aygırı (Su Aygırı geçemez)"
-      }
+        "emoji": "🦓",
+        "description": "Barrier. Blocks Hippo and Crocodile from passing.",
+        "example": "Lion > Zebra > Hippo\nLion > Zebra > Hippo (Hippo cannot pass)",
+        "image": "assets/img/cards/07-zebra.png",
+        "id": 7,
+        "translations": {
+            "fa": {
+                "name": "گورخر",
+                "description": "سد. جلوی عبور اسب‌آبی و تمساح را می‌گیرد.",
+                "example": "شیر > گورخر > اسب‌آبی\nشیر > گورخر > اسب‌آبی (اسب‌آبی نمی‌تواند رد شود)"
+            },
+            "ar": {
+                "name": "حمار وحشي",
+                "description": "حاجز. يمنع فرس النهر والتمساح من التجاوز.",
+                "example": "الأسد > الحمار الوحشي > فرس النهر\nالأسد > الحمار الوحشي > فرس النهر (فرس النهر لا يمكنه المرور)"
+            },
+            "tr": {
+                "name": "Zebra",
+                "description": "Bariyer. Su Aygırı ve Timsahın geçmesini engeller.",
+                "example": "Aslan > Zebra > Su Aygırı\nAslan > Zebra > Su Aygırı (Su Aygırı geçemez)"
+            }
+        }
+    },
+    {
+        "power": 8,
+        "name": "Giraffe",
+        "emoji": "🦒",
+        "description": "Jump Over. Moves forward exactly one position in the queue.",
+        "example": "Lion > Hippo > Giraffe\nLion > Giraffe > Hippo",
+        "image": "assets/img/cards/08-giraffe.png",
+        "id": 8,
+        "translations": {
+            "fa": {
+                "name": "زرافه",
+                "description": "پریدن. دقیقاً یک خانه به جلو می‌رود.",
+                "example": "شیر > اسب‌آبی > زرافه\nشیر > زرافه > اسب‌آبی"
+            },
+            "ar": {
+                "name": "زرافة",
+                "description": "القفز فوق. يتحرك للأمام خطوة واحدة بالضبط.",
+                "example": "الأسد > فرس النهر > زرافة\nالأسد > زرافة > فرس النهر"
+            },
+            "tr": {
+                "name": "Zürafa",
+                "description": "Üzerinden Atla. Sırada tam olarak bir pozisyon öne gider.",
+                "example": "Aslan > Su Aygırı > Zürafa\nAslan > Zürafa > Su Aygırı"
+            }
+        }
+    },
+    {
+        "power": 9,
+        "name": "Snake",
+        "emoji": "🐍",
+        "description": "Chaos Order. Sorts the entire queue from highest power to lowest power.",
+        "example": "Monkey > Lion > Zebra > Snake\nLion > Snake > Zebra > Monkey",
+        "image": "assets/img/cards/09-snake.png",
+        "id": 9,
+        "translations": {
+            "fa": {
+                "name": "مار",
+                "description": "نظم آشوب. کل صف را از قوی‌ترین به ضعیف‌ترین مرتب می‌کند.",
+                "example": "میمون > شیر > گورخر > مار\nشیر > مار > گورخر > میمون"
+            },
+            "ar": {
+                "name": "ثعبان",
+                "description": "ترتيب الفوضى. يرتب الصف من الأقوى إلى الأضعف.",
+                "example": "قرد > أسد > حمار وحشي > ثعبان\nأسد > ثعبان > حمار وحشي > قرد"
+            },
+            "tr": {
+                "name": "Yılan",
+                "description": "Kaos Düzeni. Tüm sırayı en güçlüden en zayıfa sıralar.",
+                "example": "Maymun > Aslan > Zebra > Yılan\nAslan > Yılan > Zebra > Maymun"
+            }
+        }
+    },
+    {
+        "power": 10,
+        "name": "Crocodile",
+        "emoji": "🐊",
+        "description": "Predator. Moves forward and eats all weaker cards (power < 10). Stops when it reaches Zebra or a stronger card.",
+        "example": "Lion > Zebra > Monkey > Crocodile\nLion > Zebra > Crocodile\n(Monkey is removed)",
+        "image": "assets/img/cards/10-crocodile.png",
+        "id": 10,
+        "translations": {
+            "fa": {
+                "name": "تمساح",
+                "description": "شکارچی. به جلو می‌رود و همه کارت‌های ضعیف‌تر (قدرت < ۱۰) را می‌خورد. با رسیدن به گورخر یا کارت قوی‌تر متوقف می‌شود.",
+                "example": "شیر > گورخر > میمون > تمساح\nشیر > گورخر > تمساح (میمون حذف شد)"
+            },
+            "ar": {
+                "name": "تمساح",
+                "description": "مفترس. يتحرك للأمام ويأكل جميع البطاقات الأضعف (قوة < ١٠). يتوقف عند حمار وحشي أو بطاقة أقوى.",
+                "example": "أسد > حمار وحشي > قرد > تمساح\nأسد > حمار وحشي > تمساح (القرد أُزيل)"
+            },
+            "tr": {
+                "name": "Timsah",
+                "description": "Yırtıcı. İleri gider ve daha zayıf tüm kartları (güç < 10) yer. Zebraya veya daha güçlü bir karta ulaşınca durur.",
+                "example": "Aslan > Zebra > Maymun > Timsah\nAslan > Zebra > Timsah (Maymun kaldırıldı)"
+            }
+        }
+    },
+    {
+        "power": 11,
+        "name": "Hippo",
+        "emoji": "🦛",
+        "description": "Heavy Push. Moves forward by passing all cards with power lower than 11 until it reaches a stronger card or a Zebra.",
+        "example": "Lion > Zebra > Monkey > Hippo\nLion > Zebra > Hippo > Monkey",
+        "image": "assets/img/cards/11-hippo.png",
+        "id": 11,
+        "translations": {
+            "fa": {
+                "name": "اسب‌آبی",
+                "description": "هل دادن سنگین. از روی همه کارت‌های با قدرت کمتر از ۱۱ رد می‌شود تا به کارت قوی‌تر یا گورخر برسد.",
+                "example": "شیر > گورخر > میمون > اسب‌آبی\nشیر > گورخر > اسب‌آبی > میمون"
+            },
+            "ar": {
+                "name": "فرس النهر",
+                "description": "دفع ثقيل. يتقدم بتجاوز جميع البطاقات ذات القوة أقل من ١١ حتى يصل إلى بطاقة أقوى أو حمار وحشي.",
+                "example": "أسد > حمار وحشي > قرد > فرس النهر\nأسد > حمار وحشي > فرس النهر > قرد"
+            },
+            "tr": {
+                "name": "Su Aygırı",
+                "description": "Ağır İtiş. Güç 11'den küçük tüm kartların önüne geçer. Daha güçlü bir karta veya Zebraya ulaşınca durur.",
+                "example": "Aslan > Zebra > Maymun > Su Aygırı\nAslan > Zebra > Su Aygırı > Maymun"
+            }
+        }
+    },
+    {
+        "power": 12,
+        "name": "Lion",
+        "emoji": "🦁",
+        "description": "King of the Queue. If another Lion exists in the queue, the new Lion is sent to Trash. If a Monkey exists, it is also removed. Then Lion moves to the front of the queue.",
+        "example": "Hippo > Monkey > Lion\nLion > Hippo",
+        "image": "assets/img/cards/12-lion.png",
+        "id": 12,
+        "translations": {
+            "fa": {
+                "name": "شیر",
+                "description": "پادشاه صف. اگر شیر دیگری در صف باشد، شیر جدید به سطل می‌رود. اگر میمونی وجود داشته باشد، آن هم حذف می‌شود. سپس شیر به ابتدای صف می‌رود.",
+                "example": "اسب‌آبی > میمون > شیر\nشیر > اسب‌آبی"
+            },
+            "ar": {
+                "name": "أسد",
+                "description": "ملك الصف. إذا وُجد أسد آخر، يُرسل الأسد الجديد إلى القمامة. إذا وُجد قرد يُزال أيضاً. ثم ينتقل الأسد إلى مقدمة الصف.",
+                "example": "فرس النهر > قرد > أسد\nأسد > فرس النهر"
+            },
+            "tr": {
+                "name": "Aslan",
+                "description": "Sıranın Kralı. Başka bir Aslan varsa yeni Aslan çöpe gider. Maymun varsa o da kaldırılır. Ardından Aslan sıranın başına geçer.",
+                "example": "Su Aygırı > Maymun > Aslan\nAslan > Su Aygırı"
+            }
+        }
     }
-  },
-  {
-    "power": 8,
-    "name": "Giraffe",
-    "emoji": "🦒",
-    "description": "Jump Over. Moves forward exactly one position in the queue.",
-    "example": "Lion > Hippo > Giraffe\nLion > Giraffe > Hippo",
-    "image": "assets/img/Card avatars/8 Giraffe.png",
-    "id": 8,
-    "translations": {
-      "fa": {
-        "name": "زرافه",
-        "description": "پریدن. دقیقاً یک خانه به جلو می‌رود.",
-        "example": "شیر > اسب‌آبی > زرافه\nشیر > زرافه > اسب‌آبی"
-      },
-      "ar": {
-        "name": "زرافة",
-        "description": "القفز فوق. يتحرك للأمام خطوة واحدة بالضبط.",
-        "example": "الأسد > فرس النهر > زرافة\nالأسد > زرافة > فرس النهر"
-      },
-      "tr": {
-        "name": "Zürafa",
-        "description": "Üzerinden Atla. Sırada tam olarak bir pozisyon öne gider.",
-        "example": "Aslan > Su Aygırı > Zürafa\nAslan > Zürafa > Su Aygırı"
-      }
-    }
-  },
-  {
-    "power": 9,
-    "name": "Snake",
-    "emoji": "🐍",
-    "description": "Chaos Order. Sorts the entire queue from highest power to lowest power.",
-    "example": "Monkey > Lion > Zebra > Snake\nLion > Snake > Zebra > Monkey",
-    "image": "assets/img/Card avatars/9 Snack.png",
-    "id": 9,
-    "translations": {
-      "fa": {
-        "name": "مار",
-        "description": "نظم آشوب. کل صف را از قوی‌ترین به ضعیف‌ترین مرتب می‌کند.",
-        "example": "میمون > شیر > گورخر > مار\nشیر > مار > گورخر > میمون"
-      },
-      "ar": {
-        "name": "ثعبان",
-        "description": "ترتيب الفوضى. يرتب الصف من الأقوى إلى الأضعف.",
-        "example": "قرد > أسد > حمار وحشي > ثعبان\nأسد > ثعبان > حمار وحشي > قرد"
-      },
-      "tr": {
-        "name": "Yılan",
-        "description": "Kaos Düzeni. Tüm sırayı en güçlüden en zayıfa sıralar.",
-        "example": "Maymun > Aslan > Zebra > Yılan\nAslan > Yılan > Zebra > Maymun"
-      }
-    }
-  },
-  {
-    "power": 10,
-    "name": "Crocodile",
-    "emoji": "🐊",
-    "description": "Predator. Moves forward and eats all weaker cards (power < 10). Stops when it reaches Zebra or a stronger card.",
-    "example": "Lion > Zebra > Monkey > Crocodile\nLion > Zebra > Crocodile\n(Monkey is removed)",
-    "image": "assets/img/Card avatars/10 Crocodile.png",
-    "id": 10,
-    "translations": {
-      "fa": {
-        "name": "تمساح",
-        "description": "شکارچی. به جلو می‌رود و همه کارت‌های ضعیف‌تر (قدرت < ۱۰) را می‌خورد. با رسیدن به گورخر یا کارت قوی‌تر متوقف می‌شود.",
-        "example": "شیر > گورخر > میمون > تمساح\nشیر > گورخر > تمساح (میمون حذف شد)"
-      },
-      "ar": {
-        "name": "تمساح",
-        "description": "مفترس. يتحرك للأمام ويأكل جميع البطاقات الأضعف (قوة < ١٠). يتوقف عند حمار وحشي أو بطاقة أقوى.",
-        "example": "أسد > حمار وحشي > قرد > تمساح\nأسد > حمار وحشي > تمساح (القرد أُزيل)"
-      },
-      "tr": {
-        "name": "Timsah",
-        "description": "Yırtıcı. İleri gider ve daha zayıf tüm kartları (güç < 10) yer. Zebraya veya daha güçlü bir karta ulaşınca durur.",
-        "example": "Aslan > Zebra > Maymun > Timsah\nAslan > Zebra > Timsah (Maymun kaldırıldı)"
-      }
-    }
-  },
-  {
-    "power": 11,
-    "name": "Hippo",
-    "emoji": "🦛",
-    "description": "Heavy Push. Moves forward by passing all cards with power lower than 11 until it reaches a stronger card or a Zebra.",
-    "example": "Lion > Zebra > Monkey > Hippo\nLion > Zebra > Hippo > Monkey",
-    "image": "assets/img/Card avatars/11 Hippo.png",
-    "id": 11,
-    "translations": {
-      "fa": {
-        "name": "اسب‌آبی",
-        "description": "هل دادن سنگین. از روی همه کارت‌های با قدرت کمتر از ۱۱ رد می‌شود تا به کارت قوی‌تر یا گورخر برسد.",
-        "example": "شیر > گورخر > میمون > اسب‌آبی\nشیر > گورخر > اسب‌آبی > میمون"
-      },
-      "ar": {
-        "name": "فرس النهر",
-        "description": "دفع ثقيل. يتقدم بتجاوز جميع البطاقات ذات القوة أقل من ١١ حتى يصل إلى بطاقة أقوى أو حمار وحشي.",
-        "example": "أسد > حمار وحشي > قرد > فرس النهر\nأسد > حمار وحشي > فرس النهر > قرد"
-      },
-      "tr": {
-        "name": "Su Aygırı",
-        "description": "Ağır İtiş. Güç 11'den küçük tüm kartların önüne geçer. Daha güçlü bir karta veya Zebraya ulaşınca durur.",
-        "example": "Aslan > Zebra > Maymun > Su Aygırı\nAslan > Zebra > Su Aygırı > Maymun"
-      }
-    }
-  },
-  {
-    "power": 12,
-    "name": "Lion",
-    "emoji": "🦁",
-    "description": "King of the Queue. If another Lion exists in the queue, the new Lion is sent to Trash. If a Monkey exists, it is also removed. Then Lion moves to the front of the queue.",
-    "example": "Hippo > Monkey > Lion\nLion > Hippo",
-    "image": "assets/img/Card avatars/12 Lion.png",
-    "id": 12,
-    "translations": {
-      "fa": {
-        "name": "شیر",
-        "description": "پادشاه صف. اگر شیر دیگری در صف باشد، شیر جدید به سطل می‌رود. اگر میمونی وجود داشته باشد، آن هم حذف می‌شود. سپس شیر به ابتدای صف می‌رود.",
-        "example": "اسب‌آبی > میمون > شیر\nشیر > اسب‌آبی"
-      },
-      "ar": {
-        "name": "أسد",
-        "description": "ملك الصف. إذا وُجد أسد آخر، يُرسل الأسد الجديد إلى القمامة. إذا وُجد قرد يُزال أيضاً. ثم ينتقل الأسد إلى مقدمة الصف.",
-        "example": "فرس النهر > قرد > أسد\nأسد > فرس النهر"
-      },
-      "tr": {
-        "name": "Aslan",
-        "description": "Sıranın Kralı. Başka bir Aslan varsa yeni Aslan çöpe gider. Maymun varsa o da kaldırılır. Ardından Aslan sıranın başına geçer.",
-        "example": "Su Aygırı > Maymun > Aslan\nAslan > Su Aygırı"
-      }
-    }
-  }
 ]
