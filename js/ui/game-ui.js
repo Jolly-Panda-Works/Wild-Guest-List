@@ -9,6 +9,7 @@ import { ANTICIPATION, DEFAULT_ANTICIPATION, REACTION, DEFAULT_REACTION } from "
 import { attachLongPress } from "./longPress.js";
 import { openCardInfoByPower } from "../game/help.js";
 import { LONG_PRESS_DURATION_MS } from "../constants/longPress.js";
+import { maybeShowCardHelpHint, dismissCardHelpHintOnSuccess } from "./cardHelpHint.js";
 
 let _config = null;
 async function getConfig() {
@@ -139,7 +140,23 @@ function renderHand(gameState) {
         cardEl.tabIndex = 0;
         cardEl.setAttribute("role", "button");
         const cardName = cardEl.querySelector(".card-name")?.textContent || "";
-        cardEl.setAttribute("aria-label", cardName);
+        // Short discoverability suffix so keyboard/screen-reader users learn
+        // about the hold-for-info interaction too — the visual hint/affordance
+        // below is never the only way to find out about it.
+        cardEl.setAttribute("aria-label", `${cardName} — ${t("cardHelpHintLabel")}`);
+
+        // Returning-player affordance: a small info badge that only fades
+        // in on hover/focus/touch, instead of a permanent label/icon on
+        // every card. Reuses the same "help" icon as the Help button
+        // (js/ui/icon-ui.js), so it matches the existing visual language
+        // rather than introducing a new icon. Purely visual — pointer-events
+        // disabled so it can never intercept a tap meant for the card.
+        const affordance = document.createElement("span");
+        affordance.className = "card-help-affordance";
+        affordance.setAttribute("data-icon", "help");
+        affordance.setAttribute("title", t("cardHelpHintLabel"));
+        affordance.setAttribute("aria-hidden", "true");
+        cardEl.appendChild(affordance);
 
         const playThisCard = async () => {
             if (!isMyTurn) {
@@ -163,6 +180,7 @@ function renderHand(gameState) {
             // director.isBusy() gate normal play already respects.
             isDisabled: () => director.isBusy(),
             onLongPress: () => {
+                dismissCardHelpHintOnSuccess();
                 openCardInfoByPower(card.power);
             },
         });
@@ -191,6 +209,7 @@ function renderHand(gameState) {
             keyHoldFired = false;
             keyHoldTimer = setTimeout(() => {
                 keyHoldFired = true;
+                dismissCardHelpHintOnSuccess();
                 openCardInfoByPower(card.power);
             }, LONG_PRESS_DURATION_MS);
         };
@@ -214,6 +233,15 @@ function renderHand(gameState) {
 
         hand.appendChild(cardEl);
     });
+
+    // Batch-resolve the "help" icon used by the affordance badges above,
+    // same pattern used elsewhere for dynamically-inserted [data-icon]
+    // elements (see renderOtherPlayers).
+    loadIcons(hand);
+
+    // First-time discoverability hint — no-ops instantly once it has
+    // already been shown/dismissed (see js/ui/cardHelpHint.js).
+    maybeShowCardHelpHint(hand);
 }
 
 /** The specific hand-card DOM element at `index`, captured before the

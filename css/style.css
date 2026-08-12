@@ -4780,3 +4780,174 @@ body.gameplay-locked #playerHand .card {
 
     /* Spotlight still works normally */
 }
+
+
+/* ══════════════════════════════════════════
+   CARD HELP — LONG-PRESS DISCOVERABILITY
+   (js/ui/cardHelpHint.js + affordance badges below)
+══════════════════════════════════════════ */
+
+/* ── Returning-player affordance ──────────────────────────
+   A small "info" badge on each hand card, hidden by default and only
+   faded in on hover (desktop), keyboard focus, or an active press
+   (which also covers touch — see .long-press-active, toggled the
+   moment a press starts, from js/ui/longPress.js). Never shown
+   permanently, never intercepts a tap/click (pointer-events: none). */
+.card-help-affordance {
+    position: absolute;
+    top: 5%;
+    right: 6%;
+    z-index: 4;
+    width: clamp(14px, 2.6cqw, 20px);
+    height: clamp(14px, 2.6cqw, 20px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    transform: scale(0.7);
+    transition: opacity 150ms ease, transform 150ms ease;
+    pointer-events: none;
+}
+
+.card-help-affordance .icon-image {
+    width: 65%;
+    height: 65%;
+    object-fit: contain;
+}
+
+.card:hover .card-help-affordance,
+.card:focus-visible .card-help-affordance,
+.card.long-press-active .card-help-affordance {
+    opacity: 0.95;
+    transform: scale(1);
+}
+
+[dir="rtl"] .card-help-affordance {
+    right: auto;
+    left: 6%;
+}
+
+/* ── First-time hint bubble ────────────────────────────────
+   Positioned with position:fixed and placed via JS from the hand's
+   actual bounding rect (see js/ui/cardHelpHint.js) rather than
+   anchored inside #handArea — #centerArea uses overflow:hidden for
+   its own layout, which would otherwise risk clipping a bubble meant
+   to poke up above the hand. Fixed positioning + a below-modal
+   z-index keeps it clear of both that clipping and any modal that
+   might open. Entirely pointer-events: none — it can never block a
+   tap/click meant for a card underneath/behind it. */
+.card-help-hint {
+    position: fixed;
+    z-index: 9500;
+    transform: translate(-50%, 8px);
+    opacity: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: opacity 220ms ease, transform 220ms ease;
+    max-width: min(86vw, 280px);
+}
+
+.card-help-hint.visible {
+    transform: translate(-50%, 0);
+    opacity: 1;
+}
+
+.card-help-hint-bubble {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    background: var(--bg-panel);
+    backdrop-filter: var(--blur);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-panel);
+    text-align: center;
+}
+
+.card-help-hint-text {
+    margin: 0;
+    font-size: clamp(11px, 2.4vw, 13px);
+    color: var(--text-main);
+    line-height: 1.35;
+}
+
+.card-help-hint-arrow {
+    width: 12px;
+    height: 12px;
+    margin-top: -7px;
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    transform: rotate(45deg);
+    backdrop-filter: var(--blur);
+}
+
+/* Small self-contained demo: an icon that presses down while a ring
+   fills around it, then releases — the same visual language as the
+   real long-press feedback (see .card.long-press-active), but staged
+   on its own mini widget so the actual hand cards are never touched
+   and the real Help modal is never opened automatically. */
+.card-help-hint-demo {
+    position: relative;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-help-hint-demo-icon {
+    font-size: 18px;
+    line-height: 1;
+    animation: card-help-demo-pulse 1.8s ease-in-out 2;
+}
+
+.card-help-hint-demo-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(var(--accent) 0deg, transparent 0deg);
+    opacity: 0;
+    animation: card-help-demo-ring 1.8s ease-in-out 2;
+}
+
+@keyframes card-help-demo-pulse {
+    0%   { transform: scale(1); }
+    10%  { transform: scale(0.88); }
+    75%  { transform: scale(0.88); }
+    100% { transform: scale(1); }
+}
+
+@keyframes card-help-demo-ring {
+    0%   { opacity: 0;    background: conic-gradient(var(--accent) 0deg, transparent 0deg); }
+    10%  { opacity: 0.9;  background: conic-gradient(var(--accent) 0deg, transparent 0deg); }
+    75%  { opacity: 0.9;  background: conic-gradient(var(--accent) 360deg, transparent 360deg); }
+    100% { opacity: 0;    background: conic-gradient(var(--accent) 360deg, transparent 360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card-help-hint-demo-icon,
+    .card-help-hint-demo-ring {
+        animation: none;
+    }
+    .card-help-hint-demo-ring {
+        opacity: 0.5;
+        background: conic-gradient(var(--accent) 180deg, transparent 180deg);
+    }
+}
+
+/* On the narrow mobile layout #handArea becomes position:fixed at the
+   bottom of the screen (see the existing mobile #handArea rule); the
+   JS-computed position in cardHelpHint.js already re-anchors above
+   whatever the hand's current rect is, so only the bubble's own max
+   width needs a tighter mobile cap here. */
+@media (max-width: 600px) {
+    .card-help-hint {
+        max-width: min(80vw, 240px);
+    }
+}
