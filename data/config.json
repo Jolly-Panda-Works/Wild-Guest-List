@@ -10,7 +10,7 @@
         "close": "assets/img/icons/close.png",
         "back": "assets/img/icons/Back.png",
         "kangaroo": "🦘",
-        "timer": "⏱️",
+        "timer": "assets/img/icons/Timer.png",
         "queueEntry": "🚪",
         "queueExit": "🗑️",
         "sound": "assets/img/icons/Sound.png",
@@ -24,11 +24,11 @@
         "bot-hard": "assets/img/icons/Bot-hard.png",
 
         "player": "🙋",
-        "rankGold": "🥇",
-        "rankSilver": "🥈",
-        "rankBronze": "🥉",
+        "rankGold": "assets/img/icons/1st.png",
+        "rankSilver": "assets/img/icons/2nd.png",
+        "rankBronze": "assets/img/icons/3rd.png",
         "partyEmoji": "🎉",
-        "power": "⚡",
+        "power": "assets/img/icons/Power.png",
         "trashEmoji": "🗑️",
         "waiting": "⏳",
         "trophy": "🏆",
@@ -39,8 +39,8 @@
         "tip": "💡",
         "videoPlay": "▶",
         "videoPause": "⏸",
-        "pause": "⏸",
-        "feedback": "💬"
+        "pause": "assets/img/icons/Pause.png",
+        "feedback": "assets/img/icons/Feedback.png"
     },
     "sounds": {
         "playCard": "",
