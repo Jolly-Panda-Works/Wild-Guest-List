@@ -12,10 +12,16 @@ import { initializeTutorial, openTutorial } from "./ui/tutorial-ui.js";
 import { startWalkthrough, shouldShowWalkthrough } from "./ui/walkthrough.js";
 import { loadI18n, t, setLang, buildLangSelector } from "./i18n.js";
 import { setStepGuidanceEnabled } from "./ui/cardGuidance-ui.js";
+import { initCardColorPicker } from "./ui/cardColor-ui.js";
 
 // ── i18n boot — runs before anything else ─────────────────
 await loadI18n();
 buildLangSelector(document.getElementById("langSelector"));
+
+// Card color picker: wired at boot (like the language selector above)
+// rather than only inside initializeUI(), so it already works from the
+// splash screen's Settings modal, before a game has even started.
+initCardColorPicker();
 
 // ── Bot definitions (names use i18n) ──────────────────────
 const BOT_DEFS = [
