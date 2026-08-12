@@ -3097,11 +3097,16 @@ body.gameplay-locked #playerHand .card {
     border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 20px;
 }
 
-/* Party/Trash hover enlarge */
+/* Party/Trash: hover no longer enlarges the card — these piles are
+   read-only history, not playable/selectable, so a hover lift implied
+   an interactivity that wasn't there. Hold-to-show-help (see
+   js/ui/longPress.js) is the only interaction left on these cards, and
+   it already has its own long-press-active visual feedback. */
 #partyCards .card:hover, #trashCards .card:hover {
-    transform: translateY(-8px) scale(1.45);
-    z-index: 100;
-    box-shadow: 0 12px 30px rgba(0,0,0,.6);
+    transform: none;
+    box-shadow: var(--shadow-card);
+    z-index: auto;
+    cursor: default;
 }
 #partyCards, #trashCards { overflow: visible; }
 
