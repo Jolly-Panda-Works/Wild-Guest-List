@@ -17,6 +17,12 @@ import { getRandomCardIndex }
 from "../ai/ai.js";
 
 import {
+    AI_THINKING_DELAY_MIN_MS,
+    AI_THINKING_DELAY_MAX_MS
+}
+from "../constants/playerTypes.js";
+
+import {
     isGameOver,
     finishGame
 }
@@ -129,7 +135,7 @@ export function startTurn(gameState){
             gameState
         );
 
-    },1000);
+    }, AI_THINKING_DELAY_MIN_MS + Math.random() * (AI_THINKING_DELAY_MAX_MS - AI_THINKING_DELAY_MIN_MS));
 }
 
 /**
