@@ -13,6 +13,8 @@ import { TURN_TIMER_SECONDS } from "../constants/turnTimer.js";
 import { dismissCardHelpHintOnSuccess } from "./cardHelpHint.js";
 import { loadIcons } from "./icon-ui.js";
 import { isPaused } from "./pause-ui.js";
+import { getPlayerAvatarId } from "./playerAvatar-ui.js";
+import { PLAYER_AVATARS } from "../constants/avatars.js";
 
 // ── Warning toast ─────────────────────────────────────────
 function showWarning(message) {
@@ -110,6 +112,27 @@ function queueSlotEl(index) {
 // render never linger past the re-render that replaces their elements.
 let handLongPressHandles = [];
 
+// ── Player's own name + avatar, shown by their deck ─────────
+// Mirrors playerDisplayName()/avatar shown for each bot in
+// renderOtherPlayers() below, but for the human seat (p1), whose hand
+// is laid out full-width instead of sitting in one of the three
+// opponent boxes — so this tag lives next to their own deck instead.
+function renderPlayerDeckInfo(player) {
+    const avatarImg = document.getElementById("playerDeckAvatarImg");
+    const nameEl     = document.getElementById("playerDeckName");
+    if (!avatarImg || !nameEl) return;
+
+    const avatarId = getPlayerAvatarId();
+    if (avatarImg.dataset.avatarId !== avatarId) {
+        const avatar = PLAYER_AVATARS.find(a => a.id === avatarId) || PLAYER_AVATARS[0];
+        avatarImg.src = avatar.src;
+        avatarImg.alt = t(avatar.labelKey);
+        avatarImg.dataset.avatarId = avatarId;
+    }
+
+    nameEl.textContent = playerDisplayName(player);
+}
+
 // ── Hand ──────────────────────────────────────────────────
 function renderHand(gameState) {
     const hand = document.getElementById("playerHand");
@@ -133,6 +156,8 @@ function renderHand(gameState) {
 
     const player   = gameState.players[0];
     const isMyTurn = gameState.currentPlayer === 0;
+
+    renderPlayerDeckInfo(player);
 
     player.hand.forEach((card, index) => {
         const cardEl = createCard(card);
