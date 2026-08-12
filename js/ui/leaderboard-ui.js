@@ -5,8 +5,8 @@ export function renderLeaderboard(gameState) {
     const sorted = [...gameState.players].sort((a, b) => {
         const ap = a.party.reduce((s, c) => s + c.power, 0);
         const bp = b.party.reduce((s, c) => s + c.power, 0);
-        if (bp !== ap) return bp - ap;
-        return b.party.length - a.party.length;
+        if (b.party.length !== a.party.length) return b.party.length - a.party.length;
+        return bp - ap;
     });
 
     const rowsHTML = sorted.map((p, i) => {
