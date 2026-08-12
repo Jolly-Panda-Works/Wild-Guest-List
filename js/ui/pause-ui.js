@@ -1,17 +1,17 @@
 import { openModal, closeModal } from "./modal-ui.js";
-import { pauseTurnTimer, resumeTurnTimer } from "../game/turnTimer.js";
+import { pauseTurnTimer, resumeTurnTimer, isPaused } from "../game/turnTimer.js";
 import { buildLangSelector } from "../i18n.js";
 
-// Whether the game is currently paused. Exported so other modules (e.g.
-// the hand's click/keyboard handlers in game-ui.js) can refuse to play a
-// card while paused, as a second line of defense on top of the pause
+// Re-exported so other modules (e.g. the hand's click/keyboard handlers
+// in game-ui.js, and the AI move scheduler in turnManager.js) can check
+// pause state too — as a second line of defense on top of the pause
 // panel's own full-screen overlay (which already blocks pointer clicks
 // on the board underneath it, but not a keyboard Enter/Space on a card
-// that still happens to hold focus).
-let paused = false;
-export function isPaused() {
-    return paused;
-}
+// that still happens to hold focus, or a setTimeout already in flight).
+// turnTimer.js is the single source of truth for this flag — see its
+// pauseTurnTimer()/resumeTurnTimer()/isPaused() for why it lives there
+// instead of a separate flag here.
+export { isPaused };
 
 // Tracks whether Settings was opened FROM the pause panel, so closing
 // Settings can bring the pause panel back up instead of just dropping
@@ -23,10 +23,6 @@ export function initializePause() {
     document
         .getElementById("pauseBtn")
         ?.addEventListener("click", () => {
-            // Nothing to pause before a game has actually started, or if
-            // a card is already mid-animation — same guard style used
-            // elsewhere (see director.isBusy() checks in game-ui.js).
-            paused = true;
             pauseTurnTimer();
             openModal("pauseModal");
         });
@@ -34,7 +30,6 @@ export function initializePause() {
     document
         .getElementById("pauseResumeBtn")
         ?.addEventListener("click", () => {
-            paused = false;
             closeModal("pauseModal");
             resumeTurnTimer();
         });

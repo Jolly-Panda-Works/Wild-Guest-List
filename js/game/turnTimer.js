@@ -17,12 +17,27 @@ import { TURN_TIMER_SECONDS } from "../constants/turnTimer.js";
  * Only one countdown is ever active at a time: starting a new one always
  * stops whatever was still running, so callers never have to remember
  * to stop the previous turn's timer themselves before starting the next.
+ *
+ * Pause is tracked here (not in the Pause UI module) so it's the single
+ * source of truth for every entry point that can (re)start a countdown —
+ * including a brand new turn's own startTurnTimer() call, which happens
+ * whenever one turn's card finishes animating and hands off to the next
+ * player. Without that, pausing mid-animation would freeze the *current*
+ * turn's countdown correctly, but the *next* turn beginning right after
+ * would call startTurnTimer() fresh and start ticking again completely
+ * unaware the game was still paused — which is what made the on-screen
+ * timer look like it "kept going" even with the pause panel open.
  */
 
 let intervalId = null;
 let pausedSecondsLeft = null;
 let activeOnTick = null;
 let activeOnExpire = null;
+let isPausedFlag = false;
+
+export function isPaused() {
+    return isPausedFlag;
+}
 
 /**
  * @param {Object} options
@@ -38,10 +53,22 @@ export function startTurnTimer({ onTick, onExpire } = {}) {
 
     activeOnTick = onTick;
     activeOnExpire = onExpire;
-    pausedSecondsLeft = null;
 
-    let secondsLeft = TURN_TIMER_SECONDS;
-    onTick?.(secondsLeft);
+    const secondsAtStart = TURN_TIMER_SECONDS;
+    onTick?.(secondsAtStart);
+
+    if (isPausedFlag) {
+        // A new turn is starting while the game is still paused (e.g. the
+        // previous turn's card was still animating when Pause was
+        // clicked, and only just finished). Record the full starting
+        // value and stop here — resumeTurnTimer() picks this up and
+        // starts the countdown for real once the player actually resumes,
+        // instead of ticking away unseen behind the pause panel.
+        pausedSecondsLeft = secondsAtStart;
+        return;
+    }
+
+    let secondsLeft = secondsAtStart;
 
     intervalId = setInterval(() => {
         secondsLeft -= 1;
@@ -69,23 +96,28 @@ export function stopTurnTimer() {
 /**
  * Freezes the countdown at whatever second it's currently on, without
  * losing that value — unlike stopTurnTimer(), which is meant for a turn
- * genuinely ending. Used by the Pause panel so the countdown can never
- * expire (and auto-play a random card) while the player is looking at
- * the pause overlay instead of the board. Safe to call when no timer is
- * running or the timer is already paused.
+ * genuinely ending. Also marks the game paused so that any turn which
+ * starts while still paused (see startTurnTimer() above) begins frozen
+ * too, instead of only the turn that was already running when Pause was
+ * clicked. Safe to call any time, including when no timer is running.
  */
 export function pauseTurnTimer() {
-    if (intervalId === null) return;
-    clearInterval(intervalId);
-    intervalId = null;
+    isPausedFlag = true;
+    if (intervalId !== null) {
+        clearInterval(intervalId);
+        intervalId = null;
+    }
 }
 
 /**
  * Resumes a countdown previously frozen by pauseTurnTimer(), continuing
- * from the exact second it was paused at rather than restarting from
- * TURN_TIMER_SECONDS. No-op if nothing was paused.
+ * from the exact second it was paused at (or, if a new turn started
+ * while paused, from a full TURN_TIMER_SECONDS) rather than restarting
+ * from scratch. No-op if nothing was paused.
  */
 export function resumeTurnTimer() {
+    isPausedFlag = false;
+
     if (pausedSecondsLeft === null || intervalId !== null) return;
 
     let secondsLeft = pausedSecondsLeft;
