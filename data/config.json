@@ -1,4 +1,7 @@
 {
+    "app": {
+        "version": "1.10.0"
+    },
     "icons": {
         "leaderboard": "assets/img/icons/Leaderboard.png",
         "gameLog": "assets/img/icons/Log.png",

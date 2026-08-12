@@ -63,4 +63,22 @@ export async function loadIcons(root = document) {
 
         element.dataset.iconLoaded = value;
     });
+
+    // Version display: single source of truth is config.json's
+    // app.version, not a hardcoded string in index.html (was previously
+    // stuck at "1.9.0" across dozens of releases — see PRODUCT_ROADMAP.md
+    // task 0.10). Reuses the already-fetched/cached config above.
+    const versionTargets = [];
+
+    if (root instanceof Element && root.matches("[data-app-version]")) {
+        versionTargets.push(root);
+    }
+
+    versionTargets.push(...root.querySelectorAll("[data-app-version]"));
+
+    versionTargets.forEach(element => {
+        const version = config.app?.version;
+        if (!version) return;
+        element.textContent = version;
+    });
 }
