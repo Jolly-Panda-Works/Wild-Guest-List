@@ -11,7 +11,7 @@ import { playBackgroundMusic } from "./services/soundManager.js"
 import { initializeTutorial, openTutorial } from "./ui/tutorial-ui.js";
 import { startWalkthrough, shouldShowWalkthrough } from "./ui/walkthrough.js";
 import { loadI18n, t, setLang, buildLangSelector } from "./i18n.js";
-import { setStepGuidanceEnabled } from "./ui/cardGuidance-ui.js";
+import { setStepGuidanceEnabled, isStepGuidanceEnabled, initStepGuidanceToggle } from "./ui/cardGuidance-ui.js";
 import { initCardColorPicker } from "./ui/cardColor-ui.js";
 
 // ── i18n boot — runs before anything else ─────────────────
@@ -22,6 +22,14 @@ buildLangSelector(document.getElementById("langSelector"));
 // rather than only inside initializeUI(), so it already works from the
 // splash screen's Settings modal, before a game has even started.
 initCardColorPicker();
+
+// Step-by-step Guidance toggle: same reasoning — wired at boot so
+// turning it on from the splash screen's Settings modal (before
+// Start Game is even clicked) is actually saved, instead of the click
+// being silently lost because nothing was listening yet. initializeUI()
+// still calls this again once the game starts; see the guard inside
+// initStepGuidanceToggle() for why that's safe.
+initStepGuidanceToggle();
 
 // ── Bot definitions (names use i18n) ──────────────────────
 const BOT_DEFS = [
@@ -189,7 +197,10 @@ document.getElementById("guidancePromptYesBtn")?.addEventListener("click", () =>
 document.getElementById("guidancePromptNoBtn")?.addEventListener("click", () => answerGuidancePrompt(false));
 
 document.getElementById("guidancePromptModal")?.addEventListener("keydown", e => {
-    if (e.key === "Escape") answerGuidancePrompt(false); // safe default: don't force guidance on
+    // Preserve whatever is already set (e.g. turned on from the splash
+    // Settings modal moments earlier) instead of unconditionally forcing
+    // it off — Escape should mean "close this prompt", not "opt out".
+    if (e.key === "Escape") answerGuidancePrompt(isStepGuidanceEnabled());
 });
 
 buildDifficultyPanel();

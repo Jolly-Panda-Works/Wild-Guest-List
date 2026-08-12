@@ -43,15 +43,36 @@ export function isStepGuidanceEnabled() {
 }
 
 export function setStepGuidanceEnabled(enabled) {
+    const wasEnabled = isStepGuidanceEnabled();
     localStorage.setItem(SETTING_KEY, enabled ? "true" : "false");
+
+    // Turning the setting ON — whether from off, or for the very first
+    // time — should reliably start showing per-card guidance again from
+    // here on, even for abilities already marked "explained" in an
+    // earlier session/game. Otherwise a player who re-enables this
+    // mid-game (or after having played with it on before) can end up
+    // seeing nothing at all, silently suppressed by old dismissal
+    // history that has nothing to do with their current request.
+    // Re-saving an already-matching value (off->off, on->on) never
+    // touches that history, so this can't turn into a reset loop.
+    if (enabled && !wasEnabled) {
+        resetExplainedAbilities();
+    }
 }
 
-/** Wires the Settings toggle. Call once during UI init. */
+/** Wires the Settings toggle. Safe to call more than once (e.g. once at
+ *  boot so a pre-game toggle in the splash Settings modal isn't silently
+ *  ignored, and again from initializeUI() once the game has started) —
+ *  the checked state is always re-synced, but the change listener is
+ *  only ever attached a single time. */
 export function initStepGuidanceToggle() {
     const toggle = document.getElementById("stepGuidanceToggle");
     if (!toggle) return;
 
     toggle.checked = isStepGuidanceEnabled();
+
+    if (toggle._stepGuidanceWired) return;
+    toggle._stepGuidanceWired = true;
 
     toggle.addEventListener("change", () => {
         // Persisted immediately — the very next card played reads this
@@ -85,6 +106,14 @@ function markExplained(cardId) {
         ids.push(cardId);
         localStorage.setItem(EXPLAINED_KEY, JSON.stringify(ids));
     }
+}
+
+/** Clears "already explained" history so every ability's guidance can
+ *  show again. Called automatically when the setting is turned on —
+ *  see setStepGuidanceEnabled() above — but also exported in case it's
+ *  ever useful on its own. */
+export function resetExplainedAbilities() {
+    localStorage.removeItem(EXPLAINED_KEY);
 }
 
 /* ─────────────────────────────────────────
