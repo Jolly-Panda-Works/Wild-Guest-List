@@ -213,6 +213,35 @@ body {
     }
 }
 
+/* Full-screen red flash echoing the turn-timer's urgency once it drops
+   under 3 seconds (see #screenDamage in index.html, triggered from
+   renderTurnTimer in js/ui/game-ui.js). A plain fixed overlay, never
+   intercepts clicks, sits above the game board but below modals/the
+   walkthrough overlay (z-index: 50000). */
+#screenDamage {
+    position: fixed;
+    inset: 0;
+    z-index: 40000;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(ellipse at center,
+        rgba(239,68,68,0) 55%,
+        rgba(239,68,68,.55) 100%);
+}
+#screenDamage.screen-damage-flash {
+    animation: screenDamageFlash .5s ease-out;
+}
+@keyframes screenDamageFlash {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #screenDamage.screen-damage-flash {
+        animation: none;
+        opacity: 0;
+    }
+}
+
 
 /* CENTER */
 

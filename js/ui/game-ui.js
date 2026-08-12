@@ -429,6 +429,25 @@ export function renderTurnTimer(secondsLeft) {
     const [r, g, b] = TURN_TIMER_SAFE_RGB.map((c, i) => lerpChannel(c, TURN_TIMER_DANGER_RGB[i], t));
     el.style.color = `rgb(${r}, ${g}, ${b})`;
     el.classList.toggle("turn-timer-critical", secondsLeft <= 3);
+
+    // Once the clock drops under 3 seconds, echo that urgency with a
+    // screen-wide red flash on top of the label's own pulse/color shift.
+    if (secondsLeft < 3) {
+        triggerScreenDamage();
+    }
+}
+
+/** Full-screen red flash (#screenDamage in index.html / css/style.css)
+ *  fired once per tick while the turn timer is critical. Re-triggers the
+ *  CSS animation even if the previous tick's flash hasn't fully faded,
+ *  by dropping the class, forcing a reflow, then re-adding it. */
+function triggerScreenDamage() {
+    const el = document.getElementById("screenDamage");
+    if (!el) return;
+
+    el.classList.remove("screen-damage-flash");
+    void el.offsetWidth;
+    el.classList.add("screen-damage-flash");
 }
 
 // ============================================================
