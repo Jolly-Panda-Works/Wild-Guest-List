@@ -1,50 +1,81 @@
 /**
  * Card color picker.
  *
- * Lets the player repaint the card colors used across the whole game —
- * hand, queue, party, trash, deck-backs, leaderboard rows — by choosing
- * from the predefined palette in js/constants/cardColors.js. One choice
- * is "my card color" (seat p1, always the human — see js/main.js), the
- * other is "opponent card color", applied to all three AI seats (p2-p4)
- * so every bot stays visually consistent as a single group.
+ * The game always has exactly 4 seats — p1 (human) and p2-p4 (AI bots),
+ * see js/main.js. This lets the player assign each seat its own color
+ * from the predefined palette (js/constants/cardColors.js), with one
+ * hard rule: all four colors must stay distinct. Picking a color that
+ * another seat already has simply swaps the two seats' colors, so the
+ * assignment is always a valid 1-to-1 mapping — there's no way to end
+ * up with two seats sharing a color, and no dead-end where a color is
+ * unreachable.
  *
  * This intentionally does NOT introduce a new styling mechanism: every
  * card already reads its color from the shared --p1..--p4 CSS custom
  * properties (css/style.css, :root and .card[data-player="pN"]), so
- * applying a choice here is just overwriting those four variables on
- * the document root. Nothing else needs to change.
+ * applying an assignment here is just overwriting those four variables
+ * on the document root. Nothing else needs to change.
  *
  * Persistence follows the same pattern as js/ui/cardGuidance-ui.js /
  * js/services/soundManager.js — a small localStorage key, read on boot
- * and written on change, so the choice survives reloads and carries
- * into every future game.
+ * and written on change — so each player's color stays fixed: it's
+ * whatever was last explicitly assigned, and never changes on its own
+ * (not on reload, not on a new game, not when the random starting
+ * player is picked — that only randomizes turn order, never seat
+ * identity or color).
  */
 
-import { CARD_COLOR_PALETTE, DEFAULT_MY_COLOR, DEFAULT_OPPONENT_COLOR } from "../constants/cardColors.js";
+import { CARD_COLOR_PALETTE, DEFAULT_PLAYER_COLORS } from "../constants/cardColors.js";
+import { t } from "../i18n.js";
 
-const MY_KEY  = "wgl_myCardColor";
-const OPP_KEY = "wgl_opponentCardColor";
+const STORAGE_KEY = "wgl_playerColors";
+const PLAYER_IDS  = ["p1", "p2", "p3", "p4"];
+const NAME_KEYS   = { p1: "you", p2: "bot1", p3: "bot2", p4: "bot3" };
 
 /* ─────────────────────────────────────────
    Settings persistence
 ───────────────────────────────────────── */
 
-export function getMyCardColor() {
-    return localStorage.getItem(MY_KEY) || DEFAULT_MY_COLOR;
+function isValidAssignment(obj) {
+    if (!obj || typeof obj !== "object") return false;
+    const ids = PLAYER_IDS.map(pid => obj[pid]);
+    if (ids.some(id => !CARD_COLOR_PALETTE.some(c => c.id === id))) return false;
+    return new Set(ids).size === ids.length; // all four distinct
 }
 
-export function setMyCardColor(id) {
-    localStorage.setItem(MY_KEY, id);
+/** Returns { p1: colorId, p2: colorId, p3: colorId, p4: colorId }. */
+export function getPlayerColors() {
+    try {
+        const raw    = localStorage.getItem(STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : null;
+        if (isValidAssignment(parsed)) return parsed;
+    } catch {
+        // fall through to defaults
+    }
+    return { ...DEFAULT_PLAYER_COLORS };
+}
+
+function savePlayerColors(colors) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(colors));
+}
+
+/**
+ * Assigns `colorId` to `playerId`. If another seat already has that
+ * color, the two seats swap colors — this is what keeps every
+ * assignment valid (four distinct colors) without ever blocking a
+ * choice or leaving a color unreachable.
+ */
+export function setPlayerColor(playerId, colorId) {
+    const colors  = { ...getPlayerColors() };
+    const prev    = colors[playerId];
+    const ownerOfTarget = PLAYER_IDS.find(pid => pid !== playerId && colors[pid] === colorId);
+
+    colors[playerId] = colorId;
+    if (ownerOfTarget) colors[ownerOfTarget] = prev;
+
+    savePlayerColors(colors);
     applyCardColors();
-}
-
-export function getOpponentCardColor() {
-    return localStorage.getItem(OPP_KEY) || DEFAULT_OPPONENT_COLOR;
-}
-
-export function setOpponentCardColor(id) {
-    localStorage.setItem(OPP_KEY, id);
-    applyCardColors();
+    return colors;
 }
 
 function hexFor(id) {
@@ -52,58 +83,63 @@ function hexFor(id) {
 }
 
 /**
- * Paints the current choices onto the shared --p1..--p4 variables.
- * Safe to call any time (boot, settings change, mid-game) — it never
- * touches anything but those four custom properties, so it can't
- * clobber unrelated theme state.
+ * Paints the current per-seat assignment onto the shared --p1..--p4
+ * variables. Safe to call any time (boot, settings change, mid-game).
  */
 export function applyCardColors() {
-    const root = document.documentElement.style;
-    root.setProperty("--p1", hexFor(getMyCardColor()));
-
-    const opponentHex = hexFor(getOpponentCardColor());
-    root.setProperty("--p2", opponentHex);
-    root.setProperty("--p3", opponentHex);
-    root.setProperty("--p4", opponentHex);
+    const colors = getPlayerColors();
+    const root   = document.documentElement.style;
+    PLAYER_IDS.forEach(pid => root.setProperty(`--${pid}`, hexFor(colors[pid])));
 }
 
 /* ─────────────────────────────────────────
-   Rendering the swatch pickers
+   Rendering the picker
 ───────────────────────────────────────── */
 
-function renderSwatchRow(container, selectedId, onPick) {
-    if (!container) return;
-
-    container.innerHTML = CARD_COLOR_PALETTE.map(c => `
+function renderRow(playerId, colors) {
+    const selectedId = colors[playerId];
+    const swatches = CARD_COLOR_PALETTE.map(c => `
         <button type="button"
                 class="color-swatch${c.id === selectedId ? " active" : ""}"
+                data-player="${playerId}"
                 data-color="${c.id}"
                 style="--swatch-color:${c.hex}"
                 aria-label="${c.id}"
                 aria-pressed="${c.id === selectedId}"></button>
     `).join("");
 
+    return `
+        <div class="player-color-row">
+            <div class="player-color-name">${t(NAME_KEYS[playerId])}</div>
+            <div class="color-swatch-row">${swatches}</div>
+        </div>
+    `;
+}
+
+function renderAll(container) {
+    const colors = getPlayerColors();
+    container.innerHTML = PLAYER_IDS.map(pid => renderRow(pid, colors)).join("");
+
     container.querySelectorAll(".color-swatch").forEach(btn => {
         btn.addEventListener("click", () => {
             if (btn.classList.contains("active")) return;
-            container.querySelectorAll(".color-swatch").forEach(b => {
-                b.classList.remove("active");
-                b.setAttribute("aria-pressed", "false");
-            });
-            btn.classList.add("active");
-            btn.setAttribute("aria-pressed", "true");
-            onPick(btn.dataset.color);
+            setPlayerColor(btn.dataset.player, btn.dataset.color);
+            renderAll(container); // re-render everything: a swap can change another row too
         });
     });
 }
 
-/** Wires the two Settings swatch rows. Call once during UI init. */
+/** Wires the Settings picker. Call once during UI init (and again on langchange). */
 export function initCardColorPicker() {
-    applyCardColors(); // make sure the stored/default choice is already live
+    applyCardColors(); // make sure the stored/default assignment is already live
 
-    const myRow  = document.getElementById("myColorSwatches");
-    const oppRow = document.getElementById("opponentColorSwatches");
+    const container = document.getElementById("playerColorPicker");
+    if (!container) return;
 
-    renderSwatchRow(myRow, getMyCardColor(), setMyCardColor);
-    renderSwatchRow(oppRow, getOpponentCardColor(), setOpponentCardColor);
+    renderAll(container);
+
+    if (!container._langchangeWired) {
+        window.addEventListener("langchange", () => renderAll(container));
+        container._langchangeWired = true;
+    }
 }

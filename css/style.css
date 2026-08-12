@@ -4286,21 +4286,44 @@ body.gameplay-locked #playerHand .card {
 
 /* ══════════════════════════════════════════
    Card Color Picker (Settings)
-   Repaints the shared --p1..--p4 variables that every card, hand
-   border, deck-back and leaderboard row already reads its color
-   from — see js/ui/cardColor-ui.js.
+   One row per seat (You / Bot 1 / Bot 2 / Bot 3), each repainting the
+   shared --p1..--p4 variables that every card, hand border, deck-back
+   and leaderboard row already reads its color from — see
+   js/ui/cardColor-ui.js. Colors are kept unique across all four seats
+   by swapping on conflict, so this UI never lets two seats collide.
 ══════════════════════════════════════════ */
+
+.player-color-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.player-color-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.player-color-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    min-width: 56px;
+}
 
 .color-swatch-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    width: 100%;
+    gap: 8px;
 }
 
 .color-swatch {
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     border: 2px solid rgba(255,255,255,0.15);
     background: var(--swatch-color);
@@ -4326,7 +4349,7 @@ body.gameplay-locked #playerHand .card {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 800;
     color: #fff;
     text-shadow: 0 1px 2px rgba(0,0,0,.6);

@@ -19,8 +19,11 @@ export const CARD_COLOR_PALETTE = [
     { id: "teal",   hex: "#14b8a6" },
 ];
 
-// Match the game's original defaults (--p1 / --p2 in css/style.css) so a
-// fresh install/localStorage looks exactly like it did before this
-// feature existed.
-export const DEFAULT_MY_COLOR       = "blue";
-export const DEFAULT_OPPONENT_COLOR = "green";
+// Fixed default color per seat — matches the game's original --p1..--p4
+// values exactly, so a fresh install/localStorage looks unchanged.
+export const DEFAULT_PLAYER_COLORS = {
+    p1: "blue",
+    p2: "green",
+    p3: "orange",
+    p4: "purple",
+};
