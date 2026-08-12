@@ -5,6 +5,7 @@ import { playSound } from "../services/soundManager.js";
 import { flip, playBeat, wait, isReducedMotion } from "../presentation/flip.js";
 import { director } from "../presentation/director.js";
 import { EVENTS } from "../presentation/events.js";
+import { ANTICIPATION, DEFAULT_ANTICIPATION, REACTION, DEFAULT_REACTION } from "../presentation/abilityPresentations.js";
 
 let _config = null;
 async function getConfig() {
@@ -93,7 +94,9 @@ async function renderQueue(gameState) {
             const card = createCard(gameState.queue[i]);
             card.classList.add("card-enter");
             slot.appendChild(card);
-            requestAnimationFrame(() => card.classList.remove("card-enter"));
+            // Match card-enter's real 320ms animation length (see note in
+            // cardEnteredQueue below) instead of cancelling it next frame.
+            setTimeout(() => card.classList.remove("card-enter"), 320);
         }
         queue.appendChild(slot);
     }
@@ -265,6 +268,34 @@ function findCardEl(uid) {
     return document.querySelector(`.card[data-uid="${uid}"]`);
 }
 
+/* ── Animation timing hierarchy ───────────────────────────────
+   MINOR   (joins queue, single-position hop/settle): short + subtle.
+   IMPORTANT (removed/eaten/rush/push/jump/reorder): stronger, with a
+              clear reaction beat before the card actually moves.
+   MAJOR   (queue-full resolution): paused, emphasized, celebratory —
+              see onQueueFull / onEnteredParty / onRejected below.
+   Numbers live here so the whole hierarchy can be tuned in one place.
+
+   IMPORTANT: any duration paired with a CSS @keyframes class (played via
+   playBeat) must equal that class's own animation-duration (× iteration
+   count) EXACTLY. playBeat removes the class on a plain timer, independent
+   of the animation — a shorter timer yanks the class mid-motion and the
+   card snaps back to rest instead of finishing the beat smoothly, and a
+   longer one just idles. reactBeat below is intentionally NOT reused for
+   every playBeat call for this reason — several reaction classes (see
+   ESCAPE_STYLE / REMOVE_REACTION further down) have their own true
+   length and carry it explicitly instead. */
+const T = {
+    minorFlip:   340,   // hand → queue, plain settle/hop travel
+    minorBeat:   240,   // card-joins-line (0.24s) — small joins-line bounce
+    reactBeat:   240,   // generic pre-move reaction fallback only
+    importantFlip: 400, // eaten/removed/rush/push travel
+    majorPause:  420,   // queue-full "let it sink in" pause
+    majorBeat:   260,   // card-result-anticipation (0.26s) — pre-party wind-up
+    majorFlip:   440,   // travel into Party
+    majorCelebrate: 420 // card-party-celebrate (0.42s) — landing celebration
+};
+
 /** Hand → back-of-queue. The one transition that needs a specific source
  *  element handed to it, since pure game logic (addToQueue) has no idea
  *  which DOM node the play came from. */
@@ -279,67 +310,189 @@ async function cardEnteredQueue(card, sourceEl, toIndex) {
         const el = createCard(card);
         el.classList.add("card-enter");
         slot.appendChild(el);
-        requestAnimationFrame(() => el.classList.remove("card-enter"));
+        // card-enter's own keyframe animation runs 320ms (see style.css) —
+        // give it the full length instead of yanking the class next frame,
+        // which cancelled the animation before it could play at all.
+        setTimeout(() => el.classList.remove("card-enter"), 320);
         return;
     }
 
     if (sourceEl.classList.contains("card-back")) {
         // Opponent's hand is anonymous — fly the face-down back to the
         // slot, then reveal the real card in its place.
-        await flip(sourceEl, () => slot.appendChild(sourceEl), { duration: 380 });
+        await flip(sourceEl, () => slot.appendChild(sourceEl), { duration: T.minorFlip });
         const real = createCard(card);
         real.classList.add("card-reveal");
         sourceEl.replaceWith(real);
         setTimeout(() => real.classList.remove("card-reveal"), 260);
-        await playBeat(real, "card-joins-line", 240);
+        await playBeat(real, "card-joins-line", T.minorBeat);
     } else {
-        await flip(sourceEl, () => slot.appendChild(sourceEl), { duration: 380 });
-        await playBeat(sourceEl, "card-joins-line", 240);
+        await flip(sourceEl, () => slot.appendChild(sourceEl), { duration: T.minorFlip });
+        await playBeat(sourceEl, "card-joins-line", T.minorBeat);
     }
 }
 
-async function onReposition(evt, opts) {
+// reason -> { duringClass, duration } for a plain CARD_MOVED reposition.
+// "settle" (the generic diff-based fallback) stays the lightest of the
+// bunch — everything an ability explicitly calls out gets more character.
+const MOVE_STYLE = {
+    settle: { duration: T.minorFlip },
+    hop:    { duringClass: "card-hop",        duration: 300 },   // Giraffe
+    rush:   { duringClass: "card-lion-rush",  duration: 320, easing: "cubic-bezier(.55,0,.85,.35)" }, // Lion
+    push:   { duringClass: "card-heavy-push", duration: 460, easing: "cubic-bezier(.2,.7,.3,1)" },    // Hippo
+    stick:  { duringClass: "card-stick",      duration: 220 },   // Sloth Bear following
+};
+
+// Reasons whose fromIndex→toIndex gap can span more than one slot need to
+// visibly cross every slot in between instead of sweeping straight to the
+// target in one flight — a card advancing through the queue should read
+// as passing each position, not skipping over them. "rush" (Lion's
+// charge) is a deliberate exception: it's meant to read as one aggressive
+// dash the full length of the queue, not a step-by-step walk.
+const STEPWISE_REASONS = new Set(["settle", "push", "stick"]);
+
+// The card (if any) already sitting in `slot` other than the one currently
+// moving into it — used to give a brief "something arrived" bump to a
+// card that hasn't cleared out of a slot yet when another needs to pass
+// through or land there.
+function slotOccupant(slot, movingEl) {
+    const occupant = slot.querySelector(".card");
+    return (occupant && occupant !== movingEl) ? occupant : null;
+}
+
+async function onReposition(evt) {
     const el = findCardEl(evt.card.uid);
     if (!el) {
         console.warn("[presenter] no DOM node for moved card, state already correct — skipping animation", evt);
         return;
     }
-    const slot = queueSlotEl(evt.toIndex);
-    if (!slot) return;
-    await flip(el, () => slot.appendChild(el), opts);
+    const style = MOVE_STYLE[evt.reason] || MOVE_STYLE.settle;
+
+    if (!STEPWISE_REASONS.has(evt.reason) || evt.fromIndex == null || evt.fromIndex === evt.toIndex) {
+        const slot = queueSlotEl(evt.toIndex);
+        if (!slot) return;
+        await flip(el, () => slot.appendChild(el), style);
+        return;
+    }
+
+    // Walk the card through every intermediate slot, one hop at a time.
+    // Each hop gets a fair share of the reason's overall travel time so a
+    // 3-slot push doesn't take 3x as long as a 1-slot one, just more steps.
+    const step = evt.toIndex > evt.fromIndex ? 1 : -1;
+    const hops = Math.abs(evt.toIndex - evt.fromIndex);
+    const hopDuration = Math.max(140, Math.round((style.duration ?? T.minorFlip) / hops));
+
+    let index = evt.fromIndex;
+    while (index !== evt.toIndex) {
+        const nextIndex = index + step;
+        const slot = queueSlotEl(nextIndex);
+        if (!slot) break;
+
+        // A card still settling into this slot (see the queue-slot z-index
+        // rule in style.css) gets a quick "blocked" bump acknowledging the
+        // arrival — never a size change, just a beat — before we land.
+        const occupant = slotOccupant(slot, el);
+        if (occupant) playBeat(occupant, "card-block-react", 240);
+
+        await flip(el, () => slot.appendChild(el), { ...style, duration: hopDuration });
+        index = nextIndex;
+    }
 }
+
+// reason -> reaction/travel styling for a card that's displaced but stays
+// in the queue (Hippo pushing a weaker card, or "sticking" a Sloth Bear).
+// reactDuration must equal reactClass's own CSS animation length exactly
+// (see the note on T above) — card-sticky-react in particular repeats
+// twice (480ms total), not once, or the drag gets cut off mid-shake.
+const ESCAPE_STYLE = {
+    pushed: { reactClass: "card-flee-react",   reactDuration: 220, duringClass: "card-fleeing",     duration: T.importantFlip },
+    sticky: { reactClass: "card-sticky-react", reactDuration: 480, duringClass: "card-sticky-drag", duration: T.importantFlip + 60, easing: "cubic-bezier(.3,.9,.4,1)" },
+};
 
 async function onEscaped(evt) {
     const el = findCardEl(evt.card.uid);
     if (!el) return;
-    await playBeat(el, "card-flee-react", 220);
+    const style = ESCAPE_STYLE[evt.reason] || ESCAPE_STYLE.pushed;
+    await playBeat(el, style.reactClass, style.reactDuration);
     const slot = queueSlotEl(evt.toIndex);
     if (!slot) return;
-    await flip(el, () => slot.appendChild(el), { duringClass: "card-fleeing", duration: 380 });
+    await flip(el, () => slot.appendChild(el), { duringClass: style.duringClass, duration: style.duration, easing: style.easing });
 }
 
-async function onRemoved(evt, reactionClass) {
+// cause -> reaction class + exact CSS animation length for a card that's
+// being eliminated. Distinct per cause so "outmatched" (weasel/parrot),
+// "scared off" (lion/monkey) and "bounced off another Lion" all *read*
+// differently, even though they all end up in the same place. Duration
+// must match each class's own animation-duration exactly (see the note
+// on T above) so the beat is never cut short mid-motion.
+const REMOVE_REACTION = {
+    weaker:  { className: "card-removed-react",      duration: 260 },
+    scared:  { className: "card-scared-react",        duration: 240 },
+    blocked: { className: "card-blocked-out-react",   duration: 260 },
+};
+const EATEN_REACTION = { className: "card-eaten-react", duration: 260 };
+
+async function onRemoved(evt, { reaction, sound }) {
     const el = findCardEl(evt.card.uid);
     if (!el) {
         console.warn("[presenter] no DOM node for removed card, state already correct — skipping animation", evt);
         return;
     }
-    await playBeat(el, reactionClass, 260);
+    if (sound) playSound(sound);
+    const style = reaction || REMOVE_REACTION[evt.cause] || REMOVE_REACTION.weaker;
+    await playBeat(el, style.className, style.duration);
     const trash = document.getElementById("trashCards");
     if (!trash) return;
-    await flip(el, () => trash.appendChild(el), { duringClass: "card-to-trash", duration: 420 });
-    await playBeat(el, "card-in-trash", 220);
+    await flip(el, () => trash.appendChild(el), { duringClass: "card-to-trash", duration: T.importantFlip });
+    await playBeat(el, "card-in-trash", 220); // card-in-trash's own animation is 0.22s
+}
+
+/** In-place-only reaction — nothing moves, no removal, just a beat that
+ *  communicates "something happened here". Two kinds:
+ *   - flavor "anticipate": the wind-up before an ability's main action —
+ *     looked up by WHICH ability (abilityPower), since Lion's crouch
+ *     looks nothing like Crocodile's pause.
+ *   - everything else: a reaction to what just happened, looked up by
+ *     the flavor tag itself (see abilityPresentations.js). */
+async function onReacted(evt) {
+    const el = findCardEl(evt.card.uid);
+    if (!el) return;
+    const style = evt.flavor === "anticipate"
+        ? (ANTICIPATION[evt.abilityPower] || DEFAULT_ANTICIPATION)
+        : (REACTION[evt.flavor] || DEFAULT_REACTION);
+    await playBeat(el, style.className, style.duration);
+}
+
+/** Snake's sort / Seal's reverse — many cards changing position from one
+ *  ability. Played as ONE concurrent, lightly-staggered batch rather than
+ *  a slow one-at-a-time queue: a full-queue reshuffle is exactly the case
+ *  where simultaneous motion reads as "chaotic reorder", not confusing. */
+async function onReordered(evt) {
+    const duringClass = evt.reason === "reverse" ? "card-reverse-flip" : "card-chaos-move";
+    const duration = evt.reason === "reverse" ? 480 : 380;
+
+    const flights = evt.moves.map((m, i) => (async () => {
+        const el = findCardEl(m.card.uid);
+        if (!el) return;
+        const slot = queueSlotEl(m.toIndex);
+        if (!slot) return;
+        await wait(isReducedMotion() ? 0 : i * 45);
+        await flip(el, () => slot.appendChild(el), { duringClass, duration });
+    })());
+
+    await Promise.all(flights);
 }
 
 async function onQueueFull() {
     const queueEl = document.getElementById("queue");
-    await wait(isReducedMotion() ? 120 : 500);
+    playSound("queueFull");
+    await wait(isReducedMotion() ? 100 : T.majorPause);
     if (queueEl) {
         queueEl.classList.add("queue-full-flash");
         setTimeout(() => queueEl.classList.remove("queue-full-flash"), 700);
         spawnConfetti(queueEl);
     }
-    await wait(isReducedMotion() ? 60 : 260);
+    await wait(isReducedMotion() ? 50 : 220);
 }
 
 async function onEnteredParty(evt) {
@@ -348,11 +501,13 @@ async function onEnteredParty(evt) {
     if (!party) return;
     if (!el) {
         party.appendChild(createCard(evt.card));
+        playSound("partyJoin");
         return;
     }
-    await playBeat(el, "card-result-anticipation", 260);
-    await flip(el, () => party.appendChild(el), { duringClass: "card-to-party", duration: 520 });
-    await playBeat(el, "card-party-celebrate", 420);
+    await playBeat(el, "card-result-anticipation", T.majorBeat);
+    await flip(el, () => party.appendChild(el), { duringClass: "card-to-party", duration: T.majorFlip });
+    playSound("partyJoin");
+    await playBeat(el, "card-party-celebrate", T.majorCelebrate);
 }
 
 async function onRejected(evt) {
@@ -361,10 +516,12 @@ async function onRejected(evt) {
     if (!trash) return;
     if (!el) {
         trash.appendChild(createCard(evt.card));
+        playSound("trashJoin");
         return;
     }
-    await playBeat(el, "card-removed-react", 220);
-    await flip(el, () => trash.appendChild(el), { duringClass: "card-to-trash", duration: 420 });
+    await playBeat(el, REMOVE_REACTION.weaker.className, REMOVE_REACTION.weaker.duration);
+    await flip(el, () => trash.appendChild(el), { duringClass: "card-to-trash", duration: T.importantFlip });
+    playSound("trashJoin");
 }
 
 function spawnConfetti(anchorEl) {
@@ -390,18 +547,35 @@ function spawnConfetti(anchorEl) {
     setTimeout(() => layer.remove(), 900);
 }
 
+/* ── Dimming: draw the eye to whatever an ability actually touches ──── */
+function dimQueueExcept(activeUids) {
+    document.querySelectorAll("#queue .queue-slot .card").forEach(el => {
+        const uid = Number(el.dataset.uid);
+        el.classList.toggle("queue-dimmed", !activeUids.has(uid));
+    });
+}
+
+function clearDim() {
+    document.querySelectorAll("#queue .queue-slot .card.queue-dimmed")
+        .forEach(el => el.classList.remove("queue-dimmed"));
+}
+
 async function handle(evt) {
     switch (evt.type) {
         case EVENTS.CARD_JUMPED:
-            return onReposition(evt, { duringClass: "card-jump-arc", duration: 460 });
+            return onJumped(evt);
         case EVENTS.CARD_ESCAPED:
             return onEscaped(evt);
         case EVENTS.CARD_MOVED:
-            return onReposition(evt, { duration: 380 });
+            return onReposition(evt);
         case EVENTS.CARD_REMOVED:
-            return onRemoved(evt, "card-removed-react");
+            return onRemoved(evt, { sound: "cardRemoved" });
         case EVENTS.CARD_EATEN:
-            return onRemoved(evt, "card-eaten-react");
+            return onRemoved(evt, { reaction: EATEN_REACTION, sound: "cardEaten" });
+        case EVENTS.CARD_REACTED:
+            return onReacted(evt);
+        case EVENTS.QUEUE_REORDERED:
+            return onReordered(evt);
         case EVENTS.QUEUE_FULL:
             return onQueueFull(evt);
         case EVENTS.QUEUE_RESOLUTION_STARTED:
@@ -417,5 +591,15 @@ async function handle(evt) {
     }
 }
 
+/** Kangaroo — the one dedicated "obvious jump arc", bigger and springier
+ *  than a generic reposition. */
+async function onJumped(evt) {
+    const el = findCardEl(evt.card.uid);
+    if (!el) return;
+    const slot = queueSlotEl(evt.toIndex);
+    if (!slot) return;
+    await flip(el, () => slot.appendChild(el), { duringClass: "card-jump-arc", duration: 460 });
+}
+
 // Register this module as the Director's presenter once, at load time.
-director.configure({ cardEnteredQueue, handle });
+director.configure({ cardEnteredQueue, handle, dimQueueExcept, clearDim });

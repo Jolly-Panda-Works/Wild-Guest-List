@@ -44,6 +44,8 @@ import { beginCapture, endCapture } from "../presentation/events.js";
 import { shouldShowGuidance, buildGuidancePayload, showCardGuidance }
 from "../ui/cardGuidance-ui.js";
 
+import { playSound } from "../services/soundManager.js";
+
 export function startTurn(gameState){
 
     const player =
@@ -188,7 +190,24 @@ export async function playCard(
             gameState
         );
         const abilityEvents = endCapture();
-        await director.run(abilityEvents);
+
+        // Tag every event from this capture with the ability that caused
+        // it (the card being played is always the actor here, even for
+        // events about a different, affected card) — this is what lets
+        // the presenter pick a per-animal visual style (see
+        // js/presentation/abilityPresentations.js) instead of guessing
+        // from a generic reason/cause string alone.
+        abilityEvents.forEach(evt => { evt.abilityPower = card.power; });
+
+        if (abilityEvents.length > 0) {
+            playSound("abilityActivated");
+        }
+        // Dim the rest of the queue while an ability's effects play out,
+        // so the eye is drawn to whichever card(s) are actually involved
+        // instead of the whole row competing for attention at once. The
+        // played card itself (`focus`) always stays highlighted, even if
+        // its own ability only affects other cards.
+        await director.run(abilityEvents, { dim: true, focus: card });
 
         await updateNonBoardUI(gameState);
 

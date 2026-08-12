@@ -12,13 +12,12 @@
         "kangaroo": "🦘",
         "queueEntry": "",
         "queueExit": "",
-        "sound":"assets/img/icons/Sound.png",
+        "sound": "assets/img/icons/Sound.png",
         "About Developer": "assets/img/icons/About developer.png",
         "tutorial": "assets/img/icons/Tutorial.png",
-        "previous":"assets/img/icons/previous.png",
-        "next":"assets/img/icons/next.png",
-        "play":"assets/img/icons/play.png",
-
+        "previous": "assets/img/icons/previous.png",
+        "next": "assets/img/icons/next.png",
+        "play": "assets/img/icons/play.png",
         "bot-easy": "assets/img/icons/Bot-easy.png",
         "bot-medium": "assets/img/icons/Bot-normal.png",
         "bot-hard": "assets/img/icons/Bot-hard.png"
@@ -31,6 +30,9 @@
         "yourTurn": "",
         "win": "",
         "lose": "",
-        "background":"assets/sound/background.mp3"
+        "background": "assets/sound/background.mp3",
+        "abilityActivated": "",
+        "cardRemoved": "",
+        "cardEaten": ""
     }
 }

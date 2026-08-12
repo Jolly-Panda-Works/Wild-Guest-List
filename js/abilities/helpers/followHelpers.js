@@ -8,6 +8,9 @@ import {
  }
 from "../../services/logger.js";
 
+import { emit, EVENTS }
+from "../../presentation/events.js";
+
 export function moveFollowersBehind(
     card,
     gameState
@@ -41,6 +44,13 @@ export function moveFollowersBehind(
             0,
             follower
         );
+
+        // A quick, tight snap-into-place — Sloth Bear staying "stuck"
+        // right behind whoever it's following, distinct from a card
+        // being pushed or settling on its own.
+        if(index !== cardIndex + 1){
+            emit({ type: EVENTS.CARD_MOVED, card: follower, fromIndex: index, toIndex: cardIndex + 1, reason: "stick" });
+        }
 
         addLog(
             gameState,

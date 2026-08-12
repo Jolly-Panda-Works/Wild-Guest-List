@@ -47,7 +47,7 @@ export function flip(el, mutate, opts = {}) {
     }
 
     if (isReducedMotion()) {
-        return crossFade(el);
+        return crossFade(el, opts);
     }
 
     const duration = opts.duration ?? DEFAULT_DURATION;
@@ -107,24 +107,44 @@ export function flip(el, mutate, opts = {}) {
     });
 }
 
-function crossFade(el) {
+function crossFade(el, opts = {}) {
+    // Reduced-motion fallback for a FLIP move: no positional animation,
+    // just a short opacity blip so the change still reads as a distinct
+    // step. The ability-specific `duringClass` (if any) is still applied
+    // briefly — its @keyframes motion is suppressed globally under
+    // reduced motion (see css/style.css), but any static styling on that
+    // class (a glow, a tint) still shows, keeping abilities visually
+    // distinguishable rather than making every move look identical.
     return new Promise(resolve => {
         el.style.transition = "";
         el.style.opacity = "0.35";
+        if (opts.duringClass) el.classList.add(opts.duringClass);
         requestAnimationFrame(() => {
-            el.style.transition = "opacity 140ms ease";
+            el.style.transition = `opacity 140ms ease`;
             el.style.opacity = "1";
-            setTimeout(() => { el.style.transition = ""; el.style.opacity = ""; resolve(); }, 160);
+            setTimeout(() => {
+                el.style.transition = "";
+                el.style.opacity = "";
+                if (opts.duringClass) el.classList.remove(opts.duringClass);
+                resolve();
+            }, 160);
         });
     });
 }
 
-/** Brief in-place reaction (shake / recoil / anticipation) before a bigger move. */
+/** Brief in-place reaction (shake / recoil / anticipation) before a bigger
+ *  move. Under reduced motion this still applies `className` — just for a
+ *  much shorter beat — rather than skipping it outright: the @keyframes
+ *  motion itself is suppressed globally (see css/style.css), but any
+ *  static glow/tint baked into that class still flashes briefly, so
+ *  different abilities still read differently instead of all collapsing
+ *  into "nothing happened here". */
 export function playBeat(el, className, duration = 260) {
     return new Promise(resolve => {
-        if (!el || !el.isConnected || isReducedMotion()) { resolve(); return; }
+        if (!el || !el.isConnected) { resolve(); return; }
+        const d = isReducedMotion() ? Math.min(duration, 90) : duration;
         el.classList.add(className);
-        setTimeout(() => { el.classList.remove(className); resolve(); }, duration);
+        setTimeout(() => { el.classList.remove(className); resolve(); }, d);
     });
 }
 

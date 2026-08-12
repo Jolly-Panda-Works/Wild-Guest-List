@@ -56,16 +56,46 @@ class Director {
     }
 
     /** Play a bundle of semantic events, strictly in order. */
-    async run(events) {
+    async run(events, opts = {}) {
         if (!this._presenter?.handle || !events || events.length === 0) return;
-        for (const evt of events) {
-            try {
-                await this._presenter.handle(evt);
-            } catch (e) {
-                console.error("[director] failed to animate event, skipping to next", evt, e);
+
+        const shouldDim = !!opts.dim && this._presenter.dimQueueExcept;
+        if (shouldDim) {
+            const activeUids = collectActiveUids(events);
+            // The card whose ability is resolving stays highlighted even
+            // if its own position never changes (e.g. Weasel/Parrot only
+            // affect other cards) — it's still the one "activating".
+            if (opts.focus?.uid != null) activeUids.add(opts.focus.uid);
+            try { this._presenter.dimQueueExcept(activeUids); }
+            catch (e) { console.error("[director] dim failed, continuing without it", e); }
+        }
+
+        try {
+            for (const evt of events) {
+                try {
+                    await this._presenter.handle(evt);
+                } catch (e) {
+                    console.error("[director] failed to animate event, skipping to next", evt, e);
+                }
+            }
+        } finally {
+            if (shouldDim) {
+                try { this._presenter.clearDim(); }
+                catch (e) { console.error("[director] clearDim failed", e); }
             }
         }
     }
+}
+
+function collectActiveUids(events) {
+    const uids = new Set();
+    events.forEach(evt => {
+        if (evt.card?.uid != null) uids.add(evt.card.uid);
+        if (Array.isArray(evt.moves)) {
+            evt.moves.forEach(m => { if (m.card?.uid != null) uids.add(m.card.uid); });
+        }
+    });
+    return uids;
 }
 
 export const director = new Director();
