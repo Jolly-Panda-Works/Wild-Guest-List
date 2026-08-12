@@ -249,8 +249,6 @@ export function getOpponentHandBackElement(player) {
     return document.querySelector(`.card-back[data-player="${player.id}"]`);
 }
 
-import {loadIcons} from "./icon-ui.js"
-
 // ── Other players — deck-back style with avatar & deck count ──
 async function renderOtherPlayers(gameState) {
     const top   = document.getElementById("topPlayer");
