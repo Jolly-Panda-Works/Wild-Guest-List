@@ -108,6 +108,19 @@ async function startGame() {
 
     gameState.players = players;
 
+    // Starting player is picked at random each game, rather than always
+    // being the human (players[0]/"p1") — any of the 4 seats can open
+    // the round. Exception: the player's very first-ever game keeps the
+    // human starting, since the one-time in-game walkthrough below has a
+    // step that explicitly waits for the human to play a card early on
+    // (js/ui/walkthrough.js "wt7" / waitForCardPlay) — if a bot opened
+    // that round instead, the walkthrough could stall until the human's
+    // turn eventually comes around. Every game after that first one is
+    // fully random.
+    gameState.currentPlayer = shouldShowWalkthrough()
+        ? 0
+        : Math.floor(Math.random() * players.length);
+
     players.forEach(p => {
         p.deck = createDeck(p);
         for (let i = 0; i < 4; i++) drawCard(p);
