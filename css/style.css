@@ -1873,11 +1873,33 @@ body {
 }
 
 
-.website-link{
+/* Row wrapper for the "Visit Website" / "Give Feedback" pair — keeps
+   them side by side on one row (same height, same baseline) instead
+   of relying on inline-element wrapping, which could drop the second
+   button to its own line depending on available width. */
+.about-actions{
 
-    display:inline-block;
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    flex-wrap:wrap;
+
+    gap:12px;
 
     margin-top:15px;
+
+}
+
+.website-link{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    margin-top:0;
 
     padding:10px 20px;
 
@@ -5426,7 +5448,7 @@ body.gameplay-locked #playerHand .card {
     align-items: center;
     gap: 8px;
 
-    margin-top: 14px;
+    margin-top: 0;
 
     padding: 10px 20px;
 
