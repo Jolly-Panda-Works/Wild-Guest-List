@@ -18,6 +18,7 @@
 import { t } from "../i18n.js";
 import { isWalkthroughActive } from "./walkthrough.js";
 import { LONG_PRESS_DURATION_MS } from "../constants/longPress.js";
+import { loadIcons } from "./icon-ui.js";
 
 const STORAGE_KEY = "wgl_cardHelpLongPressHintShown";
 const AUTO_DISMISS_MS = 5000;
@@ -47,7 +48,7 @@ function buildHintEl() {
         <div class="card-help-hint-bubble">
             <div class="card-help-hint-demo" aria-hidden="true">
                 <span class="card-help-hint-demo-ring"></span>
-                <span class="card-help-hint-demo-icon">👆</span>
+                <span class="card-help-hint-demo-icon" data-icon="pointer"></span>
             </div>
             <p class="card-help-hint-text"></p>
         </div>
@@ -141,6 +142,7 @@ export function maybeShowCardHelpHint(handEl) {
     hintEl = buildHintEl();
     renderText();
     document.body.appendChild(hintEl);
+    loadIcons(hintEl);
     positionHint(handEl);
 
     resizeHandler = () => positionHint(handEl);

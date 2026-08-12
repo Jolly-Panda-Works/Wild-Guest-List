@@ -53,7 +53,7 @@ function renderHandDiagram(diagram){
         <div class="tut-card">
             <div class="tut-card-emoji">${c.emoji}</div>
             <div class="tut-card-name">${c.name}</div>
-            <div class="tut-card-power">⚡${c.power}</div>
+            <div class="tut-card-power"><span data-icon="power"></span>${c.power}</div>
         </div>
     `).join("");
     return `
@@ -94,7 +94,7 @@ function renderAbilityExamples(diagram){
                 <span class="tut-ability-name">${e.name}</span>
                 <span class="tut-ability-hint">${e.hint}</span>
             </div>
-            <span class="tut-ability-power">⚡${e.power}</span>
+            <span class="tut-ability-power"><span data-icon="power"></span>${e.power}</span>
         </div>
     `).join("");
     return `
@@ -112,9 +112,9 @@ function renderResolveDiagram(diagram){
         if (diagram.party.includes(i)) role = "party";
         if (diagram.trash.includes(i)) role = "trash";
         const badges = {
-            party: `<span class="tut-role-badge badge-party">🎉 ${t("partyPanel")}</span>`,
-            trash: `<span class="tut-role-badge badge-trash">🗑️ ${t("trashPanel")}</span>`,
-            stay:  `<span class="tut-role-badge badge-stay">⏳</span>`
+            party: `<span class="tut-role-badge badge-party"><span data-icon="partyEmoji"></span> ${t("partyPanel")}</span>`,
+            trash: `<span class="tut-role-badge badge-trash"><span data-icon="trashEmoji"></span> ${t("trashPanel")}</span>`,
+            stay:  `<span class="tut-role-badge badge-stay"><span data-icon="waiting"></span></span>`
         };
         return `
             <div class="tut-card tut-card-sm tut-card-${role}">
@@ -130,9 +130,9 @@ function renderResolveDiagram(diagram){
             <div class="tut-diagram-label">${diagram.label}</div>
             <div class="tut-queue-row tut-queue-wrap">${cards}</div>
             <div class="tut-resolve-legend">
-                <span class="badge-party tut-legend-dot">🎉 ${t("partyPanel")}</span>
-                <span class="badge-stay  tut-legend-dot">⏳</span>
-                <span class="badge-trash tut-legend-dot">🗑️ ${t("trashPanel")}</span>
+                <span class="badge-party tut-legend-dot"><span data-icon="partyEmoji"></span> ${t("partyPanel")}</span>
+                <span class="badge-stay  tut-legend-dot"><span data-icon="waiting"></span></span>
+                <span class="badge-trash tut-legend-dot"><span data-icon="trashEmoji"></span> ${t("trashPanel")}</span>
             </div>
         </div>
     `;
@@ -141,7 +141,7 @@ function renderResolveDiagram(diagram){
 function renderScoreboard(diagram){
     const rows = diagram.players.map(p => `
         <div class="tut-score-row ${p.winner ? "tut-score-winner" : ""}">
-            <span class="tut-score-name">${p.winner ? "🏆 " : ""}${p.name}</span>
+            <span class="tut-score-name">${p.winner ? '<span data-icon="trophy"></span> ' : ""}${p.name}</span>
             <span class="tut-score-bar-wrap">
                 <span class="tut-score-bar" style="width:${(p.score / 12) * 100}%"></span>
             </span>
@@ -174,7 +174,7 @@ function buildVideoHTML(videoUrl){
     return `
         <div class="tut-video-wrap">
             <button class="tut-video-toggle" id="tutVideoToggle">
-                <span class="tut-video-icon">▶</span>
+                <span class="tut-video-icon" data-icon="videoPlay"></span>
                 <span>${t("tutVideoLabel")}</span>
             </button>
             <div class="tut-video-container hidden" id="tutVideoContainer">
@@ -231,7 +231,10 @@ function renderSlide(){
         if (toggleBtn && container){
             toggleBtn.addEventListener("click", () => {
                 const hidden = container.classList.toggle("hidden");
-                toggleBtn.querySelector(".tut-video-icon").textContent = hidden ? "▶" : "⏸";
+                const iconEl = toggleBtn.querySelector(".tut-video-icon");
+                iconEl.dataset.icon = hidden ? "videoPlay" : "videoPause";
+                delete iconEl.dataset.iconLoaded; // force loadIcons() to re-apply the new key
+                loadIcons(iconEl);
                 if (hidden){
                     // stop iframe
                     const iframe = document.getElementById("tutorialVideoFrame");

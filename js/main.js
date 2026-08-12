@@ -59,7 +59,7 @@ async function buildDifficultyPanel() {
         const playerRow = `
             <div class="bot-row player-row" id="playerColorRow">
                 <div class="bot-avatar">
-                    <span>🙋</span>
+                    <span data-icon="player"></span>
                 </div>
                 <div class="bot-info">
                     <div class="bot-name">${t("you")}</div>

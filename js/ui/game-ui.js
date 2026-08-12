@@ -11,14 +11,7 @@ import { openCardInfoByPower } from "../game/help.js";
 import { LONG_PRESS_DURATION_MS } from "../constants/longPress.js";
 import { TURN_TIMER_SECONDS } from "../constants/turnTimer.js";
 import { dismissCardHelpHintOnSuccess } from "./cardHelpHint.js";
-
-let _config = null;
-async function getConfig() {
-    if (_config) return _config;
-    const res = await fetch("./data/config.json");
-    _config = await res.json();
-    return _config;
-}
+import { loadIcons } from "./icon-ui.js";
 
 // ── Warning toast ─────────────────────────────────────────
 function showWarning(message) {
@@ -28,7 +21,8 @@ function showWarning(message) {
         el.id = "warningPopup";
         document.body.appendChild(el);
     }
-    el.innerHTML = `<span class="warning-icon">⏳</span> ${message}`;
+    el.innerHTML = `<span class="warning-icon" data-icon="waiting"></span> ${message}`;
+    loadIcons(el);
     el.classList.add("visible");
     clearTimeout(el._timer);
     el._timer = setTimeout(() => el.classList.remove("visible"), 2200);
@@ -68,21 +62,19 @@ export async function renderNonBoard(gameState) {
 // ── Queue ─────────────────────────────────────────────────
 async function renderQueue(gameState) {
     const queue = document.getElementById("queue");
-    const config = await getConfig();
-    const entryIcon = config.icons?.queueEntry || "🚪";
-    const exitIcon  = config.icons?.queueExit  || "🗑️";
 
     let wrapper = document.getElementById("queueWithIcons");
     if (!wrapper) {
         wrapper = document.createElement("div");
         wrapper.id = "queueWithIcons";
         wrapper.innerHTML = `
-            <div class="queue-icon queue-icon-entry">${entryIcon}</div>
+            <div class="queue-icon queue-icon-entry" data-icon="queueEntry"></div>
             <div id="queueInner"></div>
-            <div class="queue-icon queue-icon-exit">${exitIcon}</div>
+            <div class="queue-icon queue-icon-exit" data-icon="queueExit"></div>
         `;
         queue.parentNode.insertBefore(wrapper, queue);
         wrapper.querySelector("#queueInner").appendChild(queue);
+        loadIcons(wrapper);
     }
 
     queue.innerHTML = "";

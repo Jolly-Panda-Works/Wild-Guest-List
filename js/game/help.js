@@ -1,4 +1,5 @@
 import { t, getLang } from "../i18n.js";
+import { loadIcons } from "../ui/icon-ui.js";
 let helpCards = null;
 
 /** Ensures cardInfo.json is loaded, without opening/rendering the Help
@@ -120,7 +121,7 @@ function openCardInfo(card) {
         <div class="help-card-detail">
             ${visual}
             <h2>${name}</h2>
-            <div class="power-badge">⚡ Power ${card.power}</div>
+            <div class="power-badge"><span data-icon="power"></span> Power ${card.power}</div>
 
             <h3>${t("howItWorks")}</h3>
             <p class="desc-text">${description}</p>
@@ -139,8 +140,10 @@ function openCardInfo(card) {
             </div>
 
             <div class="help-tip">
-                💡 <strong>Tip:</strong> ${t("helpTip")}
+                <span data-icon="tip"></span> <strong>Tip:</strong> ${t("helpTip")}
             </div>
         </div>
     `;
+
+    loadIcons(document.getElementById("cardModalContent"));
 }

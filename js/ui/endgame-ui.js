@@ -1,5 +1,8 @@
 import { t, playerDisplayName } from "../i18n.js";
 import { playSound } from "../services/soundManager.js";
+import { loadIcons } from "./icon-ui.js";
+
+const RANK_ICON = ["rankGold", "rankSilver", "rankBronze"];
 
 export function showEndGame(gameState) {
     const screen     = document.getElementById("endGameScreen");
@@ -33,16 +36,21 @@ export function showEndGame(gameState) {
         sorted.map((player, idx) => {
             const power = player.party.reduce((s, c) => s + c.power, 0);
             const isWinner = player.id === winner.id;
+            const rankIcon = RANK_ICON[idx];
+            const rank = rankIcon
+                ? `<span data-icon="${rankIcon}"></span>`
+                : `#${idx + 1}`;
             return `
                 <div class="final-score-row ${isWinner ? "winner-row" : ""}"
                      data-player="${player.id}">
-                    <span class="rank-badge">${idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx+1}`}</span>
+                    <span class="rank-badge">${rank}</span>
                     <span class="player-name">${playerDisplayName(player)}</span>
-                    <span class="party-count">${player.party.length} 🎉</span>
-                    <span class="power-score">${power} ⚡</span>
+                    <span class="party-count">${player.party.length} <span data-icon="partyEmoji"></span></span>
+                    <span class="power-score">${power} <span data-icon="power"></span></span>
                 </div>`;
         }).join("");
 
+    loadIcons(finalScores);
     screen.classList.remove("hidden");
 }
 

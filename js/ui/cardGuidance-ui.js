@@ -29,6 +29,9 @@ import { loadCardData } from "../services/dataLoader.js";
 import { isWalkthroughActive } from "./walkthrough.js";
 import { EVENTS } from "../presentation/events.js";
 import { isReducedMotion } from "../presentation/flip.js";
+import { loadIcons } from "./icon-ui.js";
+
+const BADGE_ICON = { removed: "trashEmoji", jumped: "jumped", escaped: "escaped" };
 
 const SETTING_KEY     = "wgl_stepGuidance";
 const EXPLAINED_KEY   = "wgl_explainedAbilities";
@@ -240,10 +243,10 @@ function visualFor(cardLike) {
 function chipFor(cardLike, { affectedSet, kind }) {
     const isAffected = affectedSet.has(cardLike.uid);
     const cls = ["guide-chip"];
-    let badge = "";
+    let badgeIcon = "";
     if (isAffected) {
         cls.push("guide-chip-affected", `guide-chip-${kind}`);
-        badge = kind === "removed" ? "🗑️" : kind === "jumped" ? "⤴️" : kind === "escaped" ? "↩️" : "⭐";
+        badgeIcon = BADGE_ICON[kind] || "star";
     }
     const visual = cardLike.image
         ? `<img class="guide-chip-img" src="${cardLike.image}" alt="" />`
@@ -253,7 +256,7 @@ function chipFor(cardLike, { affectedSet, kind }) {
         <div class="${cls.join(" ")}">
             ${visual}
             <span class="guide-chip-power">${cardLike.power}</span>
-            ${badge ? `<span class="guide-chip-badge">${badge}</span>` : ""}
+            ${badgeIcon ? `<span class="guide-chip-badge" data-icon="${badgeIcon}"></span>` : ""}
         </div>
     `;
 }
@@ -295,13 +298,14 @@ async function renderGuidance(payload) {
     if (payload.destination === "trash") {
         html += `
             <div class="guide-queue-block guide-destination">
-                <div class="guide-queue-label">🗑️</div>
+                <div class="guide-queue-label" data-icon="trashEmoji"></div>
                 ${renderQueueRow(payload.affected, affectedSet, payload.kind)}
             </div>
         `;
     }
 
     diagram.innerHTML = html;
+    loadIcons(diagram);
 }
 
 /* ─────────────────────────────────────────

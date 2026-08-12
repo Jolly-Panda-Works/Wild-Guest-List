@@ -1,4 +1,7 @@
 import { t, playerDisplayName } from "../i18n.js";
+import { loadIcons } from "./icon-ui.js";
+
+const RANK_ICON = ["rankGold", "rankSilver", "rankBronze"];
 
 export function renderLeaderboard(gameState) {
 
@@ -12,12 +15,13 @@ export function renderLeaderboard(gameState) {
     const rowsHTML = sorted.map((p, i) => {
         const score = p.party.reduce((s, c) => s + c.power, 0);
         const count = p.party.length;
-        const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i+1}`;
+        const rankIcon = RANK_ICON[i];
+        const medal = rankIcon ? `<span data-icon="${rankIcon}"></span>` : `#${i + 1}`;
         return `<div class="leaderboard-row" data-player="${p.id}">
             <span class="lb-rank">${medal}</span>
             <span class="lb-name">${playerDisplayName(p)}</span>
-            <span class="lb-cards" title="${t("endParty")}">${count} 🎉</span>
-            <span class="lb-score" title="${t("endPower")}">${score} ⚡</span>
+            <span class="lb-cards" title="${t("endParty")}">${count} <span data-icon="partyEmoji"></span></span>
+            <span class="lb-score" title="${t("endPower")}">${score} <span data-icon="power"></span></span>
         </div>`;
     }).join("");
 
@@ -31,4 +35,7 @@ export function renderLeaderboard(gameState) {
 
     const mobileInline = document.getElementById("mobileLeaderboardInline");
     if (mobileInline) mobileInline.innerHTML = headerHTML + rowsHTML;
+
+    if (desktopRows) loadIcons(desktopRows);
+    if (mobileInline) loadIcons(mobileInline);
 }
