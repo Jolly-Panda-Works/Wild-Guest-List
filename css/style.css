@@ -414,9 +414,16 @@ body {
 
 /* Icon box reuses the exact dimensions of the gameplay top-bar
    buttons (.top-btn, css/style.css #topRight) so the pause panel's
-   icons read as the same UI element, just in a different context. */
+   icons read as the same UI element, just in a different context —
+   background left transparent, unlike .top-btn's own default. */
 .pause-action-icon.top-btn {
-    background: rgba(255,255,255,0.08);
+    background: transparent;
+}
+
+.pause-action-icon.top-btn:hover {
+    background: transparent;
+    transform: none;
+    box-shadow: none;
 }
 
 .pause-action-label {
