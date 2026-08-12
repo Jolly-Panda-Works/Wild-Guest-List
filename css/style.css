@@ -1880,6 +1880,53 @@ body {
         0 20px 60px rgba(0,0,0,.6);
 }
 
+/* ── About Developer panel redesign ──
+   Profile-card layout: close button pinned to the corner, a large
+   developer avatar centered up top, title below it, then the usual
+   centered body copy and action row. Replaces the old
+   .help-header (title+close in a row) for this modal only — that
+   shared class is still used as-is by the other modals. */
+.about-panel {
+    position: relative;
+    text-align: center;
+    padding-top: 40px;
+}
+
+.about-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+}
+
+[dir="rtl"] .about-close {
+    right: auto;
+    left: 14px;
+}
+
+.about-avatar {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.about-avatar [data-icon] {
+    width: 96px;
+    height: 96px;
+}
+
+.about-avatar .icon-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.about-title {
+    margin: 0 0 18px;
+    font-size: clamp(20px, 5vw, 26px);
+    font-weight: 700;
+    color: var(--text-main);
+}
+
 .about-content{
 
     text-align:center;
