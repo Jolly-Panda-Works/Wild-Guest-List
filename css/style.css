@@ -160,6 +160,29 @@ body {
     color: rgba(255,255,255,.35);
 }
 
+.turn-timer-icon {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    font-size: clamp(11px, 1.4vw, 18px);
+
+    line-height: 1;
+}
+
+/* If config.json's "timer" icon is later switched from an emoji to an
+   image path, icon-ui.js swaps in an <img class="icon-image">; size it
+   to match the text so the swap doesn't jump the layout. */
+.turn-timer-icon .icon-image {
+
+    width: 1em;
+
+    height: 1em;
+
+    object-fit: contain;
+}
+
 .turn-timer-label {
 
     font-weight: 700;
