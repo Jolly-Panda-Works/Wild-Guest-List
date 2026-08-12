@@ -5303,6 +5303,7 @@ body.gameplay-locked #playerHand .card {
 
 .feedback-modal-content {
     text-align: left;
+    box-sizing: border-box;
 }
 
 :lang(fa) .feedback-modal-content,
@@ -5320,12 +5321,15 @@ body.gameplay-locked #playerHand .card {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .feedback-field {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    box-sizing: border-box;
 }
 
 .feedback-label {
@@ -5361,6 +5365,7 @@ body.gameplay-locked #playerHand .card {
 .feedback-textarea,
 .feedback-input {
     width: 100%;
+    box-sizing: border-box;
     padding: 10px 12px;
     border-radius: 10px;
     border: 1px solid var(--border);
@@ -5393,6 +5398,7 @@ body.gameplay-locked #playerHand .card {
 
 .feedback-submit-btn {
     width: 100%;
+    box-sizing: border-box;
     margin-top: 0;
 }
 
@@ -5429,6 +5435,7 @@ body.gameplay-locked #playerHand .card {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    box-sizing: border-box;
 
     padding: 14px 16px;
     border-radius: var(--radius-md);
