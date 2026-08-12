@@ -99,6 +99,14 @@ export function startTurn(gameState){
         "logTurn", {}
     );
 
+    // Reflect the turn hand-off immediately — before the "thinking" delay
+    // and before any card is played — so the current-turn highlight (see
+    // renderOtherPlayers) lights up the moment it becomes this bot's
+    // turn, not only once its card is already mid-flight into the queue
+    // (which is when playCard()'s own updateNonBoardUI calls would
+    // otherwise first run).
+    updateNonBoardUI(gameState);
+
     setTimeout(async ()=>{
 
         const index =
