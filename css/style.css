@@ -989,6 +989,47 @@ body {
     overflow: hidden;
 }
 
+/* ── Long-press feedback ──────────────────────────────────
+   Subtle scale + glow + circular progress ring while a card is
+   being held. Purely visual — driven by the .long-press-active
+   class toggled from js/ui/longPress.js. The ring's fill duration
+   is set inline via --long-press-duration (see js/ui/game-ui.js)
+   so it always matches the actual timer, with no duplicated number
+   in CSS. Disappears immediately (no transition delay) if the
+   gesture is cancelled, since the class is simply removed. */
+.card.long-press-active {
+    transform: scale(1.04);
+    box-shadow: var(--shadow-card), 0 0 0 3px rgba(189, 93, 56, 0.55);
+    transition: transform 120ms ease-out, box-shadow 120ms ease-out;
+}
+
+.card.long-press-active::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    border-radius: inherit;
+    background: conic-gradient(var(--accent) 0deg, transparent 0deg);
+    opacity: 0.35;
+    animation: long-press-ring var(--long-press-duration, 800ms) linear forwards;
+}
+
+@keyframes long-press-ring {
+    from { background: conic-gradient(var(--accent) 0deg, transparent 0deg); }
+    to   { background: conic-gradient(var(--accent) 360deg, transparent 360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card.long-press-active {
+        transition: none;
+    }
+    .card.long-press-active::after {
+        animation: none;
+        opacity: 0.25;
+    }
+}
+
 .card-owner-badge {
     position: absolute;
     top: 5%;
@@ -1250,6 +1291,15 @@ body {
 
     height: clamp(96px, 11.5vw, 140px);
 
+}
+
+/* Let the browser keep handling horizontal scroll/pan of the hand strip
+   itself (see the mobile overflow-x:auto rule below); our long-press
+   handler cancels on the same real drag via its own movement threshold,
+   so this doesn't fight that — it just avoids blocking scroll for the
+   fraction of a gesture before our JS threshold check runs. */
+#playerHand .card {
+    touch-action: pan-x;
 }
 
 /* .owner removed - replaced by .card-owner-badge */

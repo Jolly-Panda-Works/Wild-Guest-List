@@ -6,6 +6,9 @@ import { flip, playBeat, wait, isReducedMotion } from "../presentation/flip.js";
 import { director } from "../presentation/director.js";
 import { EVENTS } from "../presentation/events.js";
 import { ANTICIPATION, DEFAULT_ANTICIPATION, REACTION, DEFAULT_REACTION } from "../presentation/abilityPresentations.js";
+import { attachLongPress } from "./longPress.js";
+import { openCardInfoByPower } from "../game/help.js";
+import { LONG_PRESS_DURATION_MS } from "../constants/longPress.js";
 
 let _config = null;
 async function getConfig() {
@@ -107,9 +110,18 @@ function queueSlotEl(index) {
     return slots[index] || null;
 }
 
+// Long-press handles for the currently-rendered hand cards — torn down
+// at the top of every renderHand() so timers/listeners from the previous
+// render never linger past the re-render that replaces their elements.
+let handLongPressHandles = [];
+
 // ── Hand ──────────────────────────────────────────────────
 function renderHand(gameState) {
     const hand = document.getElementById("playerHand");
+
+    handLongPressHandles.forEach(h => h.destroy());
+    handLongPressHandles = [];
+
     hand.innerHTML = "";
 
     document.getElementById("deckCount").textContent =
@@ -120,7 +132,16 @@ function renderHand(gameState) {
 
     player.hand.forEach((card, index) => {
         const cardEl = createCard(card);
-        cardEl.onclick = async () => {
+
+        // Accessible focus target: same info long-press reveals should
+        // also be reachable via keyboard, without changing what Enter/
+        // Space does for card-play (see keydown handler below).
+        cardEl.tabIndex = 0;
+        cardEl.setAttribute("role", "button");
+        const cardName = cardEl.querySelector(".card-name")?.textContent || "";
+        cardEl.setAttribute("aria-label", cardName);
+
+        const playThisCard = async () => {
             if (!isMyTurn) {
                 showWarning(t("notYourTurn"));
                 return;
@@ -135,6 +156,62 @@ function renderHand(gameState) {
             await playCard(player, index, gameState);
             playSound("playCard");
         };
+
+        const longPress = attachLongPress(cardEl, {
+            // Long-press must not fire while the player doesn't have
+            // control — e.g. mid-animation/AI turn — matching the same
+            // director.isBusy() gate normal play already respects.
+            isDisabled: () => director.isBusy(),
+            onLongPress: () => {
+                openCardInfoByPower(card.power);
+            },
+        });
+        handLongPressHandles.push(longPress);
+
+        cardEl.onclick = () => {
+            // A long-press that just fired also produces a trailing
+            // click/tap on release — swallow exactly that one so Help
+            // opening never also plays the card underneath it.
+            if (longPress.consumeSuppressedClick()) return;
+            playThisCard();
+        };
+
+        // Keyboard parity with the long-press gesture: holding Enter/Space
+        // for the same LONG_PRESS_DURATION_MS opens Card Information,
+        // exactly like holding the card with a pointer does. A quick
+        // tap still plays the card, so existing keyboard play behavior
+        // is unchanged — this only adds a hold action, it doesn't alter
+        // what a normal press does.
+        let keyHoldTimer = null;
+        let keyHoldFired = false;
+        const onKeyDown = e => {
+            if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
+            e.preventDefault();
+            if (e.repeat) return; // ignore OS key-repeat while held
+            keyHoldFired = false;
+            keyHoldTimer = setTimeout(() => {
+                keyHoldFired = true;
+                openCardInfoByPower(card.power);
+            }, LONG_PRESS_DURATION_MS);
+        };
+        const onKeyUp = e => {
+            if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
+            clearTimeout(keyHoldTimer);
+            if (!keyHoldFired) playThisCard();
+            keyHoldFired = false;
+        };
+        cardEl.addEventListener("keydown", onKeyDown);
+        cardEl.addEventListener("keyup", onKeyUp);
+        // Piggyback on the same handles array so a mid-render teardown
+        // also clears any pending key-hold timer, not just pointer state.
+        handLongPressHandles.push({
+            destroy() {
+                clearTimeout(keyHoldTimer);
+                cardEl.removeEventListener("keydown", onKeyDown);
+                cardEl.removeEventListener("keyup", onKeyUp);
+            },
+        });
+
         hand.appendChild(cardEl);
     });
 }

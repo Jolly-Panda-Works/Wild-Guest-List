@@ -1,6 +1,32 @@
 import { t, getLang } from "../i18n.js";
 let helpCards = null;
 
+/** Ensures cardInfo.json is loaded, without opening/rendering the Help
+ *  grid — used by callers (e.g. long-press) that only need lookup data. */
+async function ensureHelpCardsLoaded() {
+    if (!helpCards) {
+        const res = await fetch("./data/cardInfo.json");
+        helpCards = await res.json();
+    }
+    return helpCards;
+}
+
+/** Opens the existing Card Information modal for the gameplay card with
+ *  the given `power` (cardInfo.json entries are keyed by power, same as
+ *  in-game card objects — see js/services/dataLoader.js). This is the
+ *  SAME modal/rendering used by the Help grid's "click a card" flow;
+ *  nothing here duplicates it. Used by the long-press gesture on cards
+ *  in the player's hand (see js/ui/game-ui.js). */
+export async function openCardInfoByPower(power) {
+    const cards = await ensureHelpCardsLoaded();
+    const card = cards.find(c => c.power === power);
+    if (!card) {
+        console.warn("[help] no cardInfo entry for power", power);
+        return;
+    }
+    openCardInfo(card);
+}
+
 export function initHelp() {
     const helpBtn   = document.getElementById("helpBtn");
     const helpModal = document.getElementById("helpModal");
