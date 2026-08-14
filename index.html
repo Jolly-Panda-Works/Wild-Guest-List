@@ -16,7 +16,7 @@
             <div id="leftSidebar">
 
                 <div id="leaderboard">
-                    <h3><span data-icon="leaderboard"></span> <span data-i18n="leaderboard">Leaderboard</span></h3>
+                    <h3><span data-icon="leaderboard"></span> <span data-i18n="matchStandings">Match Standings</span></h3>
                     <div id="leaderboardRows"></div>
                 </div>
 
@@ -83,7 +83,7 @@
 
                     <!-- Mobile leaderboard -->
                     <div id="mobileLeaderboard">
-                        <h4>🏆 Leaderboard</h4>
+                        <h4>🏆 <span data-i18n="matchStandings">Match Standings</span></h4>
                         <div id="mobileLeaderboardInline"></div>
                     </div>
 
@@ -442,6 +442,86 @@
             </div>
             <div class="creator">
                 Created by <a href="https://www.useffarahmand.com/" target="_blank">Usef Farahmand</a>
+            </div>
+        </div>
+
+        <!-- ── HOME / MAIN HUB ───────────────────────────────
+             New default landing screen after the splash name-entry
+             step (see js/ui/home-ui.js + AGENTS.md-tracked
+             docs/PRODUCT_ROADMAP.md Phase 1 / docs/UI_UX_PLAN.md §1-2).
+             "Offline Game" launches the exact same
+             splash→difficulty→match flow that existed before Home was
+             introduced (js/main.js). "Online Game" and the bottom-nav
+             entries are real, reachable, clearly-labeled future-state
+             placeholders — not fake functionality. -->
+        <div id="homeScreen" class="screen-overlay home-screen hidden" role="region" aria-label="Home">
+            <div class="home-content">
+
+                <div class="home-topbar">
+                    <div class="home-coin-pill" id="homeCoinPill" aria-label="Coins: 0">
+                        <span class="home-coin-icon" aria-hidden="true">🪙</span>
+                        <span class="home-coin-value" id="homeCoinValue">0</span>
+                    </div>
+                </div>
+
+                <img src="assets/img/branding/banner.png" alt="Wild Guest List" class="home-banner">
+
+                <div class="home-primary-row">
+                    <button id="homeOfflineBtn" class="home-primary-btn home-play-btn" type="button">
+                        <span class="home-btn-icon" data-icon="play" aria-hidden="true"></span>
+                        <span data-i18n="homeOfflineGame">Offline Game</span>
+                    </button>
+                    <button id="homeOnlineBtn" class="home-primary-btn home-secondary-cta" type="button"
+                            aria-disabled="true" data-title="Online Multiplayer — Coming Soon" data-title-key="homeOnlineComingSoonTip">
+                        <span class="home-btn-icon" data-icon="globe" aria-hidden="true"></span>
+                        <span data-i18n="homeOnlineGame">Online Game</span>
+                        <span class="home-lock-badge" aria-hidden="true">🔒</span>
+                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
+                    </button>
+                </div>
+
+                <nav class="home-secondary-row" aria-label="More">
+                    <button id="homeCardsBtn" class="home-nav-btn" type="button">
+                        <span class="home-nav-icon" data-icon="cards" aria-hidden="true"></span>
+                        <span class="home-nav-label" data-i18n="homeCards">Card Guide</span>
+                    </button>
+                    <button id="homeProfileBtn" class="home-nav-btn" type="button">
+                        <span class="home-nav-icon" data-icon="profile" aria-hidden="true"></span>
+                        <span class="home-nav-label" data-i18n="homeProfile">Profile</span>
+                        <span class="home-nav-soon" data-i18n="comingSoon">Coming Soon</span>
+                    </button>
+                    <button id="homeSettingsBtn" class="home-nav-btn" type="button">
+                        <span class="home-nav-icon" data-icon="settings" aria-hidden="true"></span>
+                        <span class="home-nav-label" data-i18n="settingsTitle">Settings</span>
+                    </button>
+                    <button id="homeHowToPlayBtn" class="home-nav-btn" type="button">
+                        <span class="home-nav-icon" data-icon="tutorial" aria-hidden="true"></span>
+                        <span class="home-nav-label" data-i18n="homeHowToPlay">How to Play</span>
+                    </button>
+                    <button id="homeAboutBtn" class="home-nav-btn" type="button">
+                        <span class="home-nav-icon" data-icon="About Developer" aria-hidden="true"></span>
+                        <span class="home-nav-label" data-i18n="aboutTitle">About Developer</span>
+                    </button>
+                </nav>
+
+                <div class="home-bottom-nav" role="navigation" aria-label="Coming soon">
+                    <button id="homeStoreBtn" class="home-bottom-btn" type="button">
+                        <span class="home-bottom-icon" data-icon="store" aria-hidden="true"></span>
+                        <span data-i18n="homeStore">Store</span>
+                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
+                    </button>
+                    <button id="homeTournamentBtn" class="home-bottom-btn" type="button">
+                        <span class="home-bottom-icon" data-icon="tournament" aria-hidden="true"></span>
+                        <span data-i18n="homeTournament">Tournament</span>
+                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
+                    </button>
+                    <button id="homeLeaderboardBtn" class="home-bottom-btn" type="button">
+                        <span class="home-bottom-icon" data-icon="leaderboard" aria-hidden="true"></span>
+                        <span data-i18n="homeLeaderboard">Leaderboard</span>
+                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
+                    </button>
+                </div>
+
             </div>
         </div>
 

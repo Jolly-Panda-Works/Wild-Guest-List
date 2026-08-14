@@ -4,12 +4,19 @@ import { t, getLang } from "../i18n.js"
 let slides = [];
 let currentSlide = 0;
 let isFirstTime = false;
+let _initialized = false;
 
 export async function initializeTutorial(){
 
     const response = await fetch("./data/tutorial.json");
     const data     = await response.json();
     slides         = data.slides;
+
+    // Guard against double-binding: initializeTutorial() is now called
+    // once at boot (so Home's "How to Play" entry works before a match
+    // exists) as well as from js/main.js on every new game.
+    if (_initialized) return;
+    _initialized = true;
 
     bindTutorialEvents();
 

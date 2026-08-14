@@ -1,6 +1,6 @@
 {
     "app": {
-        "version": "1.10.1"
+        "version": "1.11.0"
     },
     "icons": {
         "leaderboard": "assets/img/icons/leaderboard.png",
@@ -22,6 +22,11 @@
         "previous": "assets/img/icons/previous.png",
         "next": "assets/img/icons/next.png",
         "play": "assets/img/icons/play.png",
+        "globe": "🌐",
+        "cards": "🃏",
+        "profile": "👤",
+        "store": "🛒",
+        "tournament": "🏅",
         "bot-easy": "assets/img/icons/bot-easy.png",
         "bot-medium": "assets/img/icons/bot-normal.png",
         "bot-hard": "assets/img/icons/bot-hard.png",

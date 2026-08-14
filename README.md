@@ -40,7 +40,7 @@ At the end, the player with the **most animals in their party wins**.
   * Hard
 * 🎯 Strategic shared queue system
 * 🎉 Party and Trash systems
-* 🏆 Leaderboard
+* 🏆 Match Standings (live in-match score panel)
 * 📜 Game log
 * 📖 Interactive tutorial
 * 🎓 First-time gameplay walkthrough
@@ -77,11 +77,39 @@ The abilities are designed to interact with one another, creating situations whe
 
 ---
 
+## 🏠 Home Screen
+
+After the one-time splash/name-entry step, the game opens on a **Home**
+screen — the central navigation point for the app.
+
+* **Offline Game** — the primary call-to-action; opens the existing
+  bot-difficulty selection and starts a match exactly as before.
+* **Online Game** — visible and clearly marked **Coming Soon**; tapping
+  it shows a short notice rather than doing nothing.
+* **Secondary row** — Card Guide (the existing Animal Abilities
+  reference), Settings, How to Play (tutorial), and About Developer.
+* **Profile** — visible, marked **Coming Soon** (no account system
+  exists yet).
+* **Bottom navigation** — Store, Tournament, and Leaderboard are
+  reserved, reachable entries, each showing a **Coming Soon** state.
+  These are architecture-only placeholders for future updates; no
+  purchasing, ranking, or matchmaking is implemented yet.
+* **Coin pill** — a small balance indicator in the top-right, shown as
+  `0` since there's no coin economy yet.
+
+Home is implemented in `js/ui/home-ui.js` and reuses the game's
+existing modal, help, and tutorial systems rather than duplicating
+them. See `docs/PRODUCT_ROADMAP.md` (Phase 1) and `docs/UI_UX_PLAN.md`
+for the fuller design plan this follows, including later phases
+(Profile accounts, a real Store/economy, Achievements, Quests,
+Leaderboard, and Online/Tournament play).
+
 ## 🧠 Core Gameplay
 
 ### 1. Start the Game
 
-The player enters a name and chooses the difficulty of each opponent.
+From Home, choosing **Offline Game** lets the player enter a name and
+choose the difficulty of each opponent.
 
 Each game contains:
 
@@ -216,7 +244,7 @@ There is also an interactive first-time walkthrough explaining:
 * Queue
 * Party
 * Trash
-* Leaderboard
+* Match Standings
 * Game log
 * Playing cards
 * Animal abilities
@@ -641,7 +669,11 @@ This makes the project lightweight and easy to deploy.
 
 ## 🗺️ Roadmap
 
-Potential future improvements include:
+The Home screen now reserves navigation entries (shown as "Coming
+Soon") for several of these — Online multiplayer, a Store, Tournament,
+Leaderboard, and Profile — so they can be built in without reshaping
+the app's navigation later. See `docs/PRODUCT_ROADMAP.md` for the
+phased plan. Potential future improvements include:
 
 * 🌐 Online multiplayer
 * 👥 Real-time player matches
@@ -678,7 +710,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.10.1
+**Current version:** 1.11.0
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen in the Settings modal (`data-app-version` in `index.html`, populated at runtime by `js/ui/icon-ui.js`). Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

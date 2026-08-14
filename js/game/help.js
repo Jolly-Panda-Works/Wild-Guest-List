@@ -28,17 +28,31 @@ export async function openCardInfoByPower(power) {
     openCardInfo(card);
 }
 
+/** Opens the Card Guide (the existing Help modal's animal grid) and
+ *  loads its data if needed. Shared by the in-game helpBtn (top bar)
+ *  and the Home screen's Card Guide entry (js/ui/home-ui.js) — one
+ *  modal, one loader, no duplicated "collection" screen. */
+export function openHelp() {
+    document.getElementById("helpModal")?.classList.remove("hidden");
+    loadHelpCards();
+}
+
+let _initialized = false;
+
 export function initHelp() {
+    // Guard against double-binding: initHelp() is called once at boot
+    // (so Home's Card Guide entry works before a match exists) and
+    // historically was also called from js/main.js on every new game.
+    if (_initialized) return;
+    _initialized = true;
+
     const helpBtn   = document.getElementById("helpBtn");
     const helpModal = document.getElementById("helpModal");
     const closeHelp = document.getElementById("closeHelp");
     const cardModal    = document.getElementById("cardModal");
     const cardBackBtn  = document.getElementById("cardBackBtn");
 
-    helpBtn.addEventListener("click", () => {
-        helpModal.classList.remove("hidden");
-        loadHelpCards();
-    });
+    helpBtn.addEventListener("click", openHelp);
 
     closeHelp.addEventListener("click", () => helpModal.classList.add("hidden"));
 

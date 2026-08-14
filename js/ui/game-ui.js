@@ -17,7 +17,7 @@ import { getPlayerAvatarId } from "./playerAvatar-ui.js";
 import { PLAYER_AVATARS } from "../constants/avatars.js";
 
 // ── Warning toast ─────────────────────────────────────────
-function showWarning(message) {
+export function showWarning(message) {
     let el = document.getElementById("warningPopup");
     if (!el) {
         el = document.createElement("div");

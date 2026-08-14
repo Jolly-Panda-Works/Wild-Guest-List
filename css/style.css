@@ -5754,3 +5754,321 @@ body.gameplay-locked #playerHand .card {
         right: 12px;
     }
 }
+
+
+/* ==========================================================
+   HOME / MAIN HUB
+   New default landing screen between the splash name-entry
+   step and the existing splash->difficulty->match flow.
+   Reuses existing tokens (--bg-panel, --radius-*, --shadow-*,
+   --accent) and the .screen-overlay/.screen-content/.top-btn
+   visual language already established by the splash screen and
+   in-game top bar, per docs/UI_UX_PLAN.md secs 1-2, 11-16.
+========================================================== */
+
+.home-screen {
+    align-items: stretch;
+}
+
+.home-content {
+    width: 100%;
+    height: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+    padding: 18px 20px 14px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background: var(--bg-panel);
+}
+
+.home-topbar {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Coin pill — honest placeholder (real value: 0, no economy yet).
+   Reused by Store/Rewards once Phase 4 wires a real balance. */
+.home-coin-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-main);
+}
+
+.home-coin-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.home-banner {
+    width: min(420px, 78vw);
+    max-height: 22vh;
+    object-fit: contain;
+    margin: 0 auto;
+}
+
+/* ── Primary CTAs ─────────────────────────────────────────
+   Offline Game is the strongest visual element on the screen
+   (largest, filled, accent color) — Online Game is present but
+   clearly subordinate/disabled, never hidden. */
+.home-primary-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.home-primary-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 18px 24px;
+    font-size: 19px;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.home-play-btn {
+    background: linear-gradient(145deg, var(--accent), #8f4527);
+    color: #fff;
+    box-shadow: var(--shadow-card);
+    font-size: 22px;
+    padding: 22px 24px;
+}
+
+.home-play-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+}
+
+.home-btn-icon {
+    font-size: 1.1em;
+    line-height: 1;
+}
+
+.home-secondary-cta {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    font-size: 16px;
+    padding: 14px 20px;
+    cursor: not-allowed;
+}
+
+.home-secondary-cta:hover {
+    transform: none;
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.home-lock-badge {
+    font-size: 14px;
+}
+
+.home-coming-soon-tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: var(--text-muted);
+    padding: 3px 8px;
+    border-radius: 999px;
+}
+
+/* ── Secondary nav row ────────────────────────────────────
+   Same icon-button visual language as the in-game top bar
+   (.top-btn), extended with a text label since these sit on
+   their own screen rather than a cramped top bar. */
+.home-secondary-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+    gap: 10px;
+}
+
+.home-nav-btn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    color: var(--text-main);
+    padding: 12px 8px 10px;
+    min-height: 76px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .18s ease, transform .18s ease;
+}
+
+.home-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.home-nav-icon {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.home-nav-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.25;
+}
+
+.home-nav-soon {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 6px;
+    padding: 2px 5px;
+    color: var(--text-muted);
+    letter-spacing: .3px;
+}
+
+/* ── Bottom nav (Store / Tournament / Leaderboard) ───────── */
+.home-bottom-nav {
+    margin-top: auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+
+.home-bottom-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 4px;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background .18s ease, color .18s ease;
+}
+
+.home-bottom-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+}
+
+.home-bottom-icon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.home-bottom-btn .home-coming-soon-tag {
+    font-size: 9px;
+    padding: 2px 6px;
+}
+
+/* ── Disabled-state primitive (reused wherever a Home feature
+   is gated: Online Game today, future locked nav entries) ── */
+[aria-disabled="true"] {
+    opacity: .72;
+}
+
+/* ── Keyboard focus (Home introduces plain <button> elements
+   that had no prior focus-visible treatment in this project) ── */
+.home-primary-btn:focus-visible,
+.home-nav-btn:focus-visible,
+.home-bottom-btn:focus-visible,
+.home-coin-pill:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+/* ── Responsive ───────────────────────────────────────────
+   Mirrors the existing splash-screen breakpoints so Home reads
+   as part of the same shell rather than a bolted-on screen. */
+@media (max-width: 600px) {
+    .home-content {
+        padding: 14px 14px 10px;
+        gap: 14px;
+    }
+
+    .home-banner {
+        width: 82vw;
+        max-height: 16vh;
+    }
+
+    .home-primary-btn {
+        padding: 16px 18px;
+    }
+
+    .home-play-btn {
+        font-size: 19px;
+        padding: 18px 18px;
+    }
+
+    .home-secondary-row {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 900px) {
+    .home-primary-row {
+        flex-direction: row;
+    }
+
+    .home-play-btn {
+        flex: 1.4;
+    }
+
+    .home-secondary-cta {
+        flex: 1;
+    }
+}
+
+/* RTL (Persian/Arabic) — reuse the same button/icon layout since
+   flex/grid already flip correctly under dir="rtl"; only the
+   coming-soon badge's absolute offset needs mirroring. */
+:lang(fa) .home-nav-soon,
+:lang(ar) .home-nav-soon {
+    right: auto;
+    left: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-play-btn,
+    .home-nav-btn,
+    .home-bottom-btn {
+        transition: none;
+    }
+
+    .home-play-btn:hover,
+    .home-nav-btn:hover {
+        transform: none;
+    }
+}

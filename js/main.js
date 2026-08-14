@@ -19,6 +19,7 @@ import {
 } from "./ui/cardGuidance-ui.js";
 import { initCardColorPicker, initColorTriggers } from "./ui/cardColor-ui.js";
 import { initAvatarTrigger } from "./ui/playerAvatar-ui.js";
+import { initHome, showHome } from "./ui/home-ui.js";
 
 // ── i18n boot — runs before anything else ─────────────────
 await loadI18n();
@@ -39,6 +40,16 @@ await initCardColorPicker();
 // still calls this again once the game starts; see the guard inside
 // initStepGuidanceToggle() for why that's safe.
 initStepGuidanceToggle();
+
+// ── Home screen boot ───────────────────────────────────────
+// Card Guide (help.js) and How to Play (tutorial-ui.js) are reachable
+// from Home before any match exists, so both are initialized here
+// instead of only inside startGame() as before. Both guard themselves
+// against being initialized twice (see their _initialized flags) so
+// startGame()'s existing calls remain harmless no-ops on later games.
+await initializeTutorial();
+initHelp();
+await initHome();
 
 // ── Bot definitions (names use i18n) ──────────────────────
 const BOT_DEFS = [
@@ -229,10 +240,13 @@ document.getElementById("closeSettings")?.addEventListener("click", () => {
     document.getElementById("settingsModal")?.classList.add("hidden");
 });
 
-// ── Wire up splash → difficulty panel → guidance prompt → start ──
+// ── Wire up splash → Home → difficulty panel → guidance prompt → start ──
+// Splash still plays once for name entry; it now routes to Home rather
+// than straight into difficulty selection (docs/UI_UX_PLAN.md §1).
+// Home's own "Offline Game" button (js/ui/home-ui.js) is what reveals
+// #difficultyModal — the exact same modal/flow as before.
 document.getElementById("startGameBtn")?.addEventListener("click", () => {
-    document.getElementById("splashScreen").classList.add("hidden");
-    document.getElementById("difficultyModal")?.classList.remove("hidden");
+    showHome();
 });
 
 document.getElementById("confirmDiffBtn")?.addEventListener("click", () => {
