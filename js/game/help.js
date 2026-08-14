@@ -52,7 +52,10 @@ export function initHelp() {
     const cardModal    = document.getElementById("cardModal");
     const cardBackBtn  = document.getElementById("cardBackBtn");
 
-    helpBtn.addEventListener("click", openHelp);
+    // helpBtn is the in-game top-bar icon (game.html only) — Home has
+    // its own Card Guide entry (js/ui/home-ui.js) that calls openHelp()
+    // directly, so this is a safe no-op there.
+    helpBtn?.addEventListener("click", openHelp);
 
     closeHelp.addEventListener("click", () => helpModal.classList.add("hidden"));
 
