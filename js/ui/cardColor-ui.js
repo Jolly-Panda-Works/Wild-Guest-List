@@ -2,7 +2,7 @@
  * Card color picker.
  *
  * The game always has exactly 4 seats — p1 (human) and p2-p4 (AI bots),
- * see js/main.js. This lets the player assign each seat its own color
+ * see js/home-main.js / js/game-main.js. This lets the player assign each seat its own color
  * from the predefined palette (js/constants/cardColors.js), with one
  * hard rule: all four colors must stay distinct. Picking a color that
  * another seat already has simply swaps the two seats' colors, so the

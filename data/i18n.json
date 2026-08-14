@@ -177,7 +177,12 @@
         "pauseTitle": "Paused",
         "pauseResume": "Resume",
         "pauseSettings": "Settings",
-        "pauseRestart": "Restart"
+        "pauseRestart": "Restart",
+        "profileModalTitle": "Profile",
+        "profileSaveBtn": "Save",
+        "profileNameLabel": "Display Name",
+        "homeProfileAriaLabel": "Your Profile — tap to edit",
+        "pauseHome": "Home"
     },
     "fa": {
         "dir": "rtl",
@@ -357,7 +362,12 @@
         "pauseTitle": "بازی متوقف شد",
         "pauseResume": "ادامه",
         "pauseSettings": "تنظیمات",
-        "pauseRestart": "شروع مجدد"
+        "pauseRestart": "شروع مجدد",
+        "profileModalTitle": "پروفایل",
+        "profileSaveBtn": "ذخیره",
+        "profileNameLabel": "نام نمایشی",
+        "homeProfileAriaLabel": "پروفایل شما — برای ویرایش ضربه بزنید",
+        "pauseHome": "خانه"
     },
     "ar": {
         "dir": "rtl",
@@ -537,7 +547,12 @@
         "pauseTitle": "اللعبة متوقفة",
         "pauseResume": "متابعة",
         "pauseSettings": "الإعدادات",
-        "pauseRestart": "إعادة البدء"
+        "pauseRestart": "إعادة البدء",
+        "profileModalTitle": "الملف الشخصي",
+        "profileSaveBtn": "حفظ",
+        "profileNameLabel": "الاسم المعروض",
+        "homeProfileAriaLabel": "ملفك الشخصي — اضغط للتعديل",
+        "pauseHome": "الرئيسية"
     },
     "tr": {
         "dir": "ltr",
@@ -717,6 +732,11 @@
         "pauseTitle": "Oyun Duraklatıldı",
         "pauseResume": "Devam Et",
         "pauseSettings": "Ayarlar",
-        "pauseRestart": "Yeniden Başlat"
+        "pauseRestart": "Yeniden Başlat",
+        "profileModalTitle": "Profil",
+        "profileSaveBtn": "Kaydet",
+        "profileNameLabel": "Görünen Ad",
+        "homeProfileAriaLabel": "Profilin — düzenlemek için dokun",
+        "pauseHome": "Ana Sayfa"
     }
 }

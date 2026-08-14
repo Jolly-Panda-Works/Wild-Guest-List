@@ -393,9 +393,10 @@ body {
 .pause-actions {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     justify-content: center;
     align-items: flex-start;
-    gap: clamp(20px, 6vw, 36px);
+    gap: clamp(16px, 5vw, 36px);
     margin-top: 8px;
 }
 
@@ -1581,7 +1582,7 @@ body {
 }
 
 /* The player's own deck (data-player="p1" — always the human seat, see
-   js/main.js) — colored the same way the opponents' .other-deck-back
+   js/game-main.js) — colored the same way the opponents' .other-deck-back
    already is, from the live --p1 variable set in
    js/ui/cardColor-ui.js applyCardColors(). */
 .deck-back[data-player="p1"] {
@@ -3834,6 +3835,60 @@ body.gameplay-locked #playerHand .card {
     box-shadow: 0 0 0 3px rgba(74,222,128,0.25);
 }
 
+/* ── Profile modal (js/ui/profile-ui.js) ─────────────────────
+   Display name + avatar — the only place either is edited. Reuses
+   the .avatar-choice look above at a slightly larger size since this
+   grid isn't squeezed into a popover. */
+.profile-panel {
+    max-width: 360px;
+}
+
+.profile-content {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 4px 4px 8px;
+}
+
+.profile-avatar-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+}
+
+.profile-avatar-choice {
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.15);
+    background: transparent;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.profile-avatar-choice img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.profile-avatar-choice:hover { transform: scale(1.06); }
+
+.profile-avatar-choice.active {
+    border-color: #4ade80;
+    box-shadow: 0 0 0 3px rgba(74,222,128,0.25);
+}
+
+.profile-name-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
 /* ── Per-seat color trigger (Choose Bot Difficulty screen) ──
    A small circle showing the seat's current card color; clicking it
    opens a popover with the full palette. Same underlying color state
@@ -5787,7 +5842,49 @@ body.gameplay-locked #playerHand .card {
 
 .home-topbar {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ── Profile entry point ──────────────────────────────────
+   Compact avatar + name chip — the one place on Home that
+   surfaces the player's identity (js/services/profile.js).
+   Tapping it opens #profileModal (js/ui/profile-ui.js). */
+.home-profile-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px 5px 5px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-main);
+    font-family: inherit;
+    cursor: pointer;
+    max-width: 42vw;
+    transition: background .18s ease, transform .18s ease;
+}
+
+.home-profile-chip:hover {
+    background: rgba(255, 255, 255, 0.14);
+    transform: translateY(-1px);
+}
+
+.home-profile-chip-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.home-profile-chip-name {
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Coin pill — honest placeholder (real value: 0, no economy yet).
@@ -5821,10 +5918,16 @@ body.gameplay-locked #playerHand .card {
    Offline Game is the strongest visual element on the screen
    (largest, filled, accent color) — Online Game is present but
    clearly subordinate/disabled, never hidden. */
+/* Primary Play action(s) — kept as the dominant, vertically-centered
+   focus of Home regardless of where the secondary nav/profile chip
+   above it end up sizing to (auto margins share the flex column's
+   remaining space with .home-bottom-nav's own margin-top: auto). */
 .home-primary-row {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    margin-top: auto;
+    margin-bottom: auto;
 }
 
 .home-primary-btn {
@@ -6033,7 +6136,7 @@ body.gameplay-locked #playerHand .card {
     }
 
     .home-secondary-row {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 

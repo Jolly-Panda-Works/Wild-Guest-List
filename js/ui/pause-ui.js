@@ -46,10 +46,20 @@ export function initializePause() {
     document
         .getElementById("pauseRestartBtn")
         ?.addEventListener("click", () => {
-            // Same as the existing "Play Again" button on the game-over
-            // screen (js/ui/modal-ui.js) — simplest reliable way to get
-            // a fully clean game state back.
+            // Reloads game.html — the simplest reliable way to get a
+            // fully clean game state back, using the same bot
+            // difficulties that were chosen on Home for this match.
             location.reload();
+        });
+
+    document
+        .getElementById("pauseHomeBtn")
+        ?.addEventListener("click", () => {
+            // Game → Home. A real page navigation, so every gameplay
+            // listener/timer/animation from this match is torn down
+            // for free (leaving the document unloads the module state)
+            // rather than needing manual cleanup here.
+            window.location.href = "index.html";
         });
 
     // If Settings was opened from the pause panel, closing it should

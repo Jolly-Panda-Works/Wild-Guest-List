@@ -2,19 +2,15 @@ import { buildLangSelector } from "../i18n.js";
 import { openTutorial } from "./tutorial-ui.js"
 import { initFeedback } from "./feedback-ui.js"
 
+// Shared "chrome" modal wiring — Settings, About, Tutorial, Feedback.
+// Safe to call once on any page that includes these modals (both
+// index.html/Home and game.html/Game do); each lookup is a harmless
+// no-op on a page missing a given element (e.g. Home has no in-board
+// #tutorialBtn top-bar icon, only its own homeHowToPlayBtn, which
+// js/ui/home-ui.js wires separately).
 export function initializeModals(){
 
     initFeedback();
-
-    document
-        .getElementById("settingsBtn")
-        ?.addEventListener(
-            "click",
-            ()=> {
-                buildLangSelector(document.getElementById("langSelector"));
-                openModal("settingsModal");
-            }
-        );
 
     document
         .getElementById("closeSettings")
@@ -29,7 +25,7 @@ export function initializeModals(){
             "click",
             ()=> openModal("aboutModal")
         );
-    
+
     document
         .getElementById("closeAbout")
         ?.addEventListener(
@@ -46,27 +42,6 @@ export function initializeModals(){
                 openTutorial(false);
             }
         );
-    
-    document
-        .getElementById("closeToturial")
-        ?.addEventListener(
-            "click",
-            ()=> closeModal("tutorialModal")
-        );
-
-    document
-        .getElementById("playAgainBtn")
-        ?.addEventListener(
-            "click",
-            ()=> location.reload()
-        );
-}
-
-function hideSplash(){
-
-    document
-        .getElementById("splashScreen")
-        .classList.add("hidden");
 }
 
 export function openModal(id){

@@ -12,26 +12,21 @@
  * The choice is purely cosmetic (shown on the player's own row here);
  * it persists across games/reloads the same way the sound and
  * step-guidance settings do.
+ *
+ * Storage lives in js/services/profile.js — the single authoritative
+ * player profile (displayName + avatar). This module only owns the
+ * popover *widget*; it reads/writes through profile.js so every UI
+ * area (Home, the difficulty panel, the Profile modal) shares one
+ * source of truth instead of duplicating avatar state.
  */
 
-import { PLAYER_AVATARS, DEFAULT_PLAYER_AVATAR_ID } from "../constants/avatars.js";
+import { PLAYER_AVATARS } from "../constants/avatars.js";
 import { t } from "../i18n.js";
-
-const STORAGE_KEY = "wgl_playerAvatar";
-
-function isValidAvatarId(id) {
-    return PLAYER_AVATARS.some(a => a.id === id);
-}
+import { getAvatarId, setAvatarId, subscribeProfile } from "../services/profile.js";
 
 /** Returns the currently selected avatar id for the human player. */
 export function getPlayerAvatarId() {
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (isValidAvatarId(stored)) return stored;
-    } catch {
-        // fall through to default
-    }
-    return DEFAULT_PLAYER_AVATAR_ID;
+    return getAvatarId();
 }
 
 function avatarById(id) {
@@ -40,9 +35,8 @@ function avatarById(id) {
 
 /** Persists the player's avatar choice. */
 export function setPlayerAvatarId(id) {
-    if (!isValidAvatarId(id)) return getPlayerAvatarId();
-    localStorage.setItem(STORAGE_KEY, id);
-    return id;
+    setAvatarId(id);
+    return getAvatarId();
 }
 
 /* ─────────────────────────────────────────
@@ -129,5 +123,8 @@ export function initAvatarTrigger(container) {
     if (!container) return () => {};
     const refresh = () => renderTrigger(container, refresh);
     refresh();
+    // Keep the trigger in sync if the avatar changes elsewhere (e.g. the
+    // Profile modal) — one authoritative profile, reflected everywhere.
+    subscribeProfile(refresh);
     return refresh;
 }

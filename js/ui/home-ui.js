@@ -1,15 +1,12 @@
 // ══════════════════════════════════════════════════════════
-// Home / Main Hub — js/ui/home-ui.js
+// Home — js/ui/home-ui.js
 //
-// New default landing screen, shown after the splash name-entry
-// step and before the existing splash→difficulty→match flow.
-// See docs/PRODUCT_ROADMAP.md "Phase 1 — Home & Navigation" and
-// docs/UI_UX_PLAN.md §1-2 for the plan this implements.
-//
-// Nothing here touches the game engine. "Offline Game" reveals
-// the exact same #difficultyModal flow that the splash screen's
-// Start Game button used to open directly (js/main.js still owns
-// buildDifficultyPanel()/startGame()) — Home only decides *when*
+// index.html's own screen — the app's landing page (see
+// js/home-main.js). Nothing here touches the game engine.
+// "Offline Game" reveals #difficultyModal, the same bot-difficulty
+// picker that used to open directly from the old splash screen;
+// js/home-main.js still owns building that panel and, once
+// confirmed, navigating to game.html — Home only decides *when*
 // that flow becomes visible.
 // ══════════════════════════════════════════════════════════
 
@@ -19,26 +16,11 @@ import { buildLangSelector, t } from "../i18n.js";
 import { openTutorial } from "./tutorial-ui.js";
 import { openHelp } from "../game/help.js";
 import { showWarning } from "./game-ui.js";
-
-/** Reveals Home and hides the splash screen behind it (splash may
- *  already be hidden if this isn't the first visit this session). */
-export function showHome() {
-    document.getElementById("splashScreen")?.classList.add("hidden");
-    const home = document.getElementById("homeScreen");
-    home?.classList.remove("hidden");
-    // Land focus on the primary CTA so keyboard/screen-reader users
-    // don't have to tab in from the top of the document.
-    document.getElementById("homeOfflineBtn")?.focus();
-}
-
-function hideHome() {
-    document.getElementById("homeScreen")?.classList.add("hidden");
-}
+import { openProfileModal } from "./profile-ui.js";
 
 /** Real Home entries that only have a future-state today. Shared
  *  handler so every "Coming Soon" tile gives the same, honest
- *  feedback instead of silently doing nothing (per
- *  docs/PRODUCT_ROADMAP.md Phase 1 acceptance criteria). */
+ *  feedback instead of silently doing nothing. */
 function wireComingSoon(id, messageKey) {
     document.getElementById(id)?.addEventListener("click", () => {
         showWarning(t(messageKey));
@@ -47,17 +29,16 @@ function wireComingSoon(id, messageKey) {
 
 export async function initHome() {
     // Home's icon spans (data-icon="play"/"globe"/"cards"/...) are only
-    // ever populated by loadIcons() — and until now loadIcons(document)
-    // only ran once startGame() fired. Scope a call to #homeScreen here
-    // so icons render before the player has started a match at all.
+    // ever populated by loadIcons().
     await loadIcons(document.getElementById("homeScreen"));
+
+    // ── Profile entry point ───────────────────────────────
+    document.getElementById("homeProfileChip")?.addEventListener("click", () => {
+        openProfileModal();
+    });
 
     // ── Primary CTAs ──────────────────────────────────────
     document.getElementById("homeOfflineBtn")?.addEventListener("click", () => {
-        hideHome();
-        // Same entry point the old splash "Start Game" button used to
-        // open directly — see js/main.js startGameBtn wiring (now
-        // repointed to showHome() instead).
         document.getElementById("difficultyModal")?.classList.remove("hidden");
     });
 
@@ -69,8 +50,6 @@ export async function initHome() {
     document.getElementById("homeCardsBtn")?.addEventListener("click", () => {
         openHelp();
     });
-
-    wireComingSoon("homeProfileBtn", "comingSoon");
 
     document.getElementById("homeSettingsBtn")?.addEventListener("click", async () => {
         buildLangSelector(document.getElementById("langSelector"));
@@ -88,9 +67,7 @@ export async function initHome() {
     });
 
     // ── Bottom nav (Store / Tournament / Leaderboard) ─────
-    // All three are reserved navigation entries per
-    // docs/ARCHITECTURE_PLAN.md §8 Step E — real, reachable,
-    // clearly-labeled placeholders, not dead buttons.
+    // Real, reachable, clearly-labeled placeholders, not dead buttons.
     wireComingSoon("homeStoreBtn", "comingSoon");
     wireComingSoon("homeTournamentBtn", "comingSoon");
     wireComingSoon("homeLeaderboardBtn", "comingSoon");

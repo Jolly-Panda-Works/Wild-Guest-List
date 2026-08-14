@@ -10,143 +10,118 @@
     </head>
     <body>
 
-        <div id="pageLayout">
 
-            <!-- LEFT SIDEBAR (desktop only) -->
-            <div id="leftSidebar">
+        <!-- ── HOME ───────────────────────────────────────────
+             index.html IS Home — this is the app's only landing
+             screen (see js/home-main.js + docs/ARCHITECTURE_PLAN.md).
+             It never initializes gameplay; "Offline Game" collects
+             bot-difficulty choices in #difficultyModal below, then
+             navigates to game.html, which owns all game
+             initialization. "Online Game" and the bottom-nav entries
+             are real, reachable, clearly-labeled future-state
+             placeholders — not fake functionality.
 
-                <div id="leaderboard">
-                    <h3><span data-icon="leaderboard"></span> <span data-i18n="matchStandings">Match Standings</span></h3>
-                    <div id="leaderboardRows"></div>
+             Visual hierarchy (top → bottom): logo, secondary
+             nav/profile, then the primary Play action(s) centered
+             and dominant — see .home-content / .home-primary-row
+             in css/style.css. -->
+        <div id="homeScreen" class="screen-overlay home-screen" role="region" aria-label="Home">
+            <div class="home-content">
+
+                <div class="home-topbar">
+                    <!-- Real Profile entry point: shows the player's current
+                         avatar + name, opens #profileModal. Player identity
+                         itself lives only in js/services/profile.js — this
+                         chip just displays it (js/ui/profile-ui.js). -->
+                    <button id="homeProfileChip" class="home-profile-chip" type="button"
+                            aria-label="Profile" data-title-key="homeProfileAriaLabel">
+                        <img id="homeProfileChipAvatar" class="home-profile-chip-avatar" alt="">
+                        <span id="homeProfileChipName" class="home-profile-chip-name"></span>
+                    </button>
+
+                    <div class="home-coin-pill" id="homeCoinPill" aria-label="Coins: 0">
+                        <span class="home-coin-icon" aria-hidden="true">🪙</span>
+                        <span class="home-coin-value" id="homeCoinValue">0</span>
+                    </div>
                 </div>
 
-                <div id="gameLog">
-                    <h3><span data-icon="gameLog"></span> <span data-i18n="gameLog">Game Log</span></h3>
-                    <div id="logEntries"></div>
+                <img src="assets/img/branding/banner.png" alt="Wild Guest List" class="home-banner">
+
+                <nav class="home-secondary-row" aria-label="More">
+                    <button id="homeCardsBtn" class="home-nav-btn" type="button">
+                        <span class="home-nav-icon" data-icon="cards" aria-hidden="true"></span>
+                        <span class="home-nav-label" data-i18n="homeCards">Card Guide</span>
+                    </button>
+                    <button id="homeSettingsBtn" class="home-nav-btn" type="button">
+                        <span class="home-nav-icon" data-icon="settings" aria-hidden="true"></span>
+                        <span class="home-nav-label" data-i18n="settingsTitle">Settings</span>
+                    </button>
+                    <button id="homeHowToPlayBtn" class="home-nav-btn" type="button">
+                        <span class="home-nav-icon" data-icon="tutorial" aria-hidden="true"></span>
+                        <span class="home-nav-label" data-i18n="homeHowToPlay">How to Play</span>
+                    </button>
+                    <button id="homeAboutBtn" class="home-nav-btn" type="button">
+                        <span class="home-nav-icon" data-icon="About Developer" aria-hidden="true"></span>
+                        <span class="home-nav-label" data-i18n="aboutTitle">About Developer</span>
+                    </button>
+                </nav>
+
+                <!-- Primary Play action(s) — the dominant, centered focus
+                     of Home. See .home-primary-row in css/style.css for
+                     the vertical centering that keeps this the visual
+                     anchor of the page regardless of viewport height. -->
+                <div class="home-primary-row">
+                    <button id="homeOfflineBtn" class="home-primary-btn home-play-btn" type="button">
+                        <span class="home-btn-icon" data-icon="play" aria-hidden="true"></span>
+                        <span data-i18n="homeOfflineGame">Offline Game</span>
+                    </button>
+                    <button id="homeOnlineBtn" class="home-primary-btn home-secondary-cta" type="button"
+                            aria-disabled="true" data-title="Online Multiplayer — Coming Soon" data-title-key="homeOnlineComingSoonTip">
+                        <span class="home-btn-icon" data-icon="globe" aria-hidden="true"></span>
+                        <span data-i18n="homeOnlineGame">Online Game</span>
+                        <span class="home-lock-badge" aria-hidden="true">🔒</span>
+                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
+                    </button>
                 </div>
 
-                <div id="chatPanel">
-                    <h3><span data-icon="chat"></span> <span data-i18n="chat">Chat</span></h3>
-                    <div class="comingSoon" data-i18n="comingSoon">Coming Soon</div>
+                <div class="home-bottom-nav" role="navigation" aria-label="Coming soon">
+                    <button id="homeStoreBtn" class="home-bottom-btn" type="button">
+                        <span class="home-bottom-icon" data-icon="store" aria-hidden="true"></span>
+                        <span data-i18n="homeStore">Store</span>
+                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
+                    </button>
+                    <button id="homeTournamentBtn" class="home-bottom-btn" type="button">
+                        <span class="home-bottom-icon" data-icon="tournament" aria-hidden="true"></span>
+                        <span data-i18n="homeTournament">Tournament</span>
+                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
+                    </button>
+                    <button id="homeLeaderboardBtn" class="home-bottom-btn" type="button">
+                        <span class="home-bottom-icon" data-icon="leaderboard" aria-hidden="true"></span>
+                        <span data-i18n="homeLeaderboard">Leaderboard</span>
+                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
+                    </button>
                 </div>
 
             </div>
+        </div>
 
-            <!-- GAME COLUMN -->
-            <div id="gameColumn">
-
-                <!-- TOP BAR -->
-                <div id="topBar">
-                    <div id="topBarContent">
-
-                        <div id="topLeft">
-                            <div class="turn-label" id="turnPlayer">Turn: You</div>
-                            <div class="turn-divider"></div>
-                            <div class="round-label">
-                                <span id="roundInfo">Round: 1</span>
-                                <span class="round-timer-sep" aria-hidden="true">|</span>
-                                <span class="turn-timer-icon" data-icon="timer" aria-hidden="true"></span>
-                                <span class="turn-timer-label" id="turnTimer">10</span>
-                            </div>
-                        </div>
-
-                        <div id="topCenter">
-                            <picture>
-                                <source media="(max-width: 900px)" srcset="assets/img/branding/banner.png">
-                                <img src="assets/img/branding/banner.png" alt="Wild Guest List">
-                            </picture>
-                        </div>
-
-                        <div id="topRight">
-                            <button id="logBtn"  class="top-btn mobile-only-btn" data-title="Game Log" data-title-key="btnLog">
-                                <span data-icon="gameLog"></span>
-                            </button>
-                            <button id="pauseBtn" class="top-btn" data-title="Pause" data-title-key="btnPause">
-                                <span data-icon="pause"></span>
-                            </button>
-                            <button id="helpBtn" class="top-btn" data-title="Help" data-title-key="btnHelp">
-                                <span data-icon="help"></span>
-                            </button>
-                            <button id="tutorialBtn" class="top-btn" data-title="Tutorial" data-title-key="btnTutorial">
-                                <span data-icon="tutorial"></span>
-                            </button>
-                            <button id="aboutBtn" class="top-btn" data-title="About Developer" data-title-key="btnAbout">
-                                <span data-icon="About Developer"></span>
-                            </button>
-                        </div>
-
-                    </div>
+        <!-- Profile — display name + avatar. The only place identity is
+             edited; Home's chip above and the difficulty panel's avatar
+             trigger both just reflect js/services/profile.js. -->
+        <div id="profileModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+            <div class="modal-content small-popup profile-panel">
+                <div class="help-header">
+                    <h3 id="profileModalTitle" data-i18n="profileModalTitle">Profile</h3>
+                    <button id="closeProfile" class="icon-btn close"><span data-icon="close"></span></button>
                 </div>
-
-                <!-- GAME BOARD -->
-                <div id="gameLayout">
-
-                    <!-- Mobile leaderboard -->
-                    <div id="mobileLeaderboard">
-                        <h4>🏆 <span data-i18n="matchStandings">Match Standings</span></h4>
-                        <div id="mobileLeaderboardInline"></div>
+                <div class="profile-content">
+                    <div class="profile-avatar-grid" id="profileAvatarGrid"></div>
+                    <div class="profile-name-row">
+                        <label class="settings-label" for="profileNameInput" data-i18n="profileNameLabel">Display Name</label>
+                        <input id="profileNameInput" class="player-name-input" type="text" maxlength="20"
+                               data-i18n-placeholder="playerNamePlaceholder" placeholder="Enter your name...">
                     </div>
-
-                    <!-- Mobile tabs -->
-                    <div id="mobileTabs">
-                        <button id="partyTab"><span data-icon="party"></span> <span data-i18n="partyPanel">Party</span></button>
-                        <button id="trashTab"><span data-icon="trash"></span> <span data-i18n="trashPanel">Trash</span></button>
-                    </div>
-
-                    <!-- Party area -->
-                    <div id="partyArea">
-                        <div class="panel-header">
-                            <h3>
-                                <span data-icon="party"></span> <span data-i18n="partyPanel">Party</span>
-                                <span class="panel-info-btn" data-tooltip-key="partyTooltip" data-tooltip="The first 2 cards from each resolved queue join the owner's party. More power = higher score!">ℹ</span>
-                            </h3>
-                            <button class="panel-close mobile-only-btn icon-btn close"><span data-icon="close"></span></button>
-                        </div>
-                        <div id="partyCards"></div>
-                    </div>
-
-                    <!-- Center -->
-                    <div id="centerArea">
-
-                        <div id="otherPlayers">
-                            <div id="topPlayer"></div>
-                            <div id="leftPlayer"></div>
-                            <div id="rightPlayer"></div>
-                        </div>
-
-                        <div id="queueArea">
-                            <div id="queue"></div>
-                        </div>
-
-                        <div id="handArea">
-                            <div id="playerHand"></div>
-                            <div id="deckStack">
-                                <div class="player-deck-info" id="playerDeckInfo">
-                                    <div class="player-deck-avatar-wrap">
-                                        <img id="playerDeckAvatarImg" class="player-deck-avatar-img" alt="">
-                                    </div>
-                                    <div class="player-deck-name" id="playerDeckName"></div>
-                                </div>
-                                <div class="deck-back" data-player="p1">
-                                    <span id="deckCount">0</span>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <!-- Trash area -->
-                    <div id="trashArea">
-                        <div class="panel-header">
-                            <h3>
-                                <span data-icon="trash"></span> <span data-i18n="trashPanel">Trash</span>
-                                <span class="panel-info-btn" data-tooltip-key="trashTooltip" data-tooltip="When the queue hits 5, the last card is eliminated and sent to trash. These cards are out of the game!">ℹ</span>
-                            </h3>
-                            <button class="panel-close mobile-only-btn icon-btn close"><span data-icon="close"></span></button>
-                        </div>
-                        <div id="trashCards"></div>
-                    </div>
-
+                    <button id="profileSaveBtn" class="screen-btn" type="button" data-i18n="profileSaveBtn">Save</button>
                 </div>
             </div>
         </div>
@@ -175,6 +150,7 @@
                 <div id="animalGrid"></div>
             </div>
         </div>
+
         <!-- Card detail -->
         <div id="cardModal" class="modal hidden">
             <div class="modal-content">
@@ -182,31 +158,6 @@
                     <button id="cardBackBtn" class="icon-btn"><span data-icon="back"></span></button>
                 </div>
                 <div id="cardModalContent"></div>
-            </div>
-        </div>
-
-        <!-- Kangaroo -->
-        <div id="kangarooModal" class="modal hidden">
-            <div class="modal-content kangaroo-choice">
-                <div class="help-header">
-                    <h2><span data-icon="kangaroo"></span> <span data-i18n="kangarooTitle">Kangaroo Jump</span></h2>
-                </div>
-                <div class="help-text" data-i18n="kangarooChoose">Choose how many spaces to jump:</div>
-                <div class="kangaroo-buttons">
-                    <button id="jumpOneBtn" data-i18n="jumpOne">Jump 1</button>
-                    <button id="jumpTwoBtn" data-i18n="jumpTwo">Jump 2</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Log (mobile) -->
-        <div id="logModal" class="modal hidden">
-            <div class="modal-content mobile-panel-content">
-                <div class="panel-header">
-                    <h2><span data-icon="gameLog"></span> <span data-i18n="logModalTitle">Game Log</span></h2>
-                    <button class="closeModal icon-btn"><span data-icon="close"></span></button>
-                </div>
-                <div id="mobileLogContent"></div>
             </div>
         </div>
 
@@ -258,51 +209,6 @@
                     </div>
 
                 </div>
-            </div>
-        </div>
-
-        <!-- Pause -->
-        <div id="pauseModal" class="modal hidden">
-            <div class="modal-content small-popup pause-panel">
-                <div class="help-header">
-                    <h3 data-i18n="pauseTitle">Paused</h3>
-                </div>
-                <div class="pause-actions">
-                    <button id="pauseResumeBtn" class="pause-action">
-                        <span class="pause-action-icon top-btn" data-icon="pauseResume"></span>
-                        <span class="pause-action-label" data-i18n="pauseResume">Resume</span>
-                    </button>
-                    <button id="pauseSettingsBtn" class="pause-action">
-                        <span class="pause-action-icon top-btn" data-icon="settings"></span>
-                        <span class="pause-action-label" data-i18n="pauseSettings">Settings</span>
-                    </button>
-                    <button id="pauseRestartBtn" class="pause-action">
-                        <span class="pause-action-icon top-btn" data-icon="pauseRestart"></span>
-                        <span class="pause-action-label" data-i18n="pauseRestart">Restart</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Contextual card guidance (shown after a card's ability resolves,
-             for first-time players or when Step-by-step Guidance is on) -->
-        <div id="cardGuidanceModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="guideCardName">
-            <div class="modal-content small-popup guide-modal-content">
-                <div class="guide-header">
-                    <div class="guide-visual" id="guideVisual"></div>
-                    <div class="guide-title-block">
-                        <h3 id="guideCardName"></h3>
-                        <div class="guide-ability-title" id="guideAbilityTitle"></div>
-                    </div>
-                </div>
-
-                <p class="guide-desc" id="guideDesc"></p>
-
-                <div class="guide-diagram" id="guideDiagram"></div>
-
-                <button id="guideContinueBtn" class="screen-btn guide-continue-btn" type="button">
-                    <span data-i18n="guideContinue">Continue</span>
-                </button>
             </div>
         </div>
 
@@ -401,184 +307,6 @@
             </div>
         </div>
 
-        <!-- Random in-game feedback nudge (non-blocking toast) -->
-        <div id="feedbackToast" class="feedback-toast hidden" role="status" aria-live="polite">
-            <div class="feedback-toast-bubble">
-                <span class="feedback-toast-icon" data-icon="feedback"></span>
-                <p class="feedback-toast-text" data-i18n="feedbackToastText">Enjoying the game? We'd love your feedback!</p>
-                <div class="feedback-toast-actions">
-                    <button id="feedbackToastYesBtn" type="button" class="feedback-toast-yes" data-i18n="feedbackToastYes">Give feedback</button>
-                    <button id="feedbackToastLaterBtn" type="button" class="feedback-toast-later" data-i18n="feedbackToastLater">Later</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- In-game Walkthrough Overlay -->
-        <div id="walkthroughOverlay" class="wt-overlay hidden">
-            <div id="walkthroughSpotlight" class="wt-spotlight"></div>
-            <div id="walkthroughBox" class="wt-box">
-                <div class="wt-step-label" id="wtStepLabel"></div>
-                <div class="wt-arrow" id="wtArrow"></div>
-                <h3 class="wt-title" id="wtTitle"></h3>
-                <p class="wt-text" id="wtText"></p>
-                <div class="wt-footer">
-                    <button class="wt-skip-btn" id="wtSkipBtn"></button>
-                    <button class="wt-next-btn" id="wtNextBtn"></button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Splash -->
-        <div id="splashScreen" class="screen-overlay">
-            <div class="screen-content">
-                <img src="assets/img/branding/logo-splash.png" alt="Wild Guest List" class="screen-logo">
-                <div class="player-name-row">
-                    <label class="player-name-label" data-i18n="playerNameLabel">Your Name</label>
-                    <input id="playerNameInput" class="player-name-input" type="text" maxlength="20"
-                           data-i18n-placeholder="playerNamePlaceholder" placeholder="Enter your name...">
-                </div>
-                <button id="startGameBtn" class="screen-btn" data-i18n="splashStart">Start Game</button>
-                <button id="splashSettingsBtn" class="splash-settings-btn" data-i18n="splashSettings">Settings</button>
-            </div>
-            <div class="creator">
-                Created by <a href="https://www.useffarahmand.com/" target="_blank">Usef Farahmand</a>
-            </div>
-        </div>
-
-        <!-- ── HOME / MAIN HUB ───────────────────────────────
-             New default landing screen after the splash name-entry
-             step (see js/ui/home-ui.js + AGENTS.md-tracked
-             docs/PRODUCT_ROADMAP.md Phase 1 / docs/UI_UX_PLAN.md §1-2).
-             "Offline Game" launches the exact same
-             splash→difficulty→match flow that existed before Home was
-             introduced (js/main.js). "Online Game" and the bottom-nav
-             entries are real, reachable, clearly-labeled future-state
-             placeholders — not fake functionality. -->
-        <div id="homeScreen" class="screen-overlay home-screen hidden" role="region" aria-label="Home">
-            <div class="home-content">
-
-                <div class="home-topbar">
-                    <div class="home-coin-pill" id="homeCoinPill" aria-label="Coins: 0">
-                        <span class="home-coin-icon" aria-hidden="true">🪙</span>
-                        <span class="home-coin-value" id="homeCoinValue">0</span>
-                    </div>
-                </div>
-
-                <img src="assets/img/branding/banner.png" alt="Wild Guest List" class="home-banner">
-
-                <div class="home-primary-row">
-                    <button id="homeOfflineBtn" class="home-primary-btn home-play-btn" type="button">
-                        <span class="home-btn-icon" data-icon="play" aria-hidden="true"></span>
-                        <span data-i18n="homeOfflineGame">Offline Game</span>
-                    </button>
-                    <button id="homeOnlineBtn" class="home-primary-btn home-secondary-cta" type="button"
-                            aria-disabled="true" data-title="Online Multiplayer — Coming Soon" data-title-key="homeOnlineComingSoonTip">
-                        <span class="home-btn-icon" data-icon="globe" aria-hidden="true"></span>
-                        <span data-i18n="homeOnlineGame">Online Game</span>
-                        <span class="home-lock-badge" aria-hidden="true">🔒</span>
-                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
-                    </button>
-                </div>
-
-                <nav class="home-secondary-row" aria-label="More">
-                    <button id="homeCardsBtn" class="home-nav-btn" type="button">
-                        <span class="home-nav-icon" data-icon="cards" aria-hidden="true"></span>
-                        <span class="home-nav-label" data-i18n="homeCards">Card Guide</span>
-                    </button>
-                    <button id="homeProfileBtn" class="home-nav-btn" type="button">
-                        <span class="home-nav-icon" data-icon="profile" aria-hidden="true"></span>
-                        <span class="home-nav-label" data-i18n="homeProfile">Profile</span>
-                        <span class="home-nav-soon" data-i18n="comingSoon">Coming Soon</span>
-                    </button>
-                    <button id="homeSettingsBtn" class="home-nav-btn" type="button">
-                        <span class="home-nav-icon" data-icon="settings" aria-hidden="true"></span>
-                        <span class="home-nav-label" data-i18n="settingsTitle">Settings</span>
-                    </button>
-                    <button id="homeHowToPlayBtn" class="home-nav-btn" type="button">
-                        <span class="home-nav-icon" data-icon="tutorial" aria-hidden="true"></span>
-                        <span class="home-nav-label" data-i18n="homeHowToPlay">How to Play</span>
-                    </button>
-                    <button id="homeAboutBtn" class="home-nav-btn" type="button">
-                        <span class="home-nav-icon" data-icon="About Developer" aria-hidden="true"></span>
-                        <span class="home-nav-label" data-i18n="aboutTitle">About Developer</span>
-                    </button>
-                </nav>
-
-                <div class="home-bottom-nav" role="navigation" aria-label="Coming soon">
-                    <button id="homeStoreBtn" class="home-bottom-btn" type="button">
-                        <span class="home-bottom-icon" data-icon="store" aria-hidden="true"></span>
-                        <span data-i18n="homeStore">Store</span>
-                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
-                    </button>
-                    <button id="homeTournamentBtn" class="home-bottom-btn" type="button">
-                        <span class="home-bottom-icon" data-icon="tournament" aria-hidden="true"></span>
-                        <span data-i18n="homeTournament">Tournament</span>
-                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
-                    </button>
-                    <button id="homeLeaderboardBtn" class="home-bottom-btn" type="button">
-                        <span class="home-bottom-icon" data-icon="leaderboard" aria-hidden="true"></span>
-                        <span data-i18n="homeLeaderboard">Leaderboard</span>
-                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
-                    </button>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- Difficulty Modal -->
-        <div id="difficultyModal" class="screen-overlay hidden">
-            <div class="screen-content difficulty-content">
-                <h2 data-i18n="diffTitle">🎮 Choose Bot Difficulty</h2>
-                <p class="diff-subtitle" data-i18n="diffSubtitle">Set how smart each opponent is</p>
-                <div id="difficultyPanel"></div>
-                <button id="confirmDiffBtn" class="screen-btn" data-i18n="diffConfirm">Let's Play!</button>
-            </div>
-        </div>
-
-        <!-- Guidance prompt — asked once per new game, before it starts -->
-        <div id="guidancePromptModal" class="screen-overlay hidden">
-            <div class="screen-content guide-prompt-content">
-                <h2 data-i18n="guidePromptTitle">Show step-by-step help?</h2>
-                <p class="diff-subtitle" data-i18n="guidePromptText">We can explain each animal's ability the first time you play it this game.</p>
-                <div class="guide-prompt-actions">
-                    <button id="guidancePromptYesBtn" class="screen-btn" type="button" data-i18n="guidePromptYes">Yes, guide me</button>
-                    <button id="guidancePromptNoBtn" class="screen-btn guide-prompt-no" type="button" data-i18n="guidePromptNo">No thanks</button>
-                </div>
-                <label class="guide-prompt-dontshow">
-                    <input type="checkbox" id="guidancePromptDontShowAgain">
-                    <span data-i18n="guidePromptDontShowAgain">Don't show this again</span>
-                </label>
-            </div>
-        </div>
-
-        <!-- Restart-from-beginning prompt — asked only when the player
-             chooses step-by-step guidance and some abilities have already
-             been explained in an earlier game -->
-        <div id="guidanceRestartModal" class="screen-overlay hidden">
-            <div class="screen-content guide-prompt-content">
-                <h2 data-i18n="guideRestartTitle">Start the guide over?</h2>
-                <p class="diff-subtitle" data-i18n="guideRestartText">You've already seen some animals explained. Show them all again from the beginning, or only the ones you haven't seen yet?</p>
-                <div class="guide-prompt-actions">
-                    <button id="guidanceRestartYesBtn" class="screen-btn" type="button" data-i18n="guideRestartYes">Start over</button>
-                    <button id="guidanceRestartNoBtn" class="screen-btn guide-prompt-no" type="button" data-i18n="guideRestartNo">Just new ones</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- End Game -->
-        <div id="endGameScreen" class="screen-overlay hidden">
-            <div class="screen-content">
-                <h1 id="endGameTitle"></h1>
-                <p id="endGameText"></p>
-                <div id="finalScores"></div>
-                <button id="playAgainBtn" class="screen-btn" data-i18n="playAgain">Play Again</button>
-                <button id="endgameFeedbackBtn" type="button" class="feedback-link-btn endgame-feedback-btn">
-                    <span data-icon="feedback"></span>
-                    <span data-i18n="endgameFeedbackBtn">Give Feedback</span>
-                </button>
-            </div>
-        </div>
-
         <div id="tutorialModal" class="modal hidden" role="dialog" aria-labelledby="tutorialTitle" aria-modal="true">
 
             <div class="modal-content tut-panel">
@@ -635,12 +363,47 @@
 
         </div>
 
-        <!-- Full-screen red flash when the turn timer drops under 3s
-             (see .screen-damage-flash in css/style.css, triggered from
-             renderTurnTimer in js/ui/game-ui.js) -->
-        <div id="screenDamage" aria-hidden="true"></div>
+        <!-- Difficulty Modal -->
+        <div id="difficultyModal" class="screen-overlay hidden">
+            <div class="screen-content difficulty-content">
+                <h2 data-i18n="diffTitle">🎮 Choose Bot Difficulty</h2>
+                <p class="diff-subtitle" data-i18n="diffSubtitle">Set how smart each opponent is</p>
+                <div id="difficultyPanel"></div>
+                <button id="confirmDiffBtn" class="screen-btn" data-i18n="diffConfirm">Let's Play!</button>
+            </div>
+        </div>
 
-        <script type="module" src="js/main.js"></script>
+        <!-- Guidance prompt — asked once per new game, before it starts -->
+        <div id="guidancePromptModal" class="screen-overlay hidden">
+            <div class="screen-content guide-prompt-content">
+                <h2 data-i18n="guidePromptTitle">Show step-by-step help?</h2>
+                <p class="diff-subtitle" data-i18n="guidePromptText">We can explain each animal's ability the first time you play it this game.</p>
+                <div class="guide-prompt-actions">
+                    <button id="guidancePromptYesBtn" class="screen-btn" type="button" data-i18n="guidePromptYes">Yes, guide me</button>
+                    <button id="guidancePromptNoBtn" class="screen-btn guide-prompt-no" type="button" data-i18n="guidePromptNo">No thanks</button>
+                </div>
+                <label class="guide-prompt-dontshow">
+                    <input type="checkbox" id="guidancePromptDontShowAgain">
+                    <span data-i18n="guidePromptDontShowAgain">Don't show this again</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Restart-from-beginning prompt — asked only when the player
+             chooses step-by-step guidance and some abilities have already
+             been explained in an earlier game -->
+        <div id="guidanceRestartModal" class="screen-overlay hidden">
+            <div class="screen-content guide-prompt-content">
+                <h2 data-i18n="guideRestartTitle">Start the guide over?</h2>
+                <p class="diff-subtitle" data-i18n="guideRestartText">You've already seen some animals explained. Show them all again from the beginning, or only the ones you haven't seen yet?</p>
+                <div class="guide-prompt-actions">
+                    <button id="guidanceRestartYesBtn" class="screen-btn" type="button" data-i18n="guideRestartYes">Start over</button>
+                    <button id="guidanceRestartNoBtn" class="screen-btn guide-prompt-no" type="button" data-i18n="guideRestartNo">Just new ones</button>
+                </div>
+            </div>
+        </div>
+
+        <script type="module" src="js/home-main.js"></script>
 
     </body>
 </html>

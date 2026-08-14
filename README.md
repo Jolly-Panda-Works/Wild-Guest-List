@@ -79,17 +79,19 @@ The abilities are designed to interact with one another, creating situations whe
 
 ## 🏠 Home Screen
 
-After the one-time splash/name-entry step, the game opens on a **Home**
-screen — the central navigation point for the app.
+`index.html` **is** Home — the app's landing screen and only entry
+point. It never initializes gameplay itself.
 
 * **Offline Game** — the primary call-to-action; opens the existing
-  bot-difficulty selection and starts a match exactly as before.
+  bot-difficulty selection, then navigates to `game.html`, which owns
+  starting the actual match (dealing cards, board init, etc.).
 * **Online Game** — visible and clearly marked **Coming Soon**; tapping
   it shows a short notice rather than doing nothing.
 * **Secondary row** — Card Guide (the existing Animal Abilities
   reference), Settings, How to Play (tutorial), and About Developer.
-* **Profile** — visible, marked **Coming Soon** (no account system
-  exists yet).
+* **Profile chip** — shows the player's current avatar + name (top of
+  Home); tapping it opens the Profile modal to change either. This is
+  the one place identity is edited — Home and Game both just read it.
 * **Bottom navigation** — Store, Tournament, and Leaderboard are
   reserved, reachable entries, each showing a **Coming Soon** state.
   These are architecture-only placeholders for future updates; no
@@ -97,19 +99,24 @@ screen — the central navigation point for the app.
 * **Coin pill** — a small balance indicator in the top-right, shown as
   `0` since there's no coin economy yet.
 
-Home is implemented in `js/ui/home-ui.js` and reuses the game's
-existing modal, help, and tutorial systems rather than duplicating
-them. See `docs/PRODUCT_ROADMAP.md` (Phase 1) and `docs/UI_UX_PLAN.md`
-for the fuller design plan this follows, including later phases
-(Profile accounts, a real Store/economy, Achievements, Quests,
-Leaderboard, and Online/Tournament play).
+Home is implemented in `js/home-main.js` + `js/ui/home-ui.js` and
+reuses the game's existing modal, help, and tutorial systems rather
+than duplicating them. Gameplay itself lives entirely behind
+`game.html` / `js/game-main.js` — the two pages share no game state,
+only the player's profile (`js/services/profile.js`) and persisted
+settings. See `docs/ARCHITECTURE_PLAN.md` for the fuller design this
+follows, including later phases (a real Store/economy, Achievements,
+Quests, Leaderboard, and Online/Tournament play).
 
 ## 🧠 Core Gameplay
 
 ### 1. Start the Game
 
-From Home, choosing **Offline Game** lets the player enter a name and
-choose the difficulty of each opponent.
+From Home, choosing **Offline Game** lets the player choose the
+difficulty of each opponent. The human player's name and avatar come
+from their Profile (Home's profile chip) rather than being typed in
+here — new players get a sensible default profile immediately, and
+can customize it any time.
 
 Each game contains:
 
@@ -332,7 +339,8 @@ Game State
 ```text
 WildGuestList/
 │
-├── index.html
+├── index.html          (Home — landing page, never initializes gameplay)
+├── game.html            (Game — the board; all game init lives here)
 │
 ├── css/
 │   └── style.css
@@ -344,7 +352,8 @@ WildGuestList/
 │   └── tutorial.json
 │
 ├── js/
-│   ├── main.js
+│   ├── home-main.js     (Home bootstrap — index.html)
+│   ├── game-main.js     (Game bootstrap — game.html)
 │   ├── cards.js
 │   ├── player.js
 │   ├── i18n.js
@@ -376,17 +385,21 @@ WildGuestList/
 │   ├── services/
 │   │   ├── dataLoader.js
 │   │   ├── logger.js
+│   │   ├── profile.js   (the one authoritative player profile)
 │   │   └── soundManager.js
 │   │
 │   └── ui/
 │       ├── endgame-ui.js
 │       ├── game-ui.js
+│       ├── home-ui.js
 │       ├── icon-ui.js
 │       ├── kangaroo-ui.js
 │       ├── leaderboard-ui.js
 │       ├── log-ui.js
 │       ├── mobile-ui.js
 │       ├── modal-ui.js
+│       ├── pause-ui.js
+│       ├── profile-ui.js  (Profile modal — name + avatar)
 │       ├── tutorial-ui.js
 │       ├── ui.js
 │       └── walkthrough.js
@@ -403,6 +416,10 @@ WildGuestList/
         ├── avatars/         (boy.png, girl.png)
         └── icons/           (UI icons, referenced via data/config.json)
 ```
+
+This list highlights the files most relevant to the Home/Game split —
+several smaller supporting modules (presentation helpers, additional
+`ui/` files, etc.) exist alongside these but aren't enumerated here.
 
 All folder and file names under `assets/` use lowercase kebab-case with no
 spaces, so every path is safe to reference directly in code/URLs. Icon and
@@ -710,7 +727,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.11.0
+**Current version:** 1.12.0
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen in the Settings modal (`data-app-version` in `index.html`, populated at runtime by `js/ui/icon-ui.js`). Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

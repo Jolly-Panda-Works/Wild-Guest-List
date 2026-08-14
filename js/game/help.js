@@ -42,7 +42,7 @@ let _initialized = false;
 export function initHelp() {
     // Guard against double-binding: initHelp() is called once at boot
     // (so Home's Card Guide entry works before a match exists) and
-    // historically was also called from js/main.js on every new game.
+    // historically was also called from js/game-main.js on every new game.
     if (_initialized) return;
     _initialized = true;
 

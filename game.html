@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Wild Guest List — Game</title>
+        <link rel="icon" type="image/x-icon" href="assets/img/branding/favicon.ico" />
+        <link rel="stylesheet" href="assets/fonts/fonts.css">
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+    <body>
+
+
+        <div id="pageLayout">
+
+            <!-- LEFT SIDEBAR (desktop only) -->
+            <div id="leftSidebar">
+
+                <div id="leaderboard">
+                    <h3><span data-icon="leaderboard"></span> <span data-i18n="matchStandings">Match Standings</span></h3>
+                    <div id="leaderboardRows"></div>
+                </div>
+
+                <div id="gameLog">
+                    <h3><span data-icon="gameLog"></span> <span data-i18n="gameLog">Game Log</span></h3>
+                    <div id="logEntries"></div>
+                </div>
+
+                <div id="chatPanel">
+                    <h3><span data-icon="chat"></span> <span data-i18n="chat">Chat</span></h3>
+                    <div class="comingSoon" data-i18n="comingSoon">Coming Soon</div>
+                </div>
+
+            </div>
+
+            <!-- GAME COLUMN -->
+            <div id="gameColumn">
+
+                <!-- TOP BAR -->
+                <div id="topBar">
+                    <div id="topBarContent">
+
+                        <div id="topLeft">
+                            <div class="turn-label" id="turnPlayer">Turn: You</div>
+                            <div class="turn-divider"></div>
+                            <div class="round-label">
+                                <span id="roundInfo">Round: 1</span>
+                                <span class="round-timer-sep" aria-hidden="true">|</span>
+                                <span class="turn-timer-icon" data-icon="timer" aria-hidden="true"></span>
+                                <span class="turn-timer-label" id="turnTimer">10</span>
+                            </div>
+                        </div>
+
+                        <div id="topCenter">
+                            <picture>
+                                <source media="(max-width: 900px)" srcset="assets/img/branding/banner.png">
+                                <img src="assets/img/branding/banner.png" alt="Wild Guest List">
+                            </picture>
+                        </div>
+
+                        <div id="topRight">
+                            <button id="logBtn"  class="top-btn mobile-only-btn" data-title="Game Log" data-title-key="btnLog">
+                                <span data-icon="gameLog"></span>
+                            </button>
+                            <button id="pauseBtn" class="top-btn" data-title="Pause" data-title-key="btnPause">
+                                <span data-icon="pause"></span>
+                            </button>
+                            <button id="helpBtn" class="top-btn" data-title="Help" data-title-key="btnHelp">
+                                <span data-icon="help"></span>
+                            </button>
+                            <button id="tutorialBtn" class="top-btn" data-title="Tutorial" data-title-key="btnTutorial">
+                                <span data-icon="tutorial"></span>
+                            </button>
+                            <button id="aboutBtn" class="top-btn" data-title="About Developer" data-title-key="btnAbout">
+                                <span data-icon="About Developer"></span>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- GAME BOARD -->
+                <div id="gameLayout">
+
+                    <!-- Mobile leaderboard -->
+                    <div id="mobileLeaderboard">
+                        <h4>🏆 <span data-i18n="matchStandings">Match Standings</span></h4>
+                        <div id="mobileLeaderboardInline"></div>
+                    </div>
+
+                    <!-- Mobile tabs -->
+                    <div id="mobileTabs">
+                        <button id="partyTab"><span data-icon="party"></span> <span data-i18n="partyPanel">Party</span></button>
+                        <button id="trashTab"><span data-icon="trash"></span> <span data-i18n="trashPanel">Trash</span></button>
+                    </div>
+
+                    <!-- Party area -->
+                    <div id="partyArea">
+                        <div class="panel-header">
+                            <h3>
+                                <span data-icon="party"></span> <span data-i18n="partyPanel">Party</span>
+                                <span class="panel-info-btn" data-tooltip-key="partyTooltip" data-tooltip="The first 2 cards from each resolved queue join the owner's party. More power = higher score!">ℹ</span>
+                            </h3>
+                            <button class="panel-close mobile-only-btn icon-btn close"><span data-icon="close"></span></button>
+                        </div>
+                        <div id="partyCards"></div>
+                    </div>
+
+                    <!-- Center -->
+                    <div id="centerArea">
+
+                        <div id="otherPlayers">
+                            <div id="topPlayer"></div>
+                            <div id="leftPlayer"></div>
+                            <div id="rightPlayer"></div>
+                        </div>
+
+                        <div id="queueArea">
+                            <div id="queue"></div>
+                        </div>
+
+                        <div id="handArea">
+                            <div id="playerHand"></div>
+                            <div id="deckStack">
+                                <div class="player-deck-info" id="playerDeckInfo">
+                                    <div class="player-deck-avatar-wrap">
+                                        <img id="playerDeckAvatarImg" class="player-deck-avatar-img" alt="">
+                                    </div>
+                                    <div class="player-deck-name" id="playerDeckName"></div>
+                                </div>
+                                <div class="deck-back" data-player="p1">
+                                    <span id="deckCount">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Trash area -->
+                    <div id="trashArea">
+                        <div class="panel-header">
+                            <h3>
+                                <span data-icon="trash"></span> <span data-i18n="trashPanel">Trash</span>
+                                <span class="panel-info-btn" data-tooltip-key="trashTooltip" data-tooltip="When the queue hits 5, the last card is eliminated and sent to trash. These cards are out of the game!">ℹ</span>
+                            </h3>
+                            <button class="panel-close mobile-only-btn icon-btn close"><span data-icon="close"></span></button>
+                        </div>
+                        <div id="trashCards"></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ── MODALS ─────────────────────────────────────── -->
+
+        <!-- Help -->
+        <div id="helpModal" class="modal hidden">
+            <div class="modal-content help-layout">
+                <div class="help-header">
+                    <h1 data-i18n="helpModalTitle">Help</h1>
+                    <button id="closeHelp" class="icon-btn close"><span data-icon="close"></span></button>
+                </div>
+                <div class="help-text">
+                    <span data-i18n="helpIntro">Invite wild animals to the party queue!</span>
+                    <p data-i18n="helpWhenQueue">When the queue reaches 5 animals:</p>
+                    <ul>
+                        <li data-i18n="helpRule1">The first 2 guests make it into the party.</li>
+                        <li data-i18n="helpRule2">The last guest gets turned away and sent to the trash.</li>
+                        <li data-i18n="helpRule3">The remaining guests stay in line.</li>
+                    </ul>
+                    <span data-i18n="helpGoal">Gather the biggest party and become the ultimate host!</span>
+                </div>
+                <div class="help-divider"></div>
+                <h2 class="animal-guide-title" data-i18n="animalAbilities">Animal Abilities</h2>
+                <div id="animalGrid"></div>
+            </div>
+        </div>
+
+        <!-- Card detail -->
+        <div id="cardModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button id="cardBackBtn" class="icon-btn"><span data-icon="back"></span></button>
+                </div>
+                <div id="cardModalContent"></div>
+            </div>
+        </div>
+
+        <!-- Kangaroo -->
+        <div id="kangarooModal" class="modal hidden">
+            <div class="modal-content kangaroo-choice">
+                <div class="help-header">
+                    <h2><span data-icon="kangaroo"></span> <span data-i18n="kangarooTitle">Kangaroo Jump</span></h2>
+                </div>
+                <div class="help-text" data-i18n="kangarooChoose">Choose how many spaces to jump:</div>
+                <div class="kangaroo-buttons">
+                    <button id="jumpOneBtn" data-i18n="jumpOne">Jump 1</button>
+                    <button id="jumpTwoBtn" data-i18n="jumpTwo">Jump 2</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log (mobile) -->
+        <div id="logModal" class="modal hidden">
+            <div class="modal-content mobile-panel-content">
+                <div class="panel-header">
+                    <h2><span data-icon="gameLog"></span> <span data-i18n="logModalTitle">Game Log</span></h2>
+                    <button class="closeModal icon-btn"><span data-icon="close"></span></button>
+                </div>
+                <div id="mobileLogContent"></div>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div id="settingsModal" class="modal hidden">
+            <div class="modal-content small-popup">
+                <div class="help-header">
+                    <h3 data-i18n="settingsTitle">Settings</h3>
+                    <button id="closeSettings" class="icon-btn close"><span data-icon="close"></span></button>
+                </div>
+                <div class="settings-content">
+
+                    <div class="settings-row">
+                        <label class="settings-label"><span data-icon="sound"></span> <span data-i18n="settingsSound">Sound</span></label>
+                        <label class="switch-btn">
+                            <input type="checkbox" id="soundToggle" checked>
+                            <span class="switch-track"><span class="switch-thumb"></span></span>
+                        </label>
+                    </div>
+
+                    <div class="settings-divider"></div>
+
+                    <div class="settings-row">
+                        <label class="settings-label"><span data-i18n="settingsStepGuidance">Step-by-step Guidance</span></label>
+                        <label class="switch-btn">
+                            <input type="checkbox" id="stepGuidanceToggle">
+                            <span class="switch-track"><span class="switch-thumb"></span></span>
+                        </label>
+                    </div>
+
+                    <div class="settings-divider"></div>
+
+                    <div class="settings-row settings-row-col">
+                        <label class="settings-label"><span data-i18n="settingsPlayerColors">Player Colors</span></label>
+                        <div id="playerColorPicker" class="player-color-picker"></div>
+                    </div>
+
+                    <div class="settings-divider"></div>
+
+                    <div class="settings-row settings-row-col">
+                        <label class="settings-label"><span data-i18n="settingsLanguage">Language</span></label>
+                        <div id="langSelector" class="lang-selector"></div>
+                    </div>
+
+                    <div class="settings-divider"></div>
+
+                    <div class="about-meta">
+                        <div><strong data-i18n="settingsVersion">Version</strong>: <span data-app-version>1.9.0</span></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Pause -->
+        <div id="pauseModal" class="modal hidden">
+            <div class="modal-content small-popup pause-panel">
+                <div class="help-header">
+                    <h3 data-i18n="pauseTitle">Paused</h3>
+                </div>
+                <div class="pause-actions">
+                    <button id="pauseResumeBtn" class="pause-action">
+                        <span class="pause-action-icon top-btn" data-icon="pauseResume"></span>
+                        <span class="pause-action-label" data-i18n="pauseResume">Resume</span>
+                    </button>
+                    <button id="pauseSettingsBtn" class="pause-action">
+                        <span class="pause-action-icon top-btn" data-icon="settings"></span>
+                        <span class="pause-action-label" data-i18n="pauseSettings">Settings</span>
+                    </button>
+                    <button id="pauseRestartBtn" class="pause-action">
+                        <span class="pause-action-icon top-btn" data-icon="pauseRestart"></span>
+                        <span class="pause-action-label" data-i18n="pauseRestart">Restart</span>
+                    </button>
+                    <button id="pauseHomeBtn" class="pause-action">
+                        <span class="pause-action-icon top-btn" data-icon="home"></span>
+                        <span class="pause-action-label" data-i18n="pauseHome">Home</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contextual card guidance (shown after a card's ability resolves,
+             for first-time players or when Step-by-step Guidance is on) -->
+        <div id="cardGuidanceModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="guideCardName">
+            <div class="modal-content small-popup guide-modal-content">
+                <div class="guide-header">
+                    <div class="guide-visual" id="guideVisual"></div>
+                    <div class="guide-title-block">
+                        <h3 id="guideCardName"></h3>
+                        <div class="guide-ability-title" id="guideAbilityTitle"></div>
+                    </div>
+                </div>
+
+                <p class="guide-desc" id="guideDesc"></p>
+
+                <div class="guide-diagram" id="guideDiagram"></div>
+
+                <button id="guideContinueBtn" class="screen-btn guide-continue-btn" type="button">
+                    <span data-i18n="guideContinue">Continue</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- About Developer -->
+        <div id="aboutModal" class="modal hidden">
+            <div class="modal-content small-popup about-panel">
+                <button id="closeAbout" class="icon-btn close about-close">
+                    <span data-icon="close"></span>
+                </button>
+
+                <div class="about-avatar">
+                    <span data-icon="About Developer"></span>
+                </div>
+
+                <h3 class="about-title" data-i18n="aboutTitle">About Developer</h3>
+
+                <div class="about-content">
+                    <p>
+                        <span data-i18n="aboutText">This game was designed and developed by</span>
+                        <strong>Usef Farahmand</strong>.
+                    </p>
+
+                    <p data-i18n="aboutThanks">
+                        Thank you for playing and supporting my work.
+                    </p>
+
+                    <div class="about-actions">
+                        <a href="https://www.useffarahmand.com/"
+                           target="_blank"
+                           class="website-link"
+                           data-i18n="aboutVisit">
+                            Visit Website
+                        </a>
+
+                        <button id="aboutFeedbackBtn" type="button" class="feedback-link-btn">
+                            <span data-icon="feedback"></span>
+                            <span data-i18n="aboutFeedbackBtn">Give Feedback</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback / Survey -->
+        <div id="feedbackModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle">
+            <div class="modal-content small-popup feedback-modal-content">
+                <div class="help-header">
+                    <h3 id="feedbackTitle" data-i18n="feedbackTitle">Give Feedback</h3>
+                    <button id="closeFeedback" class="icon-btn close">
+                        <span data-icon="close"></span>
+                    </button>
+                </div>
+
+                <p class="feedback-subtitle" data-i18n="feedbackSubtitle">We'd love to hear what you think of the game.</p>
+
+                <form id="feedbackForm" class="feedback-form" novalidate>
+
+                    <div class="feedback-field">
+                        <label class="feedback-label" data-i18n="feedbackRatingLabel">How would you rate the game?</label>
+                        <div id="feedbackStars" class="feedback-stars" role="radiogroup" aria-label="Rating">
+                            <button type="button" class="feedback-star" data-value="1" aria-label="1">★</button>
+                            <button type="button" class="feedback-star" data-value="2" aria-label="2">★</button>
+                            <button type="button" class="feedback-star" data-value="3" aria-label="3">★</button>
+                            <button type="button" class="feedback-star" data-value="4" aria-label="4">★</button>
+                            <button type="button" class="feedback-star" data-value="5" aria-label="5">★</button>
+                        </div>
+                        <input type="hidden" id="feedbackRatingInput" name="rating" value="">
+                    </div>
+
+                    <div class="feedback-field">
+                        <label class="feedback-label" for="feedbackMessage" data-i18n="feedbackMessageLabel">Your comments or suggestions</label>
+                        <textarea id="feedbackMessage" name="message" class="feedback-textarea" rows="4"
+                                  data-i18n-placeholder="feedbackMessagePlaceholder"
+                                  placeholder="What did you like? What should we improve?"></textarea>
+                    </div>
+
+                    <div class="feedback-field">
+                        <label class="feedback-label" for="feedbackName" data-i18n="feedbackNameLabel">Name (optional)</label>
+                        <input type="text" id="feedbackName" name="name" class="feedback-input" maxlength="40"
+                               data-i18n-placeholder="feedbackNamePlaceholder" placeholder="Your name">
+                    </div>
+
+                    <div class="feedback-field">
+                        <label class="feedback-label" for="feedbackEmail" data-i18n="feedbackEmailLabel">Email (optional, if you'd like a reply)</label>
+                        <input type="email" id="feedbackEmail" name="email" class="feedback-input" maxlength="80"
+                               data-i18n-placeholder="feedbackEmailPlaceholder" placeholder="you@example.com">
+                    </div>
+
+                    <p id="feedbackStatus" class="feedback-status" aria-live="polite"></p>
+
+                    <button id="feedbackSubmitBtn" type="submit" class="screen-btn feedback-submit-btn" data-i18n="feedbackSubmitBtn">
+                        Send Feedback
+                    </button>
+
+                </form>
+            </div>
+        </div>
+
+        <!-- Random in-game feedback nudge (non-blocking toast) -->
+        <div id="feedbackToast" class="feedback-toast hidden" role="status" aria-live="polite">
+            <div class="feedback-toast-bubble">
+                <span class="feedback-toast-icon" data-icon="feedback"></span>
+                <p class="feedback-toast-text" data-i18n="feedbackToastText">Enjoying the game? We'd love your feedback!</p>
+                <div class="feedback-toast-actions">
+                    <button id="feedbackToastYesBtn" type="button" class="feedback-toast-yes" data-i18n="feedbackToastYes">Give feedback</button>
+                    <button id="feedbackToastLaterBtn" type="button" class="feedback-toast-later" data-i18n="feedbackToastLater">Later</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- In-game Walkthrough Overlay -->
+        <div id="walkthroughOverlay" class="wt-overlay hidden">
+            <div id="walkthroughSpotlight" class="wt-spotlight"></div>
+            <div id="walkthroughBox" class="wt-box">
+                <div class="wt-step-label" id="wtStepLabel"></div>
+                <div class="wt-arrow" id="wtArrow"></div>
+                <h3 class="wt-title" id="wtTitle"></h3>
+                <p class="wt-text" id="wtText"></p>
+                <div class="wt-footer">
+                    <button class="wt-skip-btn" id="wtSkipBtn"></button>
+                    <button class="wt-next-btn" id="wtNextBtn"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- End Game -->
+        <div id="endGameScreen" class="screen-overlay hidden">
+            <div class="screen-content">
+                <h1 id="endGameTitle"></h1>
+                <p id="endGameText"></p>
+                <div id="finalScores"></div>
+                <button id="playAgainBtn" class="screen-btn" data-i18n="playAgain">Play Again</button>
+                <button id="endgameFeedbackBtn" type="button" class="feedback-link-btn endgame-feedback-btn">
+                    <span data-icon="feedback"></span>
+                    <span data-i18n="endgameFeedbackBtn">Give Feedback</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="tutorialModal" class="modal hidden" role="dialog" aria-labelledby="tutorialTitle" aria-modal="true">
+
+            <div class="modal-content tut-panel">
+
+                <!-- Header -->
+                <div class="tut-header">
+                    <div class="tut-header-left">
+                        <span class="tut-label" data-i18n="tutorialLabel">Tutorial</span>
+                        <span id="tutorialCounter" class="tut-counter">1 / 6</span>
+                    </div>
+                    <button id="closeTutorial" class="icon-btn tut-close" aria-label="Close tutorial">
+                        <span data-icon="close"></span>
+                    </button>
+                </div>
+
+                <!-- Progress bar -->
+                <div class="tut-progress-track">
+                    <div id="tutorialProgressBar" class="tut-progress-fill"></div>
+                </div>
+
+                <!-- Body -->
+                <div class="tut-body">
+
+                    <img
+                        id="tutorialImage"
+                        class="tut-image"
+                        alt="">
+
+                    <div class="tut-content">
+                        <h2 id="tutorialTitle" class="tut-title"></h2>
+                        <div id="tutorialText" class="tut-text"></div>
+                        <div id="tutorialDiagram" class="tut-diagram-wrap"></div>
+                        <div id="tutorialVideo" class="tut-video-wrap"></div>
+                    </div>
+
+                </div>
+
+                <!-- Footer -->
+                <div class="tut-footer">
+
+                    <button id="tutorialPrev" class="tut-nav-btn tut-prev" aria-label="Previous slide">
+                        <span data-icon="previous"></span>
+                    </button>
+
+                    <div id="tutorialDots" class="tut-dots"></div>
+
+                    <button id="tutorialNext" class="tut-nav-btn tut-next" aria-label="Next slide">
+                        <span data-icon="next"></span>
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Full-screen red flash when the turn timer drops under 3s
+             (see .screen-damage-flash in css/style.css, triggered from
+             renderTurnTimer in js/ui/game-ui.js) -->
+        <div id="screenDamage" aria-hidden="true"></div>
+
+        <script type="module" src="js/game-main.js"></script>
+
+    </body>
+</html>

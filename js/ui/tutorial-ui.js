@@ -14,7 +14,7 @@ export async function initializeTutorial(){
 
     // Guard against double-binding: initializeTutorial() is now called
     // once at boot (so Home's "How to Play" entry works before a match
-    // exists) as well as from js/main.js on every new game.
+    // exists) as well as from js/game-main.js on every new game.
     if (_initialized) return;
     _initialized = true;
 
