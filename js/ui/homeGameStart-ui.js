@@ -7,7 +7,8 @@
 // tabs only swaps which panel is shown in place, no navigation.
 //
 // Only Play vs Bot is active today: its panel is exactly the
-// existing "Play vs Bot" button, wired by js/ui/playVsBot-ui.js.
+// existing "Play vs Bot" button, which navigates to its own
+// top-level page (bot-difficulty.html — see js/ui/home-ui.js).
 // Rank and Friendly are real, selectable tabs — the player can see
 // their panel — but neither has a game flow or backend yet, so
 // their panel content honestly says Coming Soon instead of starting

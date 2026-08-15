@@ -3731,9 +3731,19 @@ body.gameplay-locked #playerHand .card {
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: var(--radius-md);
     padding: 14px 16px;
-    border-left: 4px solid var(--bot-color, #4ade80);
+    border-left: 4px solid #4ade80;
     transition: border-color 0.3s;
 }
+
+/* Each row's left border reflects that seat's *actually selected*
+   card color (js/ui/cardColor-ui.js sets --p2/--p3/--p4 on :root),
+   not the bot's difficulty — difficulty is only shown via the
+   Easy/Medium/Hard toggle and the avatar icon above. Reads live off
+   the shared --p2..--p4 variables, so it updates the instant the
+   color-trigger popover changes a seat's color, no extra JS needed. */
+.bot-row[data-player="p2"] { border-left-color: var(--p2, #4ade80); }
+.bot-row[data-player="p3"] { border-left-color: var(--p3, #f59e0b); }
+.bot-row[data-player="p4"] { border-left-color: var(--p4, #ef4444); }
 
 .bot-avatar {
     font-size: 36px;

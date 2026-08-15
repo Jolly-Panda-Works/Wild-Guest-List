@@ -6,15 +6,14 @@
 // genuine modals that belong to Home itself (About, Feedback, and
 // the How-to-Play tutorial — brief overlays, not full destinations).
 //
-// Profile, Settings, and Cards are NOT rendered here — they're
-// separate pages (profile.html, settings.html, cards.html) reached
-// via real navigation from js/ui/home-ui.js. Game Modes are NOT a
-// separate page either: Play vs Bot, Online Multiplayer, and Local
-// Multiplayer are direct Home actions, wired via js/ui/home-ui.js
-// and js/ui/playVsBot-ui.js. Home never initializes gameplay itself;
-// that's game-main.js's job, only once the player confirms Play vs
-// Bot and is handed off to game.html. See docs/ARCHITECTURE_PLAN.md
-// for the navigation architecture this implements.
+// Profile, Settings, Cards, and Choose Bot Difficulty are NOT
+// rendered here — they're separate pages (profile.html,
+// settings.html, cards.html, bot-difficulty.html) reached via real
+// navigation from js/ui/home-ui.js. Home never initializes gameplay
+// itself; that's game-main.js's job, only once the player confirms
+// on bot-difficulty.html and is handed off to game.html. See
+// docs/ARCHITECTURE_PLAN.md for the navigation architecture this
+// implements.
 // ══════════════════════════════════════════════════════════
 
 import { loadI18n } from "./i18n.js";

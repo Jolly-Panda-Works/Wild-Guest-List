@@ -86,31 +86,34 @@ browser's own Back/Forward, refresh, and direct-URL-access all work
 for free, and leaving a page fully unmounts it (no stale listeners,
 timers, or animations left running behind whatever's next).
 
-| Page              | Destination              | Reached from                          |
-|--------------------|--------------------------|----------------------------------------|
-| `index.html`       | Home                     | —                                      |
-| `game.html`        | Gameplay                 | Home → Play vs Bot → Let's Play!       |
-| `profile.html`     | Profile                  | Home's profile chip                    |
-| `settings.html`    | Settings                 | Home's Settings entry                  |
-| `cards.html`       | Cards (Animal Abilities) | Home's Card Guide entry                |
-| `coming-soon.html` | Shop / Tournament / Leaderboard (`?feature=`) | Home's bottom nav |
+| Page                  | Destination                | Reached from                              |
+|------------------------|-----------------------------|---------------------------------------------|
+| `index.html`           | Home                        | —                                            |
+| `bot-difficulty.html`  | Choose Bot Difficulty      | Home → Play vs Bot                           |
+| `game.html`            | Gameplay                    | `bot-difficulty.html` → Let's Play!         |
+| `profile.html`         | Profile                     | Home's profile chip                          |
+| `settings.html`        | Settings                    | Home's Settings entry                        |
+| `cards.html`           | Cards (Animal Abilities)   | Home's Card Guide entry                      |
+| `coming-soon.html`     | Shop / Tournament / Leaderboard (`?feature=`) | Home's bottom nav |
 
 **There is no separate Game Modes page.** Home's Start Game section
 (`index.html`) is a **tab bar** — Play vs Bot / Rank / Friendly — not
-three separate Home buttons and not a link into another screen.
-Switching tabs only swaps which panel is shown in place (no
-navigation). Only **Play vs Bot** is active: picking it reveals the
-existing bot-difficulty panel as a sub-state of *Home* (a
-`#play-vs-bot` history entry via `history.pushState`, swapping
-`#homeMainContent` for `#difficultyPanelSection` — not a further
-top-level destination) — so Back collapses the panel and returns to
-Home in two separate, correct steps. Confirming still hands off to
-`game.html` exactly as before, dealing the same 1 human + 3 bots as
-always. **Rank** and **Friendly** are real, switchable tabs — their
-panel is visible and reachable — but neither has a game flow or
-backend yet, so their panel content honestly reads Coming Soon rather
-than starting a fake match. See `js/ui/homeGameStart-ui.js`,
-`js/ui/playVsBot-ui.js`, and `js/ui/home-ui.js`.
+three separate Home buttons. Switching tabs only swaps which panel is
+shown in place (no navigation). Only **Play vs Bot** is active:
+picking it is a real page navigation straight to
+`bot-difficulty.html` — a top-level destination and sibling of Home,
+not a panel rendered inside it. That page shows each seat's avatar +
+name read-only (sourced from the one authoritative profile) alongside
+editable bot difficulty and per-seat color, then a Start button
+(`confirmDiffBtn`) that hands off to `game.html` exactly as before,
+dealing the same 1 human + 3 bots as always. Because it's a real page,
+browser Back, refresh, and direct URL access all work for free, and
+leaving it fully unmounts it. **Rank** and **Friendly** are real,
+switchable tabs — their panel is visible and reachable — but neither
+has a game flow or backend yet, so their panel content honestly reads
+Coming Soon rather than starting a fake match. See
+`js/ui/homeGameStart-ui.js`, `js/bot-difficulty-main.js`, and
+`js/ui/home-ui.js`.
 
 **A few things stay genuine modals on purpose**, rather than becoming
 top-level pages, because navigating away would destroy state that
@@ -141,12 +144,11 @@ never renders another destination's UI inside itself.
 * **Start Game tabs — Play vs Bot / Rank / Friendly** (see
   `.home-gamestart` / `.home-tabs`) — a tab bar, not three separate
   Home buttons and not an intermediate Game Modes screen. Only
-  **Play vs Bot** is active: its panel is exactly the existing
-  "Play vs Bot" button, revealing the bot-difficulty panel in place
-  as a sub-state of Home (`js/ui/playVsBot-ui.js`) — gameplay is
-  unchanged (still always 1 human + 3 bots). **Rank** and
-  **Friendly** are selectable tabs whose panel says Coming Soon;
-  see `js/ui/homeGameStart-ui.js`.
+  **Play vs Bot** is active: its button navigates to its own
+  top-level page, `bot-difficulty.html` — gameplay is unchanged
+  (still always 1 human + 3 bots). **Rank** and **Friendly** are
+  selectable tabs whose panel says Coming Soon; see
+  `js/ui/homeGameStart-ui.js`.
 * **Secondary row** — Card Guide, Settings, How to Play (tutorial),
   and About Developer.
 * **Profile chip** — shows the player's current avatar + name (top of
@@ -160,8 +162,9 @@ never renders another destination's UI inside itself.
   `0` since there's no coin economy yet.
 
 Home is implemented in `js/home-main.js` + `js/ui/home-ui.js` +
-`js/ui/homeGameStart-ui.js` (tab switching) + `js/ui/playVsBot-ui.js`
-(Play vs Bot's panel). See `docs/ARCHITECTURE_PLAN.md` for the fuller
+`js/ui/homeGameStart-ui.js` (tab switching). Play vs Bot's own page is
+implemented in `bot-difficulty.html` + `js/bot-difficulty-main.js`.
+See `docs/ARCHITECTURE_PLAN.md` for the fuller
 design this follows, including later phases (a real Store/economy,
 Achievements, Quests, Leaderboard, and a real Rank/Friendly game
 flow) — each of those, per the navigation architecture above, would
@@ -173,13 +176,13 @@ action/tab) too.
 ### 1. Start the Game
 
 From Home's Start Game tabs, the **Play vs Bot** tab (the only active
-one — Rank and Friendly are Coming Soon) reveals the bot-difficulty
-panel right there on Home to choose each opponent's difficulty —
-there's no separate Game Modes page to pass through first. The human
-player's name and avatar come from their Profile (`profile.html`)
-rather than being typed in here — new players get a sensible default
-profile
-immediately, and can customize it any time.
+one — Rank and Friendly are Coming Soon) navigates to
+`bot-difficulty.html` to choose each opponent's difficulty and every
+seat's color — there's no separate Game Modes page to pass through
+first. The human player's name and avatar are shown read-only there,
+sourced from their Profile (`profile.html`) rather than being editable
+in here — new players get a sensible default profile immediately, and
+can customize it any time.
 
 Each game contains:
 
@@ -403,6 +406,7 @@ Game State
 WildGuestList/
 │
 ├── index.html          (Home — landing page; hosts Game Mode buttons directly, never initializes gameplay)
+├── bot-difficulty.html  (Choose Bot Difficulty — a real top-level page reached from Home's Play vs Bot)
 ├── game.html            (Gameplay — the board; all game init lives here)
 ├── profile.html          (Profile — display name + avatar)
 ├── settings.html         (Settings — Home's copy; game.html has its own modal)
@@ -420,6 +424,7 @@ WildGuestList/
 │
 ├── js/
 │   ├── home-main.js       (Home bootstrap — index.html)
+│   ├── bot-difficulty-main.js (Choose Bot Difficulty bootstrap — bot-difficulty.html)
 │   ├── game-main.js       (Gameplay bootstrap — game.html)
 │   ├── profile-main.js    (Profile bootstrap)
 │   ├── settings-main.js   (Settings bootstrap)
@@ -471,7 +476,6 @@ WildGuestList/
 │       ├── homeGameStart-ui.js (Home's Play vs Bot / Rank / Friendly tab bar)
 │       ├── modal-ui.js    (Home/Game's genuine modals: About, Feedback, Tutorial, in-game Help/Settings)
 │       ├── pause-ui.js
-│       ├── playVsBot-ui.js (Home's Play vs Bot sub-state — bot-difficulty panel, no separate Game Modes page)
 │       ├── profile-ui.js  (Profile page content — name + avatar)
 │       ├── tutorial-ui.js
 │       ├── ui.js
@@ -800,7 +804,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.15.1
+**Current version:** 1.16.1
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Settings' own page (`settings.html`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 
