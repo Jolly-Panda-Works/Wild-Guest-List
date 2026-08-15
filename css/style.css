@@ -1862,7 +1862,11 @@ body {
     align-items: center;
 
 
-    z-index: 1000;
+    /* Home (index.html) is itself a .screen-overlay at z-index 9999
+       (see above) — About Developer and the How-to-Play tutorial are
+       genuine modals opened *on top of* Home, not a separate page, so
+       they need a higher z-index or they'd render underneath it. */
+    z-index: 10000;
 }
 
 
