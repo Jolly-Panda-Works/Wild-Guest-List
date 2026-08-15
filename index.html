@@ -9,17 +9,18 @@
         <link rel="stylesheet" href="css/style.css">
     </head>
     <body>
-
-
         <!-- ── HOME ───────────────────────────────────────────
-             index.html IS Home — this is the app's only landing
-             screen (see js/home-main.js + docs/ARCHITECTURE_PLAN.md).
-             It never initializes gameplay; "Offline Game" collects
-             bot-difficulty choices in #difficultyModal below, then
-             navigates to game.html, which owns all game
-             initialization. "Online Game" and the bottom-nav entries
-             are real, reachable, clearly-labeled future-state
-             placeholders — not fake functionality.
+             index.html IS Home — a top-level navigation destination,
+             not a persistent parent/container for the rest of the
+             app. It never initializes gameplay and never renders
+             another destination's UI inside itself: Game Modes,
+             Profile, Settings, and Cards are all separate documents
+             (game-modes.html, profile.html, settings.html,
+             cards.html) reached via real navigation — see
+             js/ui/home-ui.js. "Offline Game" and "Online Game" both
+             navigate to game-modes.html; the bottom-nav entries route
+             to coming-soon.html rather than staying on Home. See
+             docs/ARCHITECTURE_PLAN.md.
 
              Visual hierarchy (top → bottom): logo, secondary
              nav/profile, then the primary Play action(s) centered
@@ -30,9 +31,11 @@
 
                 <div class="home-topbar">
                     <!-- Real Profile entry point: shows the player's current
-                         avatar + name, opens #profileModal. Player identity
-                         itself lives only in js/services/profile.js — this
-                         chip just displays it (js/ui/profile-ui.js). -->
+                         avatar + name, navigates to profile.html (its own
+                         top-level page — see js/ui/home-ui.js). Player
+                         identity itself lives only in
+                         js/services/profile.js; this chip just displays
+                         it (js/ui/profile-ui.js). -->
                     <button id="homeProfileChip" class="home-profile-chip" type="button"
                             aria-label="Profile" data-title-key="homeProfileAriaLabel">
                         <img id="homeProfileChipAvatar" class="home-profile-chip-avatar" alt="">
@@ -104,114 +107,6 @@
 
             </div>
         </div>
-
-        <!-- Profile — display name + avatar. The only place identity is
-             edited; Home's chip above and the difficulty panel's avatar
-             trigger both just reflect js/services/profile.js. -->
-        <div id="profileModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
-            <div class="modal-content small-popup profile-panel">
-                <div class="help-header">
-                    <h3 id="profileModalTitle" data-i18n="profileModalTitle">Profile</h3>
-                    <button id="closeProfile" class="icon-btn close"><span data-icon="close"></span></button>
-                </div>
-                <div class="profile-content">
-                    <div class="profile-avatar-grid" id="profileAvatarGrid"></div>
-                    <div class="profile-name-row">
-                        <label class="settings-label" for="profileNameInput" data-i18n="profileNameLabel">Display Name</label>
-                        <input id="profileNameInput" class="player-name-input" type="text" maxlength="20"
-                               data-i18n-placeholder="playerNamePlaceholder" placeholder="Enter your name...">
-                    </div>
-                    <button id="profileSaveBtn" class="screen-btn" type="button" data-i18n="profileSaveBtn">Save</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ── MODALS ─────────────────────────────────────── -->
-
-        <!-- Help -->
-        <div id="helpModal" class="modal hidden">
-            <div class="modal-content help-layout">
-                <div class="help-header">
-                    <h1 data-i18n="helpModalTitle">Help</h1>
-                    <button id="closeHelp" class="icon-btn close"><span data-icon="close"></span></button>
-                </div>
-                <div class="help-text">
-                    <span data-i18n="helpIntro">Invite wild animals to the party queue!</span>
-                    <p data-i18n="helpWhenQueue">When the queue reaches 5 animals:</p>
-                    <ul>
-                        <li data-i18n="helpRule1">The first 2 guests make it into the party.</li>
-                        <li data-i18n="helpRule2">The last guest gets turned away and sent to the trash.</li>
-                        <li data-i18n="helpRule3">The remaining guests stay in line.</li>
-                    </ul>
-                    <span data-i18n="helpGoal">Gather the biggest party and become the ultimate host!</span>
-                </div>
-                <div class="help-divider"></div>
-                <h2 class="animal-guide-title" data-i18n="animalAbilities">Animal Abilities</h2>
-                <div id="animalGrid"></div>
-            </div>
-        </div>
-
-        <!-- Card detail -->
-        <div id="cardModal" class="modal hidden">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button id="cardBackBtn" class="icon-btn"><span data-icon="back"></span></button>
-                </div>
-                <div id="cardModalContent"></div>
-            </div>
-        </div>
-
-        <!-- Settings -->
-        <div id="settingsModal" class="modal hidden">
-            <div class="modal-content small-popup">
-                <div class="help-header">
-                    <h3 data-i18n="settingsTitle">Settings</h3>
-                    <button id="closeSettings" class="icon-btn close"><span data-icon="close"></span></button>
-                </div>
-                <div class="settings-content">
-
-                    <div class="settings-row">
-                        <label class="settings-label"><span data-icon="sound"></span> <span data-i18n="settingsSound">Sound</span></label>
-                        <label class="switch-btn">
-                            <input type="checkbox" id="soundToggle" checked>
-                            <span class="switch-track"><span class="switch-thumb"></span></span>
-                        </label>
-                    </div>
-
-                    <div class="settings-divider"></div>
-
-                    <div class="settings-row">
-                        <label class="settings-label"><span data-i18n="settingsStepGuidance">Step-by-step Guidance</span></label>
-                        <label class="switch-btn">
-                            <input type="checkbox" id="stepGuidanceToggle">
-                            <span class="switch-track"><span class="switch-thumb"></span></span>
-                        </label>
-                    </div>
-
-                    <div class="settings-divider"></div>
-
-                    <div class="settings-row settings-row-col">
-                        <label class="settings-label"><span data-i18n="settingsPlayerColors">Player Colors</span></label>
-                        <div id="playerColorPicker" class="player-color-picker"></div>
-                    </div>
-
-                    <div class="settings-divider"></div>
-
-                    <div class="settings-row settings-row-col">
-                        <label class="settings-label"><span data-i18n="settingsLanguage">Language</span></label>
-                        <div id="langSelector" class="lang-selector"></div>
-                    </div>
-
-                    <div class="settings-divider"></div>
-
-                    <div class="about-meta">
-                        <div><strong data-i18n="settingsVersion">Version</strong>: <span data-app-version>1.9.0</span></div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
         <!-- About Developer -->
         <div id="aboutModal" class="modal hidden">
             <div class="modal-content small-popup about-panel">
@@ -251,7 +146,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Feedback / Survey -->
         <div id="feedbackModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle">
             <div class="modal-content small-popup feedback-modal-content">
@@ -306,7 +200,6 @@
                 </form>
             </div>
         </div>
-
         <div id="tutorialModal" class="modal hidden" role="dialog" aria-labelledby="tutorialTitle" aria-modal="true">
 
             <div class="modal-content tut-panel">
@@ -361,46 +254,6 @@
 
             </div>
 
-        </div>
-
-        <!-- Difficulty Modal -->
-        <div id="difficultyModal" class="screen-overlay hidden">
-            <div class="screen-content difficulty-content">
-                <h2 data-i18n="diffTitle">🎮 Choose Bot Difficulty</h2>
-                <p class="diff-subtitle" data-i18n="diffSubtitle">Set how smart each opponent is</p>
-                <div id="difficultyPanel"></div>
-                <button id="confirmDiffBtn" class="screen-btn" data-i18n="diffConfirm">Let's Play!</button>
-            </div>
-        </div>
-
-        <!-- Guidance prompt — asked once per new game, before it starts -->
-        <div id="guidancePromptModal" class="screen-overlay hidden">
-            <div class="screen-content guide-prompt-content">
-                <h2 data-i18n="guidePromptTitle">Show step-by-step help?</h2>
-                <p class="diff-subtitle" data-i18n="guidePromptText">We can explain each animal's ability the first time you play it this game.</p>
-                <div class="guide-prompt-actions">
-                    <button id="guidancePromptYesBtn" class="screen-btn" type="button" data-i18n="guidePromptYes">Yes, guide me</button>
-                    <button id="guidancePromptNoBtn" class="screen-btn guide-prompt-no" type="button" data-i18n="guidePromptNo">No thanks</button>
-                </div>
-                <label class="guide-prompt-dontshow">
-                    <input type="checkbox" id="guidancePromptDontShowAgain">
-                    <span data-i18n="guidePromptDontShowAgain">Don't show this again</span>
-                </label>
-            </div>
-        </div>
-
-        <!-- Restart-from-beginning prompt — asked only when the player
-             chooses step-by-step guidance and some abilities have already
-             been explained in an earlier game -->
-        <div id="guidanceRestartModal" class="screen-overlay hidden">
-            <div class="screen-content guide-prompt-content">
-                <h2 data-i18n="guideRestartTitle">Start the guide over?</h2>
-                <p class="diff-subtitle" data-i18n="guideRestartText">You've already seen some animals explained. Show them all again from the beginning, or only the ones you haven't seen yet?</p>
-                <div class="guide-prompt-actions">
-                    <button id="guidanceRestartYesBtn" class="screen-btn" type="button" data-i18n="guideRestartYes">Start over</button>
-                    <button id="guidanceRestartNoBtn" class="screen-btn guide-prompt-no" type="button" data-i18n="guideRestartNo">Just new ones</button>
-                </div>
-            </div>
         </div>
 
         <script type="module" src="js/home-main.js"></script>

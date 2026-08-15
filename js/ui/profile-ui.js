@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════════
-// Profile modal — js/ui/profile-ui.js
+// Profile page — js/ui/profile-ui.js
 //
 // The dedicated place to change display name + avatar (see
 // docs/ARCHITECTURE_PLAN.md "Player Profile"). Reads/writes
@@ -7,13 +7,17 @@
 // authoritative profile state — so Home's profile chip, the
 // difficulty panel's avatar trigger (js/ui/playerAvatar-ui.js),
 // and any future consumer all reflect a save here immediately.
+//
+// Profile is its own top-level page (profile.html /
+// js/profile-main.js) — a sibling of Home, not something rendered
+// inside it. Home only shows a small read-only chip (see
+// updateHomeProfileChip below) that links to profile.html; it does
+// not contain the editing UI itself.
 // ══════════════════════════════════════════════════════════
 
 import { PLAYER_AVATARS } from "../constants/avatars.js";
 import { t } from "../i18n.js";
-import { loadIcons } from "./icon-ui.js";
-import { openModal, closeModal } from "./modal-ui.js";
-import { getProfile, setDisplayName, setAvatarId, subscribeProfile } from "../services/profile.js";
+import { getProfile, setDisplayName, setAvatarId } from "../services/profile.js";
 
 let selectedAvatarId = null;
 
@@ -54,19 +58,11 @@ function fillNameInput() {
     input.placeholder = t("playerNamePlaceholder");
 }
 
-/** Opens the Profile modal, pre-filled with the current profile. */
-export async function openProfileModal() {
-    selectedAvatarId = getProfile().avatarId;
-    renderAvatarGrid();
-    fillNameInput();
-    openModal("profileModal");
-    await loadIcons(document.getElementById("profileModal"));
-    document.getElementById("profileNameInput")?.focus();
-}
-
 /** Keeps Home's compact avatar/name entry point in sync with the
- *  authoritative profile. No-ops on pages without the chip (e.g. Game
- *  doesn't render one). */
+ *  authoritative profile. Called once when Home boots (Home is a
+ *  fresh page load every time the player lands on it, so a one-shot
+ *  render is enough — no live subscription needed). No-ops on pages
+ *  without the chip. */
 export function updateHomeProfileChip() {
     const chip = document.getElementById("homeProfileChip");
     if (!chip) return;
@@ -83,32 +79,25 @@ export function updateHomeProfileChip() {
     }
 }
 
-/** Wires the Profile modal's own controls. Call once at boot on any
- *  page that includes #profileModal (currently: Home only). */
-export function initProfile() {
-    document.getElementById("closeProfile")
-        ?.addEventListener("click", () => closeModal("profileModal"));
+/** Boots the Profile page's own content: avatar grid + name field +
+ *  Save. Call once from js/profile-main.js. */
+export function initProfilePage() {
+    selectedAvatarId = getProfile().avatarId;
+    renderAvatarGrid();
+    fillNameInput();
+    document.getElementById("profileNameInput")?.focus();
 
     document.getElementById("profileSaveBtn")
         ?.addEventListener("click", () => {
             const input = document.getElementById("profileNameInput");
             setDisplayName(input?.value ?? "");
             if (selectedAvatarId) setAvatarId(selectedAvatarId);
-            closeModal("profileModal");
+            // Saved — return to Home, same as the close/back link.
+            window.location.href = "index.html";
         });
 
-    document.getElementById("profileModal")?.addEventListener("keydown", e => {
-        if (e.key === "Escape") closeModal("profileModal");
-    });
-
     window.addEventListener("langchange", () => {
-        if (!document.getElementById("profileModal")?.classList.contains("hidden")) {
-            renderAvatarGrid();
-            fillNameInput();
-        }
-        updateHomeProfileChip();
+        renderAvatarGrid();
+        fillNameInput();
     });
-
-    updateHomeProfileChip();
-    subscribeProfile(updateHomeProfileChip);
 }

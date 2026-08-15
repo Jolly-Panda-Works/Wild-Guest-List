@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Wild Guest List — Settings</title>
+        <link rel="icon" type="image/x-icon" href="assets/img/branding/favicon.ico" />
+        <link rel="stylesheet" href="assets/fonts/fonts.css">
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+    <body>
+
+        <!-- ── SETTINGS ───────────────────────────────────────
+             A top-level destination reached from Home (see
+             js/ui/home-ui.js). This is Home's Settings entry only —
+             the in-game Pause → Settings flow (game.html) stays a
+             genuine modal on purpose: pausing to tweak a setting
+             mid-match shouldn't unload the active game. Both share
+             the exact same settings widgets/persistence
+             (js/ui/cardColor-ui.js, js/ui/cardGuidance-ui.js,
+             js/services/soundManager.js, js/i18n.js) — only the
+             surrounding page/modal shell differs. -->
+        <div class="screen-overlay">
+            <div class="screen-content">
+
+                <a href="index.html" class="page-back-link">
+                    <span aria-hidden="true">←</span> <span data-i18n="backToHome">Home</span>
+                </a>
+
+                <div class="modal-content small-popup">
+                    <div class="help-header">
+                        <h3 data-i18n="settingsTitle">Settings</h3>
+                    </div>
+                    <div class="settings-content">
+
+                        <div class="settings-row">
+                            <label class="settings-label"><span data-icon="sound"></span> <span data-i18n="settingsSound">Sound</span></label>
+                            <label class="switch-btn">
+                                <input type="checkbox" id="soundToggle" checked>
+                                <span class="switch-track"><span class="switch-thumb"></span></span>
+                            </label>
+                        </div>
+
+                        <div class="settings-divider"></div>
+
+                        <div class="settings-row">
+                            <label class="settings-label"><span data-i18n="settingsStepGuidance">Step-by-step Guidance</span></label>
+                            <label class="switch-btn">
+                                <input type="checkbox" id="stepGuidanceToggle">
+                                <span class="switch-track"><span class="switch-thumb"></span></span>
+                            </label>
+                        </div>
+
+                        <div class="settings-divider"></div>
+
+                        <div class="settings-row settings-row-col">
+                            <label class="settings-label"><span data-i18n="settingsPlayerColors">Player Colors</span></label>
+                            <div id="playerColorPicker" class="player-color-picker"></div>
+                        </div>
+
+                        <div class="settings-divider"></div>
+
+                        <div class="settings-row settings-row-col">
+                            <label class="settings-label"><span data-i18n="settingsLanguage">Language</span></label>
+                            <div id="langSelector" class="lang-selector"></div>
+                        </div>
+
+                        <div class="settings-divider"></div>
+
+                        <div class="about-meta">
+                            <div><strong data-i18n="settingsVersion">Version</strong>: <span data-app-version>1.9.0</span></div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <script type="module" src="js/settings-main.js"></script>
+
+    </body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Wild Guest List — Game Modes</title>
+        <link rel="icon" type="image/x-icon" href="assets/img/branding/favicon.ico" />
+        <link rel="stylesheet" href="assets/fonts/fonts.css">
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+    <body>
+
+        <!-- ── GAME MODES ─────────────────────────────────────
+             A top-level destination, sibling of Home — reached from
+             Home's Offline/Online Game buttons, not rendered inside
+             Home. "Play vs Bot" is the only implemented mode today;
+             choosing it reveals the existing bot-difficulty panel
+             right here (a sub-state of THIS page, not a further
+             top-level destination — see js/game-modes-main.js, which
+             pushes a #play-vs-bot history entry so Back correctly
+             collapses to the mode tiles before returning to Home).
+             Confirming still hands off to game.html exactly as
+             before — nothing about how a match starts changed. -->
+        <div class="screen-overlay">
+            <div class="screen-content">
+
+                <a href="index.html" class="page-back-link">
+                    <span aria-hidden="true">←</span> <span data-i18n="backToHome">Home</span>
+                </a>
+
+                <div id="modeTiles" class="mode-tiles">
+                    <h2 data-i18n="gameModesTitle">🎮 Game Modes</h2>
+                    <p class="diff-subtitle" data-i18n="gameModesSubtitle">Choose how you want to play</p>
+
+                    <div class="home-primary-row">
+                        <button id="modePlayVsBotBtn" class="home-primary-btn home-play-btn" type="button">
+                            <span class="home-btn-icon" data-icon="play" aria-hidden="true"></span>
+                            <span data-i18n="gameModesPlayVsBot">Play vs Bot</span>
+                        </button>
+                        <button id="modeOnlineBtn" class="home-primary-btn home-secondary-cta" type="button"
+                                aria-disabled="true" data-title="Online Multiplayer — Coming Soon" data-title-key="homeOnlineComingSoonTip">
+                            <span class="home-btn-icon" data-icon="globe" aria-hidden="true"></span>
+                            <span data-i18n="gameModesOnline">Online Multiplayer</span>
+                            <span class="home-lock-badge" aria-hidden="true">🔒</span>
+                            <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
+                        </button>
+                        <button id="modeLocalBtn" class="home-primary-btn home-secondary-cta" type="button"
+                                aria-disabled="true" data-title="Local Multiplayer — Coming Soon">
+                            <span class="home-btn-icon" data-icon="users" aria-hidden="true"></span>
+                            <span data-i18n="gameModesLocal">Local Multiplayer</span>
+                            <span class="home-lock-badge" aria-hidden="true">🔒</span>
+                            <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Play vs Bot — bot-difficulty selection, revealed in place
+                     of the tiles above (see js/game-modes-main.js). -->
+                <div id="difficultyPanelSection" class="difficulty-content hidden">
+                    <h2 data-i18n="diffTitle">🎮 Choose Bot Difficulty</h2>
+                    <p class="diff-subtitle" data-i18n="diffSubtitle">Set how smart each opponent is</p>
+                    <div id="difficultyPanel"></div>
+                    <button id="confirmDiffBtn" class="screen-btn" data-i18n="diffConfirm">Let's Play!</button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Guidance prompt — asked once per new game, before it starts -->
+        <div id="guidancePromptModal" class="screen-overlay hidden">
+            <div class="screen-content guide-prompt-content">
+                <h2 data-i18n="guidePromptTitle">Show step-by-step help?</h2>
+                <p class="diff-subtitle" data-i18n="guidePromptText">We can explain each animal's ability the first time you play it this game.</p>
+                <div class="guide-prompt-actions">
+                    <button id="guidancePromptYesBtn" class="screen-btn" type="button" data-i18n="guidePromptYes">Yes, guide me</button>
+                    <button id="guidancePromptNoBtn" class="screen-btn guide-prompt-no" type="button" data-i18n="guidePromptNo">No thanks</button>
+                </div>
+                <label class="guide-prompt-dontshow">
+                    <input type="checkbox" id="guidancePromptDontShowAgain">
+                    <span data-i18n="guidePromptDontShowAgain">Don't show this again</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Restart-from-beginning prompt — asked only when the player
+             chooses step-by-step guidance and some abilities have already
+             been explained in an earlier game -->
+        <div id="guidanceRestartModal" class="screen-overlay hidden">
+            <div class="screen-content guide-prompt-content">
+                <h2 data-i18n="guideRestartTitle">Start the guide over?</h2>
+                <p class="diff-subtitle" data-i18n="guideRestartText">You've already seen some animals explained. Show them all again from the beginning, or only the ones you haven't seen yet?</p>
+                <div class="guide-prompt-actions">
+                    <button id="guidanceRestartYesBtn" class="screen-btn" type="button" data-i18n="guideRestartYes">Start over</button>
+                    <button id="guidanceRestartNoBtn" class="screen-btn guide-prompt-no" type="button" data-i18n="guideRestartNo">Just new ones</button>
+                </div>
+            </div>
+        </div>
+
+        <script type="module" src="js/game-modes-main.js"></script>
+
+    </body>
+</html>

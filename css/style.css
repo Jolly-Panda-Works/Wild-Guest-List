@@ -627,6 +627,30 @@ body {
 
 }
 
+/* ── Back-to-Home link ────────────────────────────────────
+   Every standalone top-level page (Profile, Settings, Cards,
+   Game Modes, Coming Soon — see profile.html, settings.html,
+   cards.html, game-modes.html, coming-soon.html) uses this same
+   affordance to return to Home. It's a real navigation (an <a>
+   to index.html), not a modal close — browser Back already does
+   the same thing, this is just a visible, clickable equivalent. */
+.page-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    margin-bottom: 14px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: color .15s ease;
+}
+
+.page-back-link:hover {
+    color: var(--text-main);
+}
+
 /* دسکتاپ بزرگ */
 @media(min-width:1200px){
 

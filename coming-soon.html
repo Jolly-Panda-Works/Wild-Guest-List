@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Wild Guest List — Coming Soon</title>
+        <link rel="icon" type="image/x-icon" href="assets/img/branding/favicon.ico" />
+        <link rel="stylesheet" href="assets/fonts/fonts.css">
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+    <body>
+
+        <!-- ── COMING SOON ────────────────────────────────────
+             A shared top-level destination for Home's not-yet-built
+             features (Shop, Tournament, Leaderboard today; the same
+             ?feature= pattern covers Daily Challenge, Progress,
+             Achievements, News/Events, and Friends whenever Home
+             adds entry points for them). Each still gets its own
+             real, bookmarkable/refreshable URL
+             (coming-soon.html?feature=shop) and is architecturally
+             independent from Home — it's just one shared page
+             instead of near-duplicate files per feature. See
+             js/coming-soon-main.js. -->
+        <div class="screen-overlay">
+            <div class="screen-content">
+
+                <a href="index.html" class="page-back-link">
+                    <span aria-hidden="true">←</span> <span data-i18n="backToHome">Home</span>
+                </a>
+
+                <div class="modal-content small-popup">
+                    <div class="help-header">
+                        <h3 id="comingSoonFeatureName">…</h3>
+                    </div>
+                    <p class="diff-subtitle" data-i18n="comingSoonText">This feature isn't available yet — check back soon!</p>
+                    <span class="home-coming-soon-tag" data-i18n="comingSoonTitle">Coming Soon</span>
+                </div>
+
+            </div>
+        </div>
+
+        <script type="module" src="js/coming-soon-main.js"></script>
+
+    </body>
+</html>

@@ -182,7 +182,15 @@
         "profileSaveBtn": "Save",
         "profileNameLabel": "Display Name",
         "homeProfileAriaLabel": "Your Profile — tap to edit",
-        "pauseHome": "Home"
+        "pauseHome": "Home",
+        "gameModesTitle": "🎮 Game Modes",
+        "gameModesSubtitle": "Choose how you want to play",
+        "gameModesPlayVsBot": "Play vs Bot",
+        "gameModesOnline": "Online Multiplayer",
+        "gameModesLocal": "Local Multiplayer",
+        "comingSoonTitle": "Coming Soon",
+        "comingSoonText": "This feature isn't available yet — check back soon!",
+        "backToHome": "Home"
     },
     "fa": {
         "dir": "rtl",
@@ -367,7 +375,15 @@
         "profileSaveBtn": "ذخیره",
         "profileNameLabel": "نام نمایشی",
         "homeProfileAriaLabel": "پروفایل شما — برای ویرایش ضربه بزنید",
-        "pauseHome": "خانه"
+        "pauseHome": "خانه",
+        "gameModesTitle": "🎮 حالت‌های بازی",
+        "gameModesSubtitle": "روش بازی را انتخاب کنید",
+        "gameModesPlayVsBot": "بازی با ربات",
+        "gameModesOnline": "چندنفره آنلاین",
+        "gameModesLocal": "چندنفره محلی",
+        "comingSoonTitle": "به‌زودی",
+        "comingSoonText": "این قابلیت هنوز فعال نیست — بعداً دوباره سر بزنید!",
+        "backToHome": "خانه"
     },
     "ar": {
         "dir": "rtl",
@@ -552,7 +568,15 @@
         "profileSaveBtn": "حفظ",
         "profileNameLabel": "الاسم المعروض",
         "homeProfileAriaLabel": "ملفك الشخصي — اضغط للتعديل",
-        "pauseHome": "الرئيسية"
+        "pauseHome": "الرئيسية",
+        "gameModesTitle": "🎮 أنماط اللعب",
+        "gameModesSubtitle": "اختر طريقة اللعب",
+        "gameModesPlayVsBot": "اللعب ضد الروبوت",
+        "gameModesOnline": "متعدد اللاعبين عبر الإنترنت",
+        "gameModesLocal": "متعدد اللاعبين محليًا",
+        "comingSoonTitle": "قريباً",
+        "comingSoonText": "هذه الميزة غير متاحة بعد — تحقق لاحقاً!",
+        "backToHome": "الرئيسية"
     },
     "tr": {
         "dir": "ltr",
@@ -737,6 +761,14 @@
         "profileSaveBtn": "Kaydet",
         "profileNameLabel": "Görünen Ad",
         "homeProfileAriaLabel": "Profilin — düzenlemek için dokun",
-        "pauseHome": "Ana Sayfa"
+        "pauseHome": "Ana Sayfa",
+        "gameModesTitle": "🎮 Oyun Modları",
+        "gameModesSubtitle": "Nasıl oynamak istediğini seç",
+        "gameModesPlayVsBot": "Bota Karşı Oyna",
+        "gameModesOnline": "Çevrimiçi Çok Oyunculu",
+        "gameModesLocal": "Yerel Çok Oyunculu",
+        "comingSoonTitle": "Yakında",
+        "comingSoonText": "Bu özellik henüz kullanılamıyor — yakında tekrar bakın!",
+        "backToHome": "Ana Sayfa"
     }
 }

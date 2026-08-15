@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Wild Guest List — Profile</title>
+        <link rel="icon" type="image/x-icon" href="assets/img/branding/favicon.ico" />
+        <link rel="stylesheet" href="assets/fonts/fonts.css">
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+    <body>
+
+        <!-- ── PROFILE ────────────────────────────────────────
+             A top-level destination, sibling of Home — not
+             something rendered inside index.html. Home's own
+             #homeProfileChip is just a read-only preview that
+             links here; all editing happens on this page (see
+             js/profile-main.js / js/ui/profile-ui.js). Navigating
+             back to Home is a real page navigation (the link below,
+             or the browser Back button), so nothing from Home stays
+             mounted underneath this page. -->
+        <div class="screen-overlay">
+            <div class="screen-content">
+
+                <a href="index.html" class="page-back-link">
+                    <span aria-hidden="true">←</span> <span data-i18n="backToHome">Home</span>
+                </a>
+
+                <div class="modal-content small-popup profile-panel">
+                    <div class="help-header">
+                        <h3 data-i18n="profileModalTitle">Profile</h3>
+                    </div>
+                    <div class="profile-content">
+                        <div class="profile-avatar-grid" id="profileAvatarGrid"></div>
+                        <div class="profile-name-row">
+                            <label class="settings-label" for="profileNameInput" data-i18n="profileNameLabel">Display Name</label>
+                            <input id="profileNameInput" class="player-name-input" type="text" maxlength="20"
+                                   data-i18n-placeholder="playerNamePlaceholder" placeholder="Enter your name...">
+                        </div>
+                        <button id="profileSaveBtn" class="screen-btn" type="button" data-i18n="profileSaveBtn">Save</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <script type="module" src="js/profile-main.js"></script>
+
+    </body>
+</html>

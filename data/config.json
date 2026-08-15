@@ -1,6 +1,6 @@
 {
     "app": {
-        "version": "1.12.0"
+        "version": "1.13.0"
     },
     "icons": {
         "leaderboard": "assets/img/icons/leaderboard.png",
@@ -24,6 +24,7 @@
         "play": "assets/img/icons/play.png",
         "globe": "🌐",
         "cards": "🃏",
+        "users": "👥",
         "profile": "👤",
         "store": "🛒",
         "tournament": "🏅",

@@ -2,28 +2,26 @@
 // Home — js/ui/home-ui.js
 //
 // index.html's own screen — the app's landing page (see
-// js/home-main.js). Nothing here touches the game engine.
-// "Offline Game" reveals #difficultyModal, the same bot-difficulty
-// picker that used to open directly from the old splash screen;
-// js/home-main.js still owns building that panel and, once
-// confirmed, navigating to game.html — Home only decides *when*
-// that flow becomes visible.
+// js/home-main.js). Home is a navigation destination, not a
+// persistent container for the rest of the app: every button here
+// navigates to its own top-level page/document (profile.html,
+// settings.html, cards.html, game-modes.html, coming-soon.html)
+// rather than opening something inside Home's own DOM. Navigating
+// away unmounts Home completely (a real page load) — nothing here
+// keeps running in the background, and the browser's own Back
+// button returns correctly without any extra history bookkeeping.
 // ══════════════════════════════════════════════════════════
 
 import { openModal } from "./modal-ui.js";
 import { loadIcons } from "./icon-ui.js";
-import { buildLangSelector, t } from "../i18n.js";
 import { openTutorial } from "./tutorial-ui.js";
-import { openHelp } from "../game/help.js";
-import { showWarning } from "./game-ui.js";
-import { openProfileModal } from "./profile-ui.js";
 
-/** Real Home entries that only have a future-state today. Shared
- *  handler so every "Coming Soon" tile gives the same, honest
- *  feedback instead of silently doing nothing. */
-function wireComingSoon(id, messageKey) {
+/** Coming Soon entries navigate to their own page (coming-soon.html)
+ *  instead of staying on Home — even disabled/future features must
+ *  be architecturally independent destinations, not Home children. */
+function wireComingSoon(id, featureId) {
     document.getElementById(id)?.addEventListener("click", () => {
-        showWarning(t(messageKey));
+        window.location.href = `coming-soon.html?feature=${featureId}`;
     });
 }
 
@@ -34,27 +32,29 @@ export async function initHome() {
 
     // ── Profile entry point ───────────────────────────────
     document.getElementById("homeProfileChip")?.addEventListener("click", () => {
-        openProfileModal();
+        window.location.href = "profile.html";
     });
 
-    // ── Primary CTAs ──────────────────────────────────────
+    // ── Primary CTAs — both lead into Game Modes (game-modes.html),
+    //    which owns picking/configuring a mode; Home never hosts
+    //    that UI itself. Both land on the mode-tile view rather than
+    //    deep-linking into a specific mode, so Back walks the full
+    //    chain (mode → Game Modes → Home) in separate steps. ──────
     document.getElementById("homeOfflineBtn")?.addEventListener("click", () => {
-        document.getElementById("difficultyModal")?.classList.remove("hidden");
+        window.location.href = "game-modes.html";
     });
 
-    // Online Game is visibly present and clearly disabled — it must
-    // not error or silently do nothing when tapped.
-    wireComingSoon("homeOnlineBtn", "homeOnlineComingSoonTip");
+    document.getElementById("homeOnlineBtn")?.addEventListener("click", () => {
+        window.location.href = "game-modes.html";
+    });
 
     // ── Secondary nav row ─────────────────────────────────
     document.getElementById("homeCardsBtn")?.addEventListener("click", () => {
-        openHelp();
+        window.location.href = "cards.html";
     });
 
-    document.getElementById("homeSettingsBtn")?.addEventListener("click", async () => {
-        buildLangSelector(document.getElementById("langSelector"));
-        openModal("settingsModal");
-        await loadIcons(document.getElementById("settingsModal"));
+    document.getElementById("homeSettingsBtn")?.addEventListener("click", () => {
+        window.location.href = "settings.html";
     });
 
     document.getElementById("homeHowToPlayBtn")?.addEventListener("click", () => {
@@ -68,7 +68,7 @@ export async function initHome() {
 
     // ── Bottom nav (Store / Tournament / Leaderboard) ─────
     // Real, reachable, clearly-labeled placeholders, not dead buttons.
-    wireComingSoon("homeStoreBtn", "comingSoon");
-    wireComingSoon("homeTournamentBtn", "comingSoon");
-    wireComingSoon("homeLeaderboardBtn", "comingSoon");
+    wireComingSoon("homeStoreBtn", "shop");
+    wireComingSoon("homeTournamentBtn", "tournament");
+    wireComingSoon("homeLeaderboardBtn", "leaderboard");
 }
