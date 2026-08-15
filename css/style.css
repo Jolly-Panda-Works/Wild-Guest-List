@@ -3778,12 +3778,23 @@ body.gameplay-locked #playerHand .card {
    reflects the player's own card color instead of a bot's. */
 .player-row { border-left-color: var(--p1, #4ade80); }
 
-/* ── Player avatar trigger (Choose Bot Difficulty screen) ──
-   Borderless portrait button showing the player's currently chosen
-   avatar, sized to match the bot avatar icons in the rows below it;
-   clicking it opens a popover to pick between the available options.
-   Same interaction shape as .color-trigger just above, and takes the
-   .bot-avatar row slot the plain emoji icon used to sit in. */
+/* ── Player avatar display (Choose Bot Difficulty screen) ──
+   Read-only portrait showing the player's current avatar, sized to
+   match the bot avatar icons in the rows below it. Not a button —
+   this screen never lets avatar or name be changed; editing only
+   happens on profile.html (see .profile-avatar-grid further down). */
+.player-avatar-mount { flex-shrink: 0; width: 52px; text-align: center; }
+
+.player-avatar-display {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+}
+
+/* Retained for the legacy avatar-trigger-mount width (still used by
+   other emoji-icon rows); not used for the player avatar anymore. */
 .avatar-trigger-mount { flex-shrink: 0; width: 52px; text-align: center; }
 
 .avatar-trigger { position: relative; }

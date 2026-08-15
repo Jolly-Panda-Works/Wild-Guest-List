@@ -12,18 +12,27 @@
 // changed, only where the picking-a-mode UI lives. Reuses the
 // existing gameplay initialization/game state as-is; no duplicate
 // Bot gameplay implementation is introduced here.
+//
+// Player identity on this panel is display-only: the player's own
+// avatar + name are read from the single authoritative profile
+// (js/services/profile.js) and rendered as plain, non-interactive
+// elements — no avatar picker, no name field. Editing identity stays
+// exclusively on profile.html (js/ui/profile-ui.js), which this panel
+// only reflects via subscribeProfile() so it stays in sync if the
+// profile changes elsewhere while this panel is open.
 // ══════════════════════════════════════════════════════════
 
 import { t } from "../i18n.js";
 import { loadIcons } from "./icon-ui.js";
 import { initCardColorPicker, initColorTriggers } from "./cardColor-ui.js";
-import { initAvatarTrigger } from "./playerAvatar-ui.js";
 import {
     setStepGuidanceEnabled, isStepGuidanceEnabled,
     hasExplainedHistory, resetExplainedAbilities,
     isGuidancePromptHidden, setGuidancePromptHidden,
 } from "./cardGuidance-ui.js";
 import { BOT_AVATARS } from "../constants/playerTypes.js";
+import { PLAYER_AVATARS, DEFAULT_PLAYER_AVATAR_ID } from "../constants/avatars.js";
+import { getAvatarId, getDisplayName, subscribeProfile } from "../services/profile.js";
 
 const PENDING_DIFFICULTIES_KEY = "wgl_pendingDifficulties";
 const PLAY_VS_BOT_HASH = "#play-vs-bot";
@@ -36,18 +45,30 @@ const BOT_DEFS = [
 ];
 
 // ── Build the difficulty panel ────────────────────────────
-// Reveals bot difficulty + player avatar choices — identical
-// content/logic to before, just living on Home now.
+// Reveals the bot-difficulty + color configuration for this match.
+// The player's own avatar and name are shown read-only, sourced
+// from the one authoritative profile — this panel never lets either
+// be changed (see refreshPlayerIdentity() below).
 async function buildDifficultyPanel() {
     const panel = document.getElementById("difficultyPanel");
     if (!panel) return;
 
+    function avatarById(id) {
+        return PLAYER_AVATARS.find(a => a.id === id) || PLAYER_AVATARS.find(a => a.id === DEFAULT_PLAYER_AVATAR_ID) || PLAYER_AVATARS[0];
+    }
+
     function renderPanel(){
+        const activeAvatar = avatarById(getAvatarId());
+        const playerName   = getDisplayName() || t("you");
+
         const playerRow = `
             <div class="bot-row player-row" id="playerColorRow">
-                <div class="avatar-trigger-mount" id="avatarTrigger_p1"></div>
+                <div class="player-avatar-mount">
+                    <img id="playerAvatarDisplay" class="player-avatar-display"
+                         src="${activeAvatar.src}" alt="${t(activeAvatar.labelKey)}">
+                </div>
                 <div class="bot-info">
-                    <div class="bot-name">${t("you")}</div>
+                    <div class="bot-name" id="playerNameDisplay">${playerName}</div>
                 </div>
                 <div class="color-trigger-mount" id="colorTrigger_p1"></div>
             </div>
@@ -86,18 +107,29 @@ async function buildDifficultyPanel() {
         });
     }
 
-    function wireAvatarTrigger() {
-        initAvatarTrigger(document.getElementById("avatarTrigger_p1"));
+    // Keeps the read-only avatar + name in sync if the profile changes
+    // elsewhere (e.g. profile.html, open in another tab) while this
+    // panel is visible — display-only refresh, never writes back.
+    function refreshPlayerIdentity() {
+        const activeAvatar = avatarById(getAvatarId());
+        const img  = document.getElementById("playerAvatarDisplay");
+        const name = document.getElementById("playerNameDisplay");
+        if (img) {
+            img.src = activeAvatar.src;
+            img.alt = t(activeAvatar.labelKey);
+        }
+        if (name) name.textContent = getDisplayName() || t("you");
     }
 
     renderPanel();
     await wireColorTriggers();
-    wireAvatarTrigger();
+    if (!panel._profileUnsubscribe) {
+        panel._profileUnsubscribe = subscribeProfile(refreshPlayerIdentity);
+    }
     window.addEventListener("langchange", async () => {
         renderPanel();
         await loadIcons(panel);
         await wireColorTriggers();
-        wireAvatarTrigger();
     });
 
     const selected = { p2: "easy", p3: "easy", p4: "easy" };
