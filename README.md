@@ -89,21 +89,25 @@ timers, or animations left running behind whatever's next).
 | Page              | Destination              | Reached from                          |
 |--------------------|--------------------------|----------------------------------------|
 | `index.html`       | Home                     | —                                      |
-| `game-modes.html`  | Game Modes               | Home's Offline/Online Game buttons     |
-| `game.html`        | Gameplay                 | Game Modes → Play vs Bot → Let's Play! |
+| `game.html`        | Gameplay                 | Home → Play vs Bot → Let's Play!       |
 | `profile.html`     | Profile                  | Home's profile chip                    |
 | `settings.html`    | Settings                 | Home's Settings entry                  |
 | `cards.html`       | Cards (Animal Abilities) | Home's Card Guide entry                |
 | `coming-soon.html` | Shop / Tournament / Leaderboard (`?feature=`) | Home's bottom nav |
 
-**Game Modes** (`game-modes.html`) hosts mode selection — today just
-"Play vs Bot" (the existing bot-difficulty panel), with "Online
-Multiplayer" and "Local Multiplayer" shown as disabled tiles. Picking
-"Play vs Bot" reveals the difficulty panel as a sub-state of *that*
-page (a `#play-vs-bot` history entry via `history.pushState`, not a
-further top-level destination) — so Back walks Play vs Bot → Game
-Modes → Home in three separate, correct steps. Confirming still hands
-off to `game.html` exactly as before.
+**There is no separate Game Modes page.** Each Game Mode — Play vs
+Bot, Online Multiplayer, Local Multiplayer — is a direct button on
+Home itself (`index.html`), not a link into another screen. Picking
+**Play vs Bot** reveals the existing bot-difficulty panel as a
+sub-state of *Home* (a `#play-vs-bot` history entry via
+`history.pushState`, swapping `#homeMainContent` for
+`#difficultyPanelSection` — not a further top-level destination) — so
+Back collapses the panel and returns to Home in two separate, correct
+steps. Confirming still hands off to `game.html` exactly as before.
+**Online Multiplayer** and **Local Multiplayer** are disabled/Coming
+Soon buttons, visible on Home so players know they're planned, but
+not yet implemented (no networking or matchmaking). See
+`js/ui/playVsBot-ui.js` and `js/ui/home-ui.js`.
 
 **A few things stay genuine modals on purpose**, rather than becoming
 top-level pages, because navigating away would destroy state that
@@ -121,8 +125,8 @@ player's profile (`js/services/profile.js`) and persisted settings
 (sound, step-guidance, card colors, language) live in `localStorage`
 and are read independently by whichever page needs them — nothing is
 passed between pages except the one thing that has to be (the chosen
-bot difficulties, handed from Game Modes to Game via `sessionStorage`
-right before navigating).
+bot difficulties, handed from Home to Game via `sessionStorage` right
+before navigating).
 
 ## 🏠 Home Screen
 
@@ -131,9 +135,12 @@ point, and a navigation destination like any other (see
 🧭 Navigation Architecture above). It never initializes gameplay, and
 never renders another destination's UI inside itself.
 
-* **Offline Game** / **Online Game** — both navigate to
-  `game-modes.html`, which owns actually picking a mode; Home doesn't
-  contain mode-specific UI itself.
+* **Game Modes — Play vs Bot / Online Multiplayer / Local
+  Multiplayer** — each is a direct, primary Home button (see
+  `.home-primary-row`). Play vs Bot reveals the bot-difficulty panel
+  in place, as a sub-state of Home (`js/ui/playVsBot-ui.js`); Online
+  and Local Multiplayer are disabled/Coming Soon. There is no
+  intermediate Game Modes screen — Home owns picking a mode directly.
 * **Secondary row** — Card Guide, Settings, How to Play (tutorial),
   and About Developer.
 * **Profile chip** — shows the player's current avatar + name (top of
@@ -146,21 +153,23 @@ never renders another destination's UI inside itself.
 * **Coin pill** — a small balance indicator in the top-right, shown as
   `0` since there's no coin economy yet.
 
-Home is implemented in `js/home-main.js` + `js/ui/home-ui.js`. See
-`docs/ARCHITECTURE_PLAN.md` for the fuller design this follows,
-including later phases (a real Store/economy, Achievements, Quests,
-Leaderboard, and Online/Tournament play) — each of those, per the
-navigation architecture above, would get its own top-level page too.
+Home is implemented in `js/home-main.js` + `js/ui/home-ui.js` +
+`js/ui/playVsBot-ui.js`. See `docs/ARCHITECTURE_PLAN.md` for the
+fuller design this follows, including later phases (a real
+Store/economy, Achievements, Quests, Leaderboard, and Online/Local
+multiplayer play) — each of those, per the navigation architecture
+above, would get its own top-level page (or, for a Game Mode, stay a
+direct Home action) too.
 
 ## 🧠 Core Gameplay
 
 ### 1. Start the Game
 
-From Home, choosing **Offline Game** navigates to **Game Modes**
-(`game-modes.html`), where **Play vs Bot** reveals the difficulty
-panel to choose each opponent's difficulty. The human player's name
-and avatar come from their Profile (`profile.html`) rather than being
-typed in here — new players get a sensible default profile
+From Home, choosing **Play vs Bot** reveals the bot-difficulty panel
+right there on Home to choose each opponent's difficulty — there's no
+separate Game Modes page to pass through first. The human player's
+name and avatar come from their Profile (`profile.html`) rather than
+being typed in here — new players get a sensible default profile
 immediately, and can customize it any time.
 
 Each game contains:
@@ -384,8 +393,7 @@ Game State
 ```text
 WildGuestList/
 │
-├── index.html          (Home — landing page, never initializes gameplay)
-├── game-modes.html      (Game Modes — pick/configure a mode)
+├── index.html          (Home — landing page; hosts Game Mode buttons directly, never initializes gameplay)
 ├── game.html            (Gameplay — the board; all game init lives here)
 ├── profile.html          (Profile — display name + avatar)
 ├── settings.html         (Settings — Home's copy; game.html has its own modal)
@@ -403,7 +411,6 @@ WildGuestList/
 │
 ├── js/
 │   ├── home-main.js       (Home bootstrap — index.html)
-│   ├── game-modes-main.js (Game Modes bootstrap)
 │   ├── game-main.js       (Gameplay bootstrap — game.html)
 │   ├── profile-main.js    (Profile bootstrap)
 │   ├── settings-main.js   (Settings bootstrap)
@@ -454,6 +461,7 @@ WildGuestList/
 │       ├── mobile-ui.js
 │       ├── modal-ui.js    (Home/Game's genuine modals: About, Feedback, Tutorial, in-game Help/Settings)
 │       ├── pause-ui.js
+│       ├── playVsBot-ui.js (Home's Play vs Bot sub-state — bot-difficulty panel, no separate Game Modes page)
 │       ├── profile-ui.js  (Profile page content — name + avatar)
 │       ├── tutorial-ui.js
 │       ├── ui.js
@@ -782,7 +790,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.13.0
+**Current version:** 1.14.0
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Settings' own page (`settings.html`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

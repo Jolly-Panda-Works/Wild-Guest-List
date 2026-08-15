@@ -13,21 +13,27 @@
              index.html IS Home — a top-level navigation destination,
              not a persistent parent/container for the rest of the
              app. It never initializes gameplay and never renders
-             another destination's UI inside itself: Game Modes,
-             Profile, Settings, and Cards are all separate documents
-             (game-modes.html, profile.html, settings.html,
-             cards.html) reached via real navigation — see
-             js/ui/home-ui.js. "Offline Game" and "Online Game" both
-             navigate to game-modes.html; the bottom-nav entries route
-             to coming-soon.html rather than staying on Home. See
-             docs/ARCHITECTURE_PLAN.md.
+             another destination's UI inside itself: Profile,
+             Settings, and Cards are all separate documents
+             (profile.html, settings.html, cards.html) reached via
+             real navigation — see js/ui/home-ui.js. The bottom-nav
+             entries route to coming-soon.html rather than staying on
+             Home. See docs/ARCHITECTURE_PLAN.md.
+
+             There is no separate Game Modes screen. Each Game Mode
+             (Play vs Bot, Online Multiplayer, Local Multiplayer) is
+             a direct Home action — see .home-primary-row below and
+             js/ui/playVsBot-ui.js. Play vs Bot reveals the existing
+             bot-difficulty panel as a sub-state of Home itself
+             (#homeMainContent swaps with #difficultyPanelSection);
+             Online/Local Multiplayer are Coming Soon.
 
              Visual hierarchy (top → bottom): logo, secondary
-             nav/profile, then the primary Play action(s) centered
-             and dominant — see .home-content / .home-primary-row
-             in css/style.css. -->
+             nav/profile, then the primary Game Mode action(s)
+             centered and dominant — see .home-content /
+             .home-primary-row in css/style.css. -->
         <div id="homeScreen" class="screen-overlay home-screen" role="region" aria-label="Home">
-            <div class="home-content">
+            <div id="homeMainContent" class="home-content">
 
                 <div class="home-topbar">
                     <!-- Real Profile entry point: shows the player's current
@@ -69,19 +75,29 @@
                     </button>
                 </nav>
 
-                <!-- Primary Play action(s) — the dominant, centered focus
-                     of Home. See .home-primary-row in css/style.css for
-                     the vertical centering that keeps this the visual
-                     anchor of the page regardless of viewport height. -->
+                <!-- Primary Game Mode action(s) — the dominant, centered
+                     focus of Home. Each mode is a direct Home button, not
+                     a link into a separate Game Modes screen — see
+                     js/ui/playVsBot-ui.js and js/ui/home-ui.js. See
+                     .home-primary-row in css/style.css for the vertical
+                     centering that keeps this the visual anchor of the
+                     page regardless of viewport height. -->
                 <div class="home-primary-row">
-                    <button id="homeOfflineBtn" class="home-primary-btn home-play-btn" type="button">
+                    <button id="homePlayVsBotBtn" class="home-primary-btn home-play-btn" type="button">
                         <span class="home-btn-icon" data-icon="play" aria-hidden="true"></span>
-                        <span data-i18n="homeOfflineGame">Offline Game</span>
+                        <span data-i18n="gameModesPlayVsBot">Play vs Bot</span>
                     </button>
                     <button id="homeOnlineBtn" class="home-primary-btn home-secondary-cta" type="button"
                             aria-disabled="true" data-title="Online Multiplayer — Coming Soon" data-title-key="homeOnlineComingSoonTip">
                         <span class="home-btn-icon" data-icon="globe" aria-hidden="true"></span>
-                        <span data-i18n="homeOnlineGame">Online Game</span>
+                        <span data-i18n="gameModesOnline">Online Multiplayer</span>
+                        <span class="home-lock-badge" aria-hidden="true">🔒</span>
+                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
+                    </button>
+                    <button id="homeLocalBtn" class="home-primary-btn home-secondary-cta" type="button"
+                            aria-disabled="true" data-title="Local Multiplayer — Coming Soon" data-title-key="homeLocalComingSoonTip">
+                        <span class="home-btn-icon" data-icon="users" aria-hidden="true"></span>
+                        <span data-i18n="gameModesLocal">Local Multiplayer</span>
                         <span class="home-lock-badge" aria-hidden="true">🔒</span>
                         <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
                     </button>
@@ -105,6 +121,51 @@
                     </button>
                 </div>
 
+            </div>
+
+            <!-- Play vs Bot — bot-difficulty selection, a sub-state of
+                 Home revealed in place of #homeMainContent (not a
+                 separate Game Modes screen). See js/ui/playVsBot-ui.js,
+                 which pushes a #play-vs-bot history entry so Back
+                 correctly collapses this before returning to the rest
+                 of Home. Confirming still hands off to game.html
+                 exactly as before — nothing about how a match starts
+                 changed. -->
+            <div id="difficultyPanelSection" class="difficulty-content hidden">
+                <h2 data-i18n="diffTitle">🎮 Choose Bot Difficulty</h2>
+                <p class="diff-subtitle" data-i18n="diffSubtitle">Set how smart each opponent is</p>
+                <div id="difficultyPanel"></div>
+                <button id="confirmDiffBtn" class="screen-btn" data-i18n="diffConfirm">Let's Play!</button>
+            </div>
+        </div>
+
+        <!-- Guidance prompt — asked once per new game, before it starts -->
+        <div id="guidancePromptModal" class="screen-overlay hidden">
+            <div class="screen-content guide-prompt-content">
+                <h2 data-i18n="guidePromptTitle">Show step-by-step help?</h2>
+                <p class="diff-subtitle" data-i18n="guidePromptText">We can explain each animal's ability the first time you play it this game.</p>
+                <div class="guide-prompt-actions">
+                    <button id="guidancePromptYesBtn" class="screen-btn" type="button" data-i18n="guidePromptYes">Yes, guide me</button>
+                    <button id="guidancePromptNoBtn" class="screen-btn guide-prompt-no" type="button" data-i18n="guidePromptNo">No thanks</button>
+                </div>
+                <label class="guide-prompt-dontshow">
+                    <input type="checkbox" id="guidancePromptDontShowAgain">
+                    <span data-i18n="guidePromptDontShowAgain">Don't show this again</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Restart-from-beginning prompt — asked only when the player
+             chooses step-by-step guidance and some abilities have already
+             been explained in an earlier game -->
+        <div id="guidanceRestartModal" class="screen-overlay hidden">
+            <div class="screen-content guide-prompt-content">
+                <h2 data-i18n="guideRestartTitle">Start the guide over?</h2>
+                <p class="diff-subtitle" data-i18n="guideRestartText">You've already seen some animals explained. Show them all again from the beginning, or only the ones you haven't seen yet?</p>
+                <div class="guide-prompt-actions">
+                    <button id="guidanceRestartYesBtn" class="screen-btn" type="button" data-i18n="guideRestartYes">Start over</button>
+                    <button id="guidanceRestartNoBtn" class="screen-btn guide-prompt-no" type="button" data-i18n="guideRestartNo">Just new ones</button>
+                </div>
             </div>
         </div>
         <!-- About Developer -->
