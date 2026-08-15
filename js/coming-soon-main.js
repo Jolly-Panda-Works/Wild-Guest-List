@@ -21,7 +21,6 @@ const FEATURE_NAME_KEYS = {
     shop:        "homeStore",
     tournament:  "homeTournament",
     leaderboard: "homeLeaderboard",
-    online:      "gameModesOnline",
 };
 
 await loadI18n();

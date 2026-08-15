@@ -20,18 +20,22 @@
              entries route to coming-soon.html rather than staying on
              Home. See docs/ARCHITECTURE_PLAN.md.
 
-             There is no separate Game Modes screen. Each Game Mode
-             (Play vs Bot, Online Multiplayer, Local Multiplayer) is
-             a direct Home action — see .home-primary-row below and
-             js/ui/playVsBot-ui.js. Play vs Bot reveals the existing
-             bot-difficulty panel as a sub-state of Home itself
-             (#homeMainContent swaps with #difficultyPanelSection);
-             Online/Local Multiplayer are Coming Soon.
+             There is no separate Game Modes screen. Home's Start
+             Game section is a tab bar — Play vs Bot, Rank, Friendly
+             (see .home-gamestart / .home-tabs below and
+             js/ui/homeGameStart-ui.js). Only Play vs Bot is active
+             today: it reveals the existing bot-difficulty panel as a
+             sub-state of Home itself (#homeMainContent swaps with
+             #difficultyPanelSection), unchanged from before — still
+             exactly the current 1-human + 3-bot match. Rank and
+             Friendly are visible, selectable tabs whose panel says
+             Coming Soon; neither has a backend or game flow yet, so
+             neither starts a match.
 
              Visual hierarchy (top → bottom): logo, secondary
-             nav/profile, then the primary Game Mode action(s)
-             centered and dominant — see .home-content /
-             .home-primary-row in css/style.css. -->
+             nav/profile, then the Start Game tabs centered and
+             dominant — see .home-content / .home-gamestart in
+             css/style.css. -->
         <div id="homeScreen" class="screen-overlay home-screen" role="region" aria-label="Home">
             <div id="homeMainContent" class="home-content">
 
@@ -75,32 +79,53 @@
                     </button>
                 </nav>
 
-                <!-- Primary Game Mode action(s) — the dominant, centered
-                     focus of Home. Each mode is a direct Home button, not
-                     a link into a separate Game Modes screen — see
-                     js/ui/playVsBot-ui.js and js/ui/home-ui.js. See
-                     .home-primary-row in css/style.css for the vertical
-                     centering that keeps this the visual anchor of the
-                     page regardless of viewport height. -->
-                <div class="home-primary-row">
-                    <button id="homePlayVsBotBtn" class="home-primary-btn home-play-btn" type="button">
-                        <span class="home-btn-icon" data-icon="play" aria-hidden="true"></span>
-                        <span data-i18n="gameModesPlayVsBot">Play vs Bot</span>
-                    </button>
-                    <button id="homeOnlineBtn" class="home-primary-btn home-secondary-cta" type="button"
-                            aria-disabled="true" data-title="Online Multiplayer — Coming Soon" data-title-key="homeOnlineComingSoonTip">
-                        <span class="home-btn-icon" data-icon="globe" aria-hidden="true"></span>
-                        <span data-i18n="gameModesOnline">Online Multiplayer</span>
-                        <span class="home-lock-badge" aria-hidden="true">🔒</span>
-                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
-                    </button>
-                    <button id="homeLocalBtn" class="home-primary-btn home-secondary-cta" type="button"
-                            aria-disabled="true" data-title="Local Multiplayer — Coming Soon" data-title-key="homeLocalComingSoonTip">
-                        <span class="home-btn-icon" data-icon="users" aria-hidden="true"></span>
-                        <span data-i18n="gameModesLocal">Local Multiplayer</span>
-                        <span class="home-lock-badge" aria-hidden="true">🔒</span>
-                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
-                    </button>
+                <!-- Start Game — a tab bar, not three separate Home
+                     buttons and not a Game Modes screen. Only "Play
+                     vs Bot" is active: its panel is exactly the
+                     existing "Play vs Bot" button, unchanged. Rank
+                     and Friendly are real, switchable tabs — you can
+                     see their panel — but neither has a game flow
+                     yet, so their panel honestly says Coming Soon
+                     rather than pretending to start a match. See
+                     js/ui/homeGameStart-ui.js. -->
+                <div class="home-gamestart">
+                    <h2 class="home-gamestart-title" data-i18n="homeStartGame">Start Game</h2>
+
+                    <div class="home-tabs" role="tablist" aria-label="Game mode">
+                        <button id="homeTabPlayVsBot" class="home-tab" type="button"
+                                role="tab" aria-selected="true" aria-controls="homeTabPanelPlayVsBot"
+                                data-tab="playVsBot">
+                            <span data-i18n="gameModesPlayVsBot">Play vs Bot</span>
+                        </button>
+                        <button id="homeTabRank" class="home-tab" type="button"
+                                role="tab" aria-selected="false" aria-controls="homeTabPanelRank"
+                                data-tab="rank" tabindex="-1">
+                            <span data-i18n="homeTabRank">Rank</span>
+                        </button>
+                        <button id="homeTabFriendly" class="home-tab" type="button"
+                                role="tab" aria-selected="false" aria-controls="homeTabPanelFriendly"
+                                data-tab="friendly" tabindex="-1">
+                            <span data-i18n="homeTabFriendly">Friendly</span>
+                        </button>
+                    </div>
+
+                    <div id="homeTabPanelPlayVsBot" class="home-tab-panel" role="tabpanel"
+                         aria-labelledby="homeTabPlayVsBot" tabindex="0">
+                        <button id="homePlayVsBotBtn" class="home-primary-btn home-play-btn" type="button">
+                            <span class="home-btn-icon" data-icon="play" aria-hidden="true"></span>
+                            <span data-i18n="gameModesPlayVsBot">Play vs Bot</span>
+                        </button>
+                    </div>
+
+                    <div id="homeTabPanelRank" class="home-tab-panel hidden" role="tabpanel"
+                         aria-labelledby="homeTabRank" tabindex="0">
+                        <p class="home-tab-comingsoon" data-i18n="homeRankComingSoon">Rank play is coming soon.</p>
+                    </div>
+
+                    <div id="homeTabPanelFriendly" class="home-tab-panel hidden" role="tabpanel"
+                         aria-labelledby="homeTabFriendly" tabindex="0">
+                        <p class="home-tab-comingsoon" data-i18n="homeFriendlyComingSoon">Friendly play is coming soon.</p>
+                    </div>
                 </div>
 
                 <div class="home-bottom-nav" role="navigation" aria-label="Coming soon">

@@ -21,8 +21,6 @@
         "gameLog": "Game Log",
         "chat": "Chat",
         "comingSoon": "Coming Soon",
-        "homeOnlineComingSoonTip": "Online Multiplayer — Coming Soon",
-        "homeLocalComingSoonTip": "Local Multiplayer — Coming Soon",
         "homeCards": "Card Guide",
         "homeProfile": "Profile",
         "homeHowToPlay": "How to Play",
@@ -183,11 +181,14 @@
         "homeProfileAriaLabel": "Your Profile — tap to edit",
         "pauseHome": "Home",
         "gameModesPlayVsBot": "Play vs Bot",
-        "gameModesOnline": "Online Multiplayer",
-        "gameModesLocal": "Local Multiplayer",
         "comingSoonTitle": "Coming Soon",
         "comingSoonText": "This feature isn't available yet — check back soon!",
-        "backToHome": "Home"
+        "backToHome": "Home",
+        "homeStartGame": "Start Game",
+        "homeTabRank": "Rank",
+        "homeTabFriendly": "Friendly",
+        "homeRankComingSoon": "Rank play is coming soon.",
+        "homeFriendlyComingSoon": "Friendly play is coming soon."
     },
     "fa": {
         "dir": "rtl",
@@ -211,8 +212,6 @@
         "gameLog": "گزارش بازی",
         "chat": "چت",
         "comingSoon": "به زودی",
-        "homeOnlineComingSoonTip": "بازی چندنفره آنلاین — به زودی",
-        "homeLocalComingSoonTip": "بازی چندنفره محلی — به زودی",
         "homeCards": "راهنمای کارت‌ها",
         "homeProfile": "پروفایل",
         "homeHowToPlay": "چگونه بازی کنیم",
@@ -373,11 +372,14 @@
         "homeProfileAriaLabel": "پروفایل شما — برای ویرایش ضربه بزنید",
         "pauseHome": "خانه",
         "gameModesPlayVsBot": "بازی با ربات",
-        "gameModesOnline": "چندنفره آنلاین",
-        "gameModesLocal": "چندنفره محلی",
         "comingSoonTitle": "به‌زودی",
         "comingSoonText": "این قابلیت هنوز فعال نیست — بعداً دوباره سر بزنید!",
-        "backToHome": "خانه"
+        "backToHome": "خانه",
+        "homeStartGame": "شروع بازی",
+        "homeTabRank": "رنک",
+        "homeTabFriendly": "دوستانه",
+        "homeRankComingSoon": "بازی رنک به‌زودی فعال می‌شود.",
+        "homeFriendlyComingSoon": "بازی دوستانه به‌زودی فعال می‌شود."
     },
     "ar": {
         "dir": "rtl",
@@ -401,8 +403,6 @@
         "gameLog": "سجل اللعبة",
         "chat": "الدردشة",
         "comingSoon": "قريباً",
-        "homeOnlineComingSoonTip": "اللعب الجماعي عبر الإنترنت — قريباً",
-        "homeLocalComingSoonTip": "اللعب الجماعي محليًا — قريباً",
         "homeCards": "دليل البطاقات",
         "homeProfile": "الملف الشخصي",
         "homeHowToPlay": "كيفية اللعب",
@@ -563,11 +563,14 @@
         "homeProfileAriaLabel": "ملفك الشخصي — اضغط للتعديل",
         "pauseHome": "الرئيسية",
         "gameModesPlayVsBot": "اللعب ضد الروبوت",
-        "gameModesOnline": "متعدد اللاعبين عبر الإنترنت",
-        "gameModesLocal": "متعدد اللاعبين محليًا",
         "comingSoonTitle": "قريباً",
         "comingSoonText": "هذه الميزة غير متاحة بعد — تحقق لاحقاً!",
-        "backToHome": "الرئيسية"
+        "backToHome": "الرئيسية",
+        "homeStartGame": "بدء اللعبة",
+        "homeTabRank": "تصنيفي",
+        "homeTabFriendly": "ودّي",
+        "homeRankComingSoon": "وضع اللعب التصنيفي قريباً.",
+        "homeFriendlyComingSoon": "الوضع الودّي قريباً."
     },
     "tr": {
         "dir": "ltr",
@@ -591,8 +594,6 @@
         "gameLog": "Oyun Günlüğü",
         "chat": "Sohbet",
         "comingSoon": "Yakında",
-        "homeOnlineComingSoonTip": "Çevrimiçi Çok Oyunculu — Yakında",
-        "homeLocalComingSoonTip": "Yerel Çok Oyunculu — Yakında",
         "homeCards": "Kart Rehberi",
         "homeProfile": "Profil",
         "homeHowToPlay": "Nasıl Oynanır",
@@ -753,10 +754,13 @@
         "homeProfileAriaLabel": "Profilin — düzenlemek için dokun",
         "pauseHome": "Ana Sayfa",
         "gameModesPlayVsBot": "Bota Karşı Oyna",
-        "gameModesOnline": "Çevrimiçi Çok Oyunculu",
-        "gameModesLocal": "Yerel Çok Oyunculu",
         "comingSoonTitle": "Yakında",
         "comingSoonText": "Bu özellik henüz kullanılamıyor — yakında tekrar bakın!",
-        "backToHome": "Ana Sayfa"
+        "backToHome": "Ana Sayfa",
+        "homeStartGame": "Oyuna Başla",
+        "homeTabRank": "Sıralı",
+        "homeTabFriendly": "Dostluk",
+        "homeRankComingSoon": "Sıralı oyun yakında geliyor.",
+        "homeFriendlyComingSoon": "Dostluk maçı yakında geliyor."
     }
 }
