@@ -131,6 +131,23 @@ only the surrounding shell differs:
 * About Developer, Feedback, and the How-to-Play tutorial are
   Home-only, brief dismissible overlays.
 
+**Every Home popup shares one lifecycle.** Clicking a popup's backdrop
+or pressing Escape closes the topmost open one, focus moves into the
+popup on open and back to whatever triggered it on close, and Tab
+stays trapped inside the topmost popup while it's open — handled once,
+centrally, in `js/ui/modal-ui.js`, on top of each popup's own close
+button. Individual popups (like Card Guide's nested card-detail view)
+can still layer their own close wiring on top of this without
+conflicting with it.
+
+**Profile now has an Achievements section** (`#profileAchievements`
+in `index.html`'s Profile popup). No achievement system exists in the
+project yet, so it's an honest empty state today — no invented
+unlocked achievements or progress — reusing the existing `trophy`
+icon from `data/config.json` rather than a new asset. Once a real
+achievement system exists (see `docs/PRODUCT_ROADMAP.md`), this is
+where its data should render.
+
 **Player identity and settings are shared, not duplicated.** The
 player's profile (`js/services/profile.js`) and persisted settings
 (sound, step-guidance, card colors, language) live in `localStorage`
@@ -807,7 +824,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.17.0
+**Current version:** 1.18.0
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Home's Settings popup (`index.html` `#settingsModal`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

@@ -173,6 +173,24 @@
                                data-i18n-placeholder="playerNamePlaceholder" placeholder="Enter your name...">
                     </div>
                     <button id="profileSaveBtn" class="screen-btn" type="button" data-i18n="profileSaveBtn">Save</button>
+
+                    <div class="settings-divider"></div>
+
+                    <!-- Achievements — no achievement system exists yet
+                         (see docs/ARCHITECTURE_PLAN.md / PRODUCT_ROADMAP.md).
+                         This is only the minimum UI placeholder Profile
+                         needs today: an honest empty state, no invented
+                         unlocked achievements or progress. Once a real
+                         achievement system/service exists, this section
+                         should read from it directly rather than being
+                         rebuilt. -->
+                    <div class="profile-achievements" id="profileAchievements">
+                        <h4 class="profile-achievements-title" data-i18n="profileAchievementsTitle">Achievements</h4>
+                        <div class="profile-achievements-empty">
+                            <span class="profile-achievements-empty-icon" data-icon="trophy" aria-hidden="true"></span>
+                            <span data-i18n="profileAchievementsEmpty">Coming soon — your unlocked achievements will show up here.</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

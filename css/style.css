@@ -3938,6 +3938,43 @@ body.gameplay-locked #playerHand .card {
     gap: 8px;
 }
 
+/* ── Profile → Achievements section ──────────────────────────
+   Empty/"coming soon" state today (no achievement system exists
+   yet — see docs/PRODUCT_ROADMAP.md). Once real achievement data
+   exists, states (locked/unlocked/progress) should render here
+   using this same section, not a separate implementation. */
+.profile-achievements {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.profile-achievements-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+}
+
+.profile-achievements-empty {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    border: 1px dashed rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.75);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.profile-achievements-empty-icon {
+    flex-shrink: 0;
+    font-size: 22px;
+    opacity: 0.8;
+}
+
 /* ── Per-seat color trigger (Choose Bot Difficulty screen) ──
    A small circle showing the seat's current card color; clicking it
    opens a popover with the full palette. Same underlying color state

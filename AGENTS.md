@@ -60,4 +60,11 @@ via `js/ui/modal-ui.js`), **not** as a separate top-level page.
   `docs/ARCHITECTURE_PLAN.md` and the relevant `README.md` section so
   the documented navigation architecture still matches reality — see
   rule 2.
+- All `.modal` popups share one open/close lifecycle — backdrop
+  click, Escape, focus-into-popup-on-open, focus-restore-on-close,
+  and a Tab focus trap — handled centrally in `js/ui/modal-ui.js`
+  (`openModal`/`closeModal` + the document-level listeners at the
+  bottom of that file). Use `openModal`/`closeModal` for any new
+  popup instead of writing bespoke show/hide logic, and don't build a
+  second popup framework — extend this one.
 
