@@ -107,10 +107,6 @@
                         <span class="home-nav-icon" data-icon="tutorial" aria-hidden="true"></span>
                         <span class="home-nav-label" data-i18n="homeHowToPlay">How to Play</span>
                     </button>
-                    <button id="homeAboutBtn" class="home-nav-btn" type="button">
-                        <span class="home-nav-icon" data-icon="About Developer" aria-hidden="true"></span>
-                        <span class="home-nav-label" data-i18n="aboutTitle">About Developer</span>
-                    </button>
                 </nav>
 
                 <!-- Start Game — a tab bar, not three separate Home
@@ -299,6 +295,26 @@
                     <div class="about-meta">
                         <div><strong data-i18n="settingsVersion">Version</strong>: <span data-app-version>1.9.0</span></div>
                     </div>
+
+                    <div class="settings-divider"></div>
+
+                    <!-- About Developer — moved here from Home's top-level
+                         Menu (see js/ui/home-ui.js history / README.md).
+                         Opens the existing #aboutModal (unchanged, see
+                         below) as a nested popup on top of this one —
+                         same pattern already used by #cardModal opening
+                         on top of #helpModal, handled by the same
+                         openModal()/closeModal() lifecycle in
+                         js/ui/modal-ui.js (topmost-modal Escape/backdrop
+                         close, focus trap). No duplicate About Developer
+                         implementation — this is the only one. -->
+                    <button id="settingsAboutBtn" type="button" class="settings-row settings-row-link">
+                        <span class="settings-label">
+                            <span data-icon="About Developer"></span>
+                            <span data-i18n="aboutTitle">About Developer</span>
+                        </span>
+                        <span class="settings-row-chevron" data-icon="next" aria-hidden="true"></span>
+                    </button>
 
                 </div>
             </div>

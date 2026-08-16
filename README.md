@@ -128,8 +128,11 @@ only the surrounding shell differs:
   own Pause → Settings and topbar Help/Card Guide modals — checking
   an ability or tweaking a setting mid-match doesn't unload the
   active game either.
-* About Developer, Feedback, and the How-to-Play tutorial are
-  Home-only, brief dismissible overlays.
+* About Developer is reached from inside Settings (`#settingsAboutBtn`
+  opens `#aboutModal` nested on top of `#settingsModal` — the same
+  nested-popup pattern Card Guide's card-detail view uses over
+  `#helpModal`), not its own top-level Menu entry. Feedback and the
+  How-to-Play tutorial remain Home-only, brief dismissible overlays.
 
 **Every Home popup shares one lifecycle.** Clicking a popup's backdrop
 or pressing Escape closes the topmost open one, focus moves into the
@@ -197,9 +200,11 @@ point, and a navigation destination like any other (see
   (still always 1 human + 3 bots). **Rank** and **Friendly** are
   selectable tabs whose panel says Coming Soon; see
   `js/ui/homeGameStart-ui.js`.
-* **Secondary row** — Card Guide, Settings, How to Play (tutorial),
-  and About Developer — each opens its own popup modal over Home
-  (`#helpModal`, `#settingsModal`, `#tutorialModal`, `#aboutModal`).
+* **Secondary row** — Card Guide, Settings, and How to Play
+  (tutorial) — each opens its own popup modal over Home
+  (`#helpModal`, `#settingsModal`, `#tutorialModal`). About Developer
+  is no longer a separate secondary-row entry — it's reached from
+  inside Settings (see below).
 * **Profile chip** — shows the player's current avatar + name (top of
   Home); tapping it opens the Profile popup (`#profileModal`) to
   change either. This is the one place identity is edited — the chip
@@ -907,7 +912,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.21.0
+**Current version:** 1.21.1
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Home's Settings popup (`index.html` `#settingsModal`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

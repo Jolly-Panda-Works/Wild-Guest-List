@@ -4174,6 +4174,36 @@ body.gameplay-locked #playerHand .card {
 
 .settings-label { font-size: 14px; font-weight: 600; }
 
+/* About Developer's entry row inside Settings — a clickable
+   .settings-row (see the shared layout rule above) rather than a new
+   row style, opening the existing #aboutModal nested on top of
+   #settingsModal (js/ui/modal-ui.js already supports this — same
+   pattern as #cardModal over #helpModal). */
+.settings-row-link {
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+}
+
+.settings-row-link .settings-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.settings-row-chevron {
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+[dir="rtl"] .settings-row-chevron {
+    transform: scaleX(-1);
+}
+
 .settings-divider {
     height: 1px;
     background: rgba(255,255,255,0.08);

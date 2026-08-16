@@ -4,17 +4,19 @@
 // index.html's own screen — the app's landing page (see
 // js/home-main.js).
 //
-// Menu-type destinations (Profile, Settings, Card Guide, About,
-// How-to-Play) default to opening as genuine popup modals over Home
-// — quick lookups/tweaks that shouldn't unload Home underneath them
-// — unless a specific screen has an explicit reason to be a real
-// page instead. Right now the only such exception is Choose Bot
-// Difficulty (bot-difficulty.html): it's a step in actually starting
-// a match, not a menu lookup, so it stays a real top-level
-// destination with its own Back/refresh/direct-URL support. Coming
-// Soon entries are likewise real pages (coming-soon.html) so even
-// disabled/future features are independently linkable. See
-// docs/ARCHITECTURE_PLAN.md.
+// Menu-type destinations (Profile, Settings, Card Guide, How-to-Play)
+// default to opening as genuine popup modals over Home — quick
+// lookups/tweaks that shouldn't unload Home underneath them — unless
+// a specific screen has an explicit reason to be a real page instead.
+// About Developer is no longer its own top-level Menu entry — it now
+// lives inside Settings (#settingsAboutBtn opens the existing
+// #aboutModal nested on top of #settingsModal). Right now the only
+// real-page exception is Choose Bot Difficulty (bot-difficulty.html):
+// it's a step in actually starting a match, not a menu lookup, so it
+// stays a real top-level destination with its own Back/refresh/
+// direct-URL support. Coming Soon entries are likewise real pages
+// (coming-soon.html) so even disabled/future features are
+// independently linkable. See docs/ARCHITECTURE_PLAN.md.
 // ══════════════════════════════════════════════════════════
 
 import { openModal } from "./modal-ui.js";
@@ -54,7 +56,7 @@ export async function initHome() {
         window.location.href = "bot-difficulty.html";
     });
 
-    // ── Secondary nav row — popups, matching About/How-to-Play ──
+    // ── Secondary nav row — popups, matching How-to-Play ──
     document.getElementById("homeCardsBtn")?.addEventListener("click", () => {
         openHelp();
     });
@@ -68,7 +70,11 @@ export async function initHome() {
         openTutorial(false);
     });
 
-    document.getElementById("homeAboutBtn")?.addEventListener("click", () => {
+    // About Developer now lives inside Settings (#settingsAboutBtn,
+    // see index.html #settingsModal) rather than as its own top-level
+    // Menu entry — opens the same #aboutModal, nested on top of
+    // Settings, exactly like #cardModal nests on top of #helpModal.
+    document.getElementById("settingsAboutBtn")?.addEventListener("click", () => {
         openModal("aboutModal");
     });
 
