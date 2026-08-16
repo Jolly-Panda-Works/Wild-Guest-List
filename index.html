@@ -9,6 +9,36 @@
         <link rel="stylesheet" href="css/style.css">
     </head>
     <body>
+        <!-- ── STARTUP (Splash → Loading → Ready) ──────────────
+             Covers Home while js/ui/startup-ui.js runs bootHome()
+             (js/home-main.js's real boot sequence: i18n, config/
+             icons, Home's modals and wiring — nothing duplicated
+             here, this UI just gates it). Shows the Jolly Panda
+             logo (config.json → branding.developerLogo) for a
+             short minimum duration; only shows the Loading state
+             if boot genuinely takes longer than that. Removed from
+             the DOM once boot succeeds — Home underneath has been
+             booting the whole time regardless. On failure, shows
+             Retry, which re-runs bootHome(). See
+             docs/ARCHITECTURE_PLAN.md. -->
+        <div id="startupScreen" class="startup-screen" role="status" aria-live="polite">
+
+            <div id="startupSplash" class="startup-splash">
+                <img id="startupLogo" class="startup-logo" alt="" data-i18n-alt="startupLogoAlt">
+            </div>
+
+            <div id="startupLoading" class="startup-loading hidden">
+                <div class="startup-spinner" aria-hidden="true"></div>
+                <p class="startup-status" data-i18n="startupLoading">Loading...</p>
+            </div>
+
+            <div id="startupError" class="startup-error hidden">
+                <p class="startup-status" data-i18n="startupError">Unable to load the game.</p>
+                <button id="startupRetryBtn" type="button" class="screen-btn" data-i18n="startupRetry">Retry</button>
+            </div>
+
+        </div>
+
         <!-- ── HOME ───────────────────────────────────────────
              index.html IS Home — a top-level navigation destination,
              not a persistent parent/container for the rest of the

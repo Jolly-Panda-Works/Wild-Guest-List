@@ -79,6 +79,13 @@ export async function applyLang(lang, allStrings) {
         el.setAttribute("aria-label", allStrings[lang][key] ?? allStrings["en"][key] ?? key);
     });
 
+    // Update data-i18n-alt elements (image alt text, e.g. the startup
+    // splash's Jolly Panda logo)
+    document.querySelectorAll("[data-i18n-alt]").forEach(el => {
+        const key = el.dataset.i18nAlt;
+        el.setAttribute("alt", allStrings[lang][key] ?? allStrings["en"][key] ?? key);
+    });
+
     // Update active state on language buttons
     document.querySelectorAll(".lang-btn").forEach(btn => {
         btn.classList.toggle("active", btn.dataset.lang === lang);

@@ -156,6 +156,37 @@ is passed between pages except the one thing that has to be (the
 chosen bot difficulties, handed from `bot-difficulty.html` to
 `game.html` via `sessionStorage` right before navigating).
 
+## 🐼 Startup — Splash → Loading → Home
+
+`index.html` boots behind a Splash/Loading overlay (`#startupScreen`,
+`js/ui/startup-ui.js`) instead of appearing bare while
+`js/home-main.js` is still initializing. This wraps Home's real boot
+sequence — it doesn't duplicate it:
+
+1. **Splash** — the Jolly Panda logo (`config.json` →
+   `branding.developerLogo`, not a hardcoded path) fades and scales
+   in, shown for a short minimum duration (900ms) so it doesn't just
+   flash by.
+2. **Loading** — only shown if `js/home-main.js`'s `bootHome()` (i18n
+   → modals/profile → Home wiring → icons — the same sequence that
+   ran directly before this feature) is genuinely still running once
+   the splash's minimum time is up. A real spinner + status text, no
+   fake progress percentage — there's nothing measurable to show one
+   for.
+3. **Ready** — the overlay fades out and is removed from the DOM;
+   Home underneath has been booting the whole time regardless, so
+   there's no separate "reveal" step and no reload.
+4. **Error** — if `bootHome()` throws (e.g. `config.json`/`i18n.json`
+   failed to fetch), shows a plain error state with a **Retry**
+   button that re-invokes `bootHome()`.
+
+Known limitation: Retry re-runs `bootHome()`'s full sequence from the
+top, including any earlier steps that already succeeded. In practice
+this only matters if a step fails *after* an earlier step has already
+attached DOM listeners — the two fetch-based steps (i18n, then
+config/icons) are the realistic failure points, and both fail before
+any listener wiring happens.
+
 ## 🏠 Home Screen
 
 `index.html` **is** Home — the app's landing screen and only entry
@@ -824,7 +855,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.19.6
+**Current version:** 1.20.0
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Home's Settings popup (`index.html` `#settingsModal`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

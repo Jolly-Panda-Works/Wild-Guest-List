@@ -47,6 +47,85 @@
 
 
 /* ==========================================================
+   STARTUP — Splash → Loading → Error (js/ui/startup-ui.js)
+   The very first thing painted; sits above Home (z-index 9999)
+   and every modal (z-index 10000) since it can cover both while
+   js/home-main.js's bootHome() is still running. Fixed background
+   matches .screen-overlay/.modal's existing dark-glass treatment
+   so it reads as part of the same app, not a separate splash app.
+========================================================== */
+
+.startup-screen {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 20000;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: var(--bg-main);
+
+    transition: opacity 0.4s ease;
+}
+
+.startup-screen-exit {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.startup-splash,
+.startup-loading,
+.startup-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.startup-logo {
+    width: min(160px, 40vw);
+    height: min(160px, 40vw);
+    object-fit: contain;
+    animation: startupLogoIn 1.4s ease forwards;
+}
+
+@keyframes startupLogoIn {
+    0%   { opacity: 0; transform: scale(0.85); }
+    35%  { opacity: 1; transform: scale(1.04); }
+    55%  { opacity: 1; transform: scale(1); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.startup-spinner {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.15);
+    border-top-color: var(--accent);
+    animation: startupSpin 0.8s linear infinite;
+}
+
+@keyframes startupSpin {
+    to { transform: rotate(360deg); }
+}
+
+.startup-status {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.startup-error .startup-status {
+    color: var(--text-main);
+}
+
+
+/* ==========================================================
    GLOBAL
 ========================================================== */
 
@@ -3906,15 +3985,19 @@ body.gameplay-locked #playerHand .card {
     gap: 14px;
 }
 
+/* Matches .player-avatar-display's untouched, uncropped look on the
+   Choose Bot Difficulty screen — no border-radius/overflow-clipping,
+   object-fit: contain so the whole illustration shows instead of
+   being cover-cropped into the button's box. */
 .profile-avatar-choice {
-    width: 64px;
-    height: 64px;
+    width: 72px;
+    height: 72px;
     padding: 0;
-    border-radius: var(--radius-md);
+    border-radius: 0;
     border: none;
     background: transparent;
     cursor: pointer;
-    overflow: hidden;
+    overflow: visible;
     opacity: 0.55;
     transition: transform 0.15s ease, opacity 0.15s ease;
 }
@@ -3922,7 +4005,7 @@ body.gameplay-locked #playerHand .card {
 .profile-avatar-choice img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     display: block;
 }
 

@@ -68,3 +68,24 @@ via `js/ui/modal-ui.js`), **not** as a separate top-level page.
   popup instead of writing bespoke show/hide logic, and don't build a
   second popup framework — extend this one.
 
+## 5. Home's real boot sequence lives in `bootHome()`, gated by Splash/Loading
+
+`js/home-main.js`'s `bootHome()` is the actual startup sequence
+(i18n → modals/profile → Home wiring → icons). It's driven by
+`js/ui/startup-ui.js`'s `runStartup()`, which shows `#startupScreen`
+(Splash with the Jolly Panda logo → Loading, only if boot genuinely
+takes longer than the splash's minimum time → Error + Retry on
+failure) — see README.md § Startup.
+
+- Add new one-time boot steps *inside* `bootHome()`, not as bare
+  top-level awaits in `js/home-main.js` — top-level awaits bypass the
+  Splash/Loading/Error UI entirely.
+- `bootHome()` must stay re-invokable: Retry calls it again on
+  failure. Prefer steps that are safe to run twice (fetch-based reads,
+  idempotent DOM population) over steps that unconditionally
+  `addEventListener` on every call, or guard the latter.
+- The Jolly Panda logo (and any future splash/loading visual) resolves
+  through `data/config.json` → `branding.*`, loaded via
+  `js/ui/icon-ui.js`'s exported `getIconConfig()` — don't add another
+  parallel `fetch("./data/config.json")`.
+
