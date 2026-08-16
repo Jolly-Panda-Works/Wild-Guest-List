@@ -2,20 +2,27 @@
 // Home — js/ui/home-ui.js
 //
 // index.html's own screen — the app's landing page (see
-// js/home-main.js). Home is a navigation destination, not a
-// persistent container for the rest of the app: every button here
-// navigates to its own top-level page/document (profile.html,
-// settings.html, cards.html, bot-difficulty.html, coming-soon.html).
-// Navigating away unmounts Home completely (a real page load) —
-// nothing here keeps running in the background, and the browser's
-// own Back button returns correctly without any extra history
-// bookkeeping.
+// js/home-main.js).
+//
+// Menu-type destinations (Profile, Settings, Card Guide, About,
+// How-to-Play) default to opening as genuine popup modals over Home
+// — quick lookups/tweaks that shouldn't unload Home underneath them
+// — unless a specific screen has an explicit reason to be a real
+// page instead. Right now the only such exception is Choose Bot
+// Difficulty (bot-difficulty.html): it's a step in actually starting
+// a match, not a menu lookup, so it stays a real top-level
+// destination with its own Back/refresh/direct-URL support. Coming
+// Soon entries are likewise real pages (coming-soon.html) so even
+// disabled/future features are independently linkable. See
+// docs/ARCHITECTURE_PLAN.md.
 // ══════════════════════════════════════════════════════════
 
 import { openModal } from "./modal-ui.js";
 import { loadIcons } from "./icon-ui.js";
 import { openTutorial } from "./tutorial-ui.js";
+import { openProfileModal } from "./profile-ui.js";
 import { initHomeGameStart } from "./homeGameStart-ui.js";
+import { openHelp } from "../game/help.js";
 
 /** Coming Soon entries navigate to their own page (coming-soon.html)
  *  instead of staying on Home — even disabled/future features must
@@ -31,28 +38,29 @@ export async function initHome() {
     // ever populated by loadIcons().
     await loadIcons(document.getElementById("homeScreen"));
 
-    // ── Profile entry point ───────────────────────────────
+    // ── Profile entry point — popup, see js/ui/profile-ui.js ──
     document.getElementById("homeProfileChip")?.addEventListener("click", () => {
-        window.location.href = "profile.html";
+        openProfileModal();
     });
 
     // ── Start Game tabs — Play vs Bot / Rank / Friendly. Play vs Bot
-    //    is a real top-level destination (bot-difficulty.html), not a
-    //    sub-state rendered inside Home — see js/bot-difficulty-main.js.
-    //    Rank and Friendly are switchable tabs whose panel says
-    //    Coming Soon; see js/ui/homeGameStart-ui.js. ───────────────
+    //    is the one menu item that's a real top-level destination
+    //    (bot-difficulty.html), not a popup — see the note above and
+    //    js/bot-difficulty-main.js. Rank and Friendly are switchable
+    //    tabs whose panel says Coming Soon; see
+    //    js/ui/homeGameStart-ui.js. ─────────────────────────────────
     initHomeGameStart();
     document.getElementById("homePlayVsBotBtn")?.addEventListener("click", () => {
         window.location.href = "bot-difficulty.html";
     });
 
-    // ── Secondary nav row ─────────────────────────────────
+    // ── Secondary nav row — popups, matching About/How-to-Play ──
     document.getElementById("homeCardsBtn")?.addEventListener("click", () => {
-        window.location.href = "cards.html";
+        openHelp();
     });
 
     document.getElementById("homeSettingsBtn")?.addEventListener("click", () => {
-        window.location.href = "settings.html";
+        openModal("settingsModal");
     });
 
     document.getElementById("homeHowToPlayBtn")?.addEventListener("click", () => {

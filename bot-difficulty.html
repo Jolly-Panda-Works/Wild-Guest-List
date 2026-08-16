@@ -20,9 +20,10 @@
 
              Player identity (avatar + name) is read-only here,
              sourced from the one authoritative profile
-             (js/services/profile.js) — editing only happens on
-             profile.html. Bot difficulty and every seat's color are
-             the only things this page lets you change. Confirming
+             (js/services/profile.js) — editing only happens in
+             Home's Profile popup (index.html #profileModal, see
+             js/ui/profile-ui.js). Bot difficulty and every seat's
+             color are the only things this page lets you change. Confirming
              hands off to game.html exactly as before via the same
              sessionStorage handoff — nothing about how a match
              starts changed, only where the picking-a-setup UI

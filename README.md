@@ -79,21 +79,21 @@ The abilities are designed to interact with one another, creating situations whe
 
 ## 🧭 Navigation Architecture
 
-Every major section of the app is its own top-level page — a sibling
-of Home, not something rendered inside it. Navigating between them is
-a real browser navigation (`location.href` / a normal link), so the
-browser's own Back/Forward, refresh, and direct-URL-access all work
-for free, and leaving a page fully unmounts it (no stale listeners,
-timers, or animations left running behind whatever's next).
+**Menu-type destinations default to popups over Home, not separate
+pages** — see `AGENTS.md` rule 4. Profile, Settings, Card Guide,
+About, and How-to-Play are all genuine `.modal`/`.modal-content`
+popups defined right in `index.html` and wired via
+`js/ui/modal-ui.js` — quick lookups/tweaks that shouldn't unload Home
+underneath them. The one thing that's a real top-level page is
+**Choose Bot Difficulty**: it's a step in actually starting a match,
+not a menu lookup, so it needs genuine Back/refresh/direct-URL
+support and gets its own document.
 
 | Page                  | Destination                | Reached from                              |
 |------------------------|-----------------------------|---------------------------------------------|
-| `index.html`           | Home                        | —                                            |
+| `index.html`           | Home (+ its popups: Profile, Settings, Card Guide, About, How-to-Play) | — |
 | `bot-difficulty.html`  | Choose Bot Difficulty      | Home → Play vs Bot                           |
 | `game.html`            | Gameplay                    | `bot-difficulty.html` → Let's Play!         |
-| `profile.html`         | Profile                     | Home's profile chip                          |
-| `settings.html`        | Settings                    | Home's Settings entry                        |
-| `cards.html`           | Cards (Animal Abilities)   | Home's Card Guide entry                      |
 | `coming-soon.html`     | Shop / Tournament / Leaderboard (`?feature=`) | Home's bottom nav |
 
 **There is no separate Game Modes page.** Home's Start Game section
@@ -115,31 +115,35 @@ Coming Soon rather than starting a fake match. See
 `js/ui/homeGameStart-ui.js`, `js/bot-difficulty-main.js`, and
 `js/ui/home-ui.js`.
 
-**A few things stay genuine modals on purpose**, rather than becoming
-top-level pages, because navigating away would destroy state that
-shouldn't be lost:
-* Game's Pause → Settings and topbar Help/Card Guide (`game.html`) —
-  tweaking a setting or checking an ability mid-match doesn't unload
-  the active game. They share the exact same underlying
-  widgets/persistence as `settings.html`/`cards.html`; only the
-  surrounding shell (page vs. modal) differs.
-* Home's About Developer, Feedback, and How-to-Play tutorial — brief,
-  dismissible overlays, not full destinations.
+**Home's menu popups share their underlying widgets/persistence with
+`game.html`'s in-game equivalents**, rather than duplicating them —
+only the surrounding shell differs:
+* Profile (`#profileModal`) is Home-only; the same
+  `js/services/profile.js` state it edits is read everywhere else
+  (Home's chip, Choose Bot Difficulty's read-only display).
+* Settings (`#settingsModal`) and Card Guide (`#helpModal`) use the
+  exact same markup shape, widgets, and persistence
+  (`js/ui/cardColor-ui.js`, `js/ui/cardGuidance-ui.js`,
+  `js/services/soundManager.js`, `js/game/help.js`) as `game.html`'s
+  own Pause → Settings and topbar Help/Card Guide modals — checking
+  an ability or tweaking a setting mid-match doesn't unload the
+  active game either.
+* About Developer, Feedback, and the How-to-Play tutorial are
+  Home-only, brief dismissible overlays.
 
 **Player identity and settings are shared, not duplicated.** The
 player's profile (`js/services/profile.js`) and persisted settings
 (sound, step-guidance, card colors, language) live in `localStorage`
-and are read independently by whichever page needs them — nothing is
-passed between pages except the one thing that has to be (the chosen
-bot difficulties, handed from Home to Game via `sessionStorage` right
-before navigating).
+and are read independently by whichever screen needs them — nothing
+is passed between pages except the one thing that has to be (the
+chosen bot difficulties, handed from `bot-difficulty.html` to
+`game.html` via `sessionStorage` right before navigating).
 
 ## 🏠 Home Screen
 
 `index.html` **is** Home — the app's landing screen and only entry
 point, and a navigation destination like any other (see
-🧭 Navigation Architecture above). It never initializes gameplay, and
-never renders another destination's UI inside itself.
+🧭 Navigation Architecture above). It never initializes gameplay.
 
 * **Start Game tabs — Play vs Bot / Rank / Friendly** (see
   `.home-gamestart` / `.home-tabs`) — a tab bar, not three separate
@@ -150,10 +154,12 @@ never renders another destination's UI inside itself.
   selectable tabs whose panel says Coming Soon; see
   `js/ui/homeGameStart-ui.js`.
 * **Secondary row** — Card Guide, Settings, How to Play (tutorial),
-  and About Developer.
+  and About Developer — each opens its own popup modal over Home
+  (`#helpModal`, `#settingsModal`, `#tutorialModal`, `#aboutModal`).
 * **Profile chip** — shows the player's current avatar + name (top of
-  Home); tapping it navigates to `profile.html` to change either. This
-  is the one place identity is edited — Home just displays it.
+  Home); tapping it opens the Profile popup (`#profileModal`) to
+  change either. This is the one place identity is edited — the chip
+  itself just displays it.
 * **Bottom navigation** — Store, Tournament, and Leaderboard each
   navigate to `coming-soon.html?feature=...`, a real, reachable,
   clearly-labeled future-state page rather than a Home-local toast.
@@ -162,14 +168,17 @@ never renders another destination's UI inside itself.
   `0` since there's no coin economy yet.
 
 Home is implemented in `js/home-main.js` + `js/ui/home-ui.js` +
-`js/ui/homeGameStart-ui.js` (tab switching). Play vs Bot's own page is
+`js/ui/homeGameStart-ui.js` (tab switching) + `js/ui/modal-ui.js`
+(shared modal open/close) + `js/ui/profile-ui.js` (Profile popup) +
+`js/game/help.js` (Card Guide popup). Play vs Bot's own page is
 implemented in `bot-difficulty.html` + `js/bot-difficulty-main.js`.
 See `docs/ARCHITECTURE_PLAN.md` for the fuller
 design this follows, including later phases (a real Store/economy,
 Achievements, Quests, Leaderboard, and a real Rank/Friendly game
 flow) — each of those, per the navigation architecture above, would
-get its own top-level page (or, for a Game Mode, stay a direct Home
-action/tab) too.
+default to a Home popup unless it's genuinely a step in
+starting/continuing a match (in which case it'd get its own top-level
+page, like Choose Bot Difficulty did).
 
 ## 🧠 Core Gameplay
 
@@ -180,9 +189,9 @@ one — Rank and Friendly are Coming Soon) navigates to
 `bot-difficulty.html` to choose each opponent's difficulty and every
 seat's color — there's no separate Game Modes page to pass through
 first. The human player's name and avatar are shown read-only there,
-sourced from their Profile (`profile.html`) rather than being editable
-in here — new players get a sensible default profile immediately, and
-can customize it any time.
+sourced from their Profile (Home's `#profileModal` popup) rather than
+being editable in here — new players get a sensible default profile
+immediately, and can customize it any time.
 
 Each game contains:
 
@@ -405,12 +414,9 @@ Game State
 ```text
 WildGuestList/
 │
-├── index.html          (Home — landing page; hosts Game Mode buttons directly, never initializes gameplay)
+├── index.html          (Home — landing page; also hosts its menu popups: Profile, Settings, Card Guide, About, How-to-Play)
 ├── bot-difficulty.html  (Choose Bot Difficulty — a real top-level page reached from Home's Play vs Bot)
 ├── game.html            (Gameplay — the board; all game init lives here)
-├── profile.html          (Profile — display name + avatar)
-├── settings.html         (Settings — Home's copy; game.html has its own modal)
-├── cards.html            (Cards — Animal Abilities reference)
 ├── coming-soon.html      (shared "not built yet" page, ?feature=...)
 │
 ├── css/
@@ -423,12 +429,9 @@ WildGuestList/
 │   └── tutorial.json
 │
 ├── js/
-│   ├── home-main.js       (Home bootstrap — index.html)
+│   ├── home-main.js       (Home bootstrap — index.html; also boots Profile/Settings/Card Guide popups)
 │   ├── bot-difficulty-main.js (Choose Bot Difficulty bootstrap — bot-difficulty.html)
 │   ├── game-main.js       (Gameplay bootstrap — game.html)
-│   ├── profile-main.js    (Profile bootstrap)
-│   ├── settings-main.js   (Settings bootstrap)
-│   ├── cards-main.js      (Cards bootstrap)
 │   ├── coming-soon-main.js
 │   ├── cards.js
 │   ├── player.js
@@ -453,7 +456,7 @@ WildGuestList/
 │   │   ├── deck.js
 │   │   ├── gameOver.js
 │   │   ├── gameState.js
-│   │   ├── help.js         (Card Guide — shared by cards.html and game.html's in-game Help modal)
+│   │   ├── help.js         (Card Guide — shared by Home's #helpModal popup and game.html's in-game Help modal)
 │   │   ├── queueManager.js
 │   │   ├── scoreManager.js
 │   │   └── turnManager.js
@@ -474,9 +477,9 @@ WildGuestList/
 │       ├── log-ui.js
 │       ├── mobile-ui.js
 │       ├── homeGameStart-ui.js (Home's Play vs Bot / Rank / Friendly tab bar)
-│       ├── modal-ui.js    (Home/Game's genuine modals: About, Feedback, Tutorial, in-game Help/Settings)
+│       ├── modal-ui.js    (Home's popup modals: Profile, Settings, Card Guide, About, Feedback, Tutorial — plus Game's own in-game Settings/Help)
 │       ├── pause-ui.js
-│       ├── profile-ui.js  (Profile page content — name + avatar)
+│       ├── profile-ui.js  (Profile popup content — name + avatar; opened from Home's profile chip)
 │       ├── tutorial-ui.js
 │       ├── ui.js
 │       └── walkthrough.js
@@ -804,9 +807,9 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.16.2
+**Current version:** 1.17.0
 
-The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Settings' own page (`settings.html`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
+The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Home's Settings popup (`index.html` `#settingsModal`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 
 See `AGENTS.md` for the rule that keeps this number (and this README) current as work is done.
 

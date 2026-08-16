@@ -4,12 +4,13 @@ import { initFeedback } from "./feedback-ui.js"
 
 // Shared "chrome" modal wiring — Settings, About, Tutorial, Feedback.
 // Safe to call once on any page that includes some subset of these
-// modals: index.html/Home only keeps About/Feedback/Tutorial now
-// (Settings became its own page, settings.html — see
-// js/settings-main.js), while game.html/Game keeps all four,
-// including its own in-game Settings/Help modals (deliberately NOT
-// pages — see docs in game.html). Each lookup is a harmless no-op on
-// a page missing a given element.
+// modals: index.html/Home keeps Profile/Settings/Card Guide/About/
+// Feedback/Tutorial as popups (see js/home-main.js), while
+// game.html/Game keeps its own in-game Settings/Help/Card Guide
+// modals — a deliberate, separate use case (see js/ui/pause-ui.js)
+// sharing the same underlying widgets/persistence, not the same
+// markup instance. Each lookup here is a harmless no-op on a page
+// missing a given element.
 export function initializeModals(){
 
     initFeedback();

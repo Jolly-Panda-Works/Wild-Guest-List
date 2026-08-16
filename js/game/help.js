@@ -30,10 +30,9 @@ export async function openCardInfoByPower(power) {
 
 /** Opens the Card Guide (the existing Help modal's animal grid) and
  *  loads its data if needed. Called by the in-game helpBtn (top bar,
- *  game.html) to reveal the in-game Help modal; cards.html (Home's
- *  Cards destination, js/cards-main.js) calls it directly at boot
- *  since Help is that page's own content rather than something to
- *  reveal — one loader either way, no duplicated "collection" screen. */
+ *  game.html) to reveal the in-game Help modal, and by Home's Card
+ *  Guide entry (js/ui/home-ui.js) to reveal the same modal there —
+ *  one loader, one modal markup shape, either way. */
 export function openHelp() {
     document.getElementById("helpModal")?.classList.remove("hidden");
     loadHelpCards();
@@ -43,8 +42,8 @@ let _initialized = false;
 
 export function initHelp() {
     // Guard against double-binding: initHelp() is called once at boot
-    // on both game.html (in-game Help modal) and cards.html (Help as
-    // its own top-level page).
+    // on both game.html (in-game Help modal) and index.html/Home
+    // (Home's Card Guide entry — also a genuine modal now).
     if (_initialized) return;
     _initialized = true;
 
@@ -59,13 +58,11 @@ export function initHelp() {
     // directly, so this is a safe no-op there.
     helpBtn?.addEventListener("click", openHelp);
 
-    // closeHelp / backdrop-click-to-close only apply where Help is shown
-    // as an actual modal (game.html's in-game Help). On cards.html —
-    // Help's own top-level page, see js/cards-main.js — there's no
-    // closeHelp button and #helpModal is the page's own content, not an
-    // overlay backdrop, so both are skipped there (guarded together,
-    // since a lone backdrop-click handler with no close button would
-    // risk hiding the whole page on a stray click).
+    // closeHelp / backdrop-click-to-close apply anywhere Help is shown
+    // as an actual modal — both game.html's in-game Help and Home's
+    // Card Guide popup share this exact markup shape (#closeHelp
+    // button + #helpModal as the overlay backdrop), so one guarded
+    // block covers both.
     if (closeHelp && helpModal) {
         closeHelp.addEventListener("click", () => helpModal.classList.add("hidden"));
 

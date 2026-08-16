@@ -10,8 +10,9 @@
 //
 // Player identity (avatar + name) is read-only on this page, sourced
 // from the one authoritative profile (js/services/profile.js) —
-// editing only happens on profile.html. Bot difficulty and every
-// seat's color are the only things configurable here.
+// editing only happens in Home's Profile popup (index.html
+// #profileModal). Bot difficulty and every seat's color are the
+// only things configurable here.
 // ══════════════════════════════════════════════════════════
 
 import { loadI18n, t } from "./i18n.js";
@@ -98,7 +99,7 @@ async function buildDifficultyPanel() {
     }
 
     // Keeps the read-only avatar + name in sync if the profile changes
-    // elsewhere (e.g. profile.html, open in another tab) while this
+    // elsewhere (e.g. Home's Profile popup, open in another tab) while this
     // page is visible — display-only refresh, never writes back.
     function refreshPlayerIdentity() {
         const activeAvatar = avatarById(getAvatarId());

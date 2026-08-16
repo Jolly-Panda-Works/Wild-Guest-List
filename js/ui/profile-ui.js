@@ -1,23 +1,23 @@
 // ══════════════════════════════════════════════════════════
-// Profile page — js/ui/profile-ui.js
+// Profile — js/ui/profile-ui.js
 //
 // The dedicated place to change display name + avatar (see
 // docs/ARCHITECTURE_PLAN.md "Player Profile"). Reads/writes
 // exclusively through js/services/profile.js — the one
 // authoritative profile state — so Home's profile chip, the
-// difficulty panel's avatar trigger (js/ui/playerAvatar-ui.js),
-// and any future consumer all reflect a save here immediately.
+// Choose Bot Difficulty page's read-only display, and any future
+// consumer all reflect a save here immediately.
 //
-// Profile is its own top-level page (profile.html /
-// js/profile-main.js) — a sibling of Home, not something rendered
-// inside it. Home only shows a small read-only chip (see
-// updateHomeProfileChip below) that links to profile.html; it does
-// not contain the editing UI itself.
+// Profile is a genuine popup modal on Home (#profileModal in
+// index.html, opened via openProfileModal() below) — not a separate
+// page. Home's #homeProfileChip is a small read-only preview that
+// opens it; all editing happens inside this modal.
 // ══════════════════════════════════════════════════════════
 
 import { PLAYER_AVATARS } from "../constants/avatars.js";
 import { t } from "../i18n.js";
 import { getProfile, setDisplayName, setAvatarId } from "../services/profile.js";
+import { openModal, closeModal } from "./modal-ui.js";
 
 let selectedAvatarId = null;
 
@@ -79,25 +79,39 @@ export function updateHomeProfileChip() {
     }
 }
 
-/** Boots the Profile page's own content: avatar grid + name field +
- *  Save. Call once from js/profile-main.js. */
+/** Boots the Profile modal's content: avatar grid + name field + Save
+ *  wiring. Call once from js/home-main.js at boot (the modal starts
+ *  hidden — see openProfileModal() below for what runs on open). */
 export function initProfilePage() {
     selectedAvatarId = getProfile().avatarId;
     renderAvatarGrid();
     fillNameInput();
-    document.getElementById("profileNameInput")?.focus();
 
     document.getElementById("profileSaveBtn")
         ?.addEventListener("click", () => {
             const input = document.getElementById("profileNameInput");
             setDisplayName(input?.value ?? "");
             if (selectedAvatarId) setAvatarId(selectedAvatarId);
-            // Saved — return to Home, same as the close/back link.
-            window.location.href = "index.html";
+            updateHomeProfileChip(); // reflect the save immediately — no reload
+            closeModal("profileModal");
         });
+
+    document.getElementById("closeProfile")
+        ?.addEventListener("click", () => closeModal("profileModal"));
 
     window.addEventListener("langchange", () => {
         renderAvatarGrid();
         fillNameInput();
     });
+}
+
+/** Opens the Profile modal — re-renders against the current profile
+ *  (in case it was changed elsewhere) and focuses the name field.
+ *  Wired to Home's #homeProfileChip (js/ui/home-ui.js). */
+export function openProfileModal() {
+    selectedAvatarId = getProfile().avatarId;
+    renderAvatarGrid();
+    fillNameInput();
+    openModal("profileModal");
+    document.getElementById("profileNameInput")?.focus();
 }
