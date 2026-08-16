@@ -52,10 +52,35 @@ function renderAvatarGrid() {
 }
 
 function fillNameInput() {
+    const name = getProfile().displayName || "";
+
     const input = document.getElementById("profileNameInput");
-    if (!input) return;
-    input.value = getProfile().displayName || "";
-    input.placeholder = t("playerNamePlaceholder");
+    if (input) {
+        input.value = name;
+        input.placeholder = t("playerNamePlaceholder");
+    }
+
+    const text = document.getElementById("profileNameText");
+    if (text) text.textContent = name || t("you");
+}
+
+/** Toggles the name row between its read view (plain text + Edit
+ *  button) and its edit view (the actual input). Editing is opt-in —
+ *  tapping the Edit button reveals the input, pre-filled and focused;
+ *  Save commits it and returns to the read view. */
+function setNameEditMode(editing) {
+    const display  = document.getElementById("profileNameDisplay");
+    const editWrap = document.getElementById("profileNameEditWrap");
+    if (!display || !editWrap) return;
+
+    display.classList.toggle("hidden", editing);
+    editWrap.classList.toggle("hidden", !editing);
+
+    if (editing) {
+        const input = document.getElementById("profileNameInput");
+        input?.focus({ preventScroll: true });
+        input?.select();
+    }
 }
 
 /** Keeps Home's compact avatar/name entry point in sync with the
@@ -86,13 +111,24 @@ export function initProfilePage() {
     selectedAvatarId = getProfile().avatarId;
     renderAvatarGrid();
     fillNameInput();
+    setNameEditMode(false);
+
+    document.getElementById("profileEditNameBtn")
+        ?.addEventListener("click", () => setNameEditMode(true));
+
+    document.getElementById("profileNameInput")
+        ?.addEventListener("keydown", e => {
+            if (e.key === "Enter") document.getElementById("profileSaveBtn")?.click();
+        });
 
     document.getElementById("profileSaveBtn")
         ?.addEventListener("click", () => {
             const input = document.getElementById("profileNameInput");
             setDisplayName(input?.value ?? "");
             if (selectedAvatarId) setAvatarId(selectedAvatarId);
-            updateHomeProfileChip(); // reflect the save immediately — no reload
+            fillNameInput();          // reflect the (possibly regenerated) name
+            setNameEditMode(false);   // back to the read view
+            updateHomeProfileChip();  // reflect the save immediately — no reload
             closeModal("profileModal");
         });
 
@@ -106,12 +142,13 @@ export function initProfilePage() {
 }
 
 /** Opens the Profile modal — re-renders against the current profile
- *  (in case it was changed elsewhere) and focuses the name field.
- *  Wired to Home's #homeProfileChip (js/ui/home-ui.js). */
+ *  (in case it was changed elsewhere), starting in the name row's
+ *  read view (see setNameEditMode). Wired to Home's
+ *  #homeProfileChip (js/ui/home-ui.js). */
 export function openProfileModal() {
     selectedAvatarId = getProfile().avatarId;
     renderAvatarGrid();
     fillNameInput();
+    setNameEditMode(false);
     openModal("profileModal");
-    document.getElementById("profileNameInput")?.focus();
 }

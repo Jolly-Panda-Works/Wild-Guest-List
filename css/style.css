@@ -3939,6 +3939,47 @@ body.gameplay-locked #playerHand .card {
     gap: 8px;
 }
 
+/* ── Name row: read view (text + Edit) vs edit view (input) ──
+   Read view is the default; tapping Edit swaps to the input (see
+   js/ui/profile-ui.js setNameEditMode). Both share the row's
+   centered layout so nothing shifts horizontally when toggling. */
+.profile-name-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+}
+
+.profile-name-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-name-edit-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+}
+
+.profile-name-edit-btn:hover {
+    background: rgba(255,255,255,0.12);
+}
+
+.profile-name-edit-wrap {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
 /* ── Profile → Achievements section ──────────────────────────
    Empty/"coming soon" state today (no achievement system exists
    yet — see docs/PRODUCT_ROADMAP.md). Once real achievement data

@@ -27,12 +27,22 @@ import { PLAYER_AVATARS, DEFAULT_PLAYER_AVATAR_ID } from "../constants/avatars.j
 const STORAGE_KEY        = "wgl_playerProfile";
 const LEGACY_AVATAR_KEY  = "wgl_playerAvatar";
 const MAX_NAME_LENGTH    = 20;
+const GUEST_NAME_PREFIX  = "Guest";
 
 let _profile = null;
 const _listeners = new Set();
 
 function isValidAvatarId(id) {
     return PLAYER_AVATARS.some(a => a.id === id);
+}
+
+/** Generates a random ID-like guest name (e.g. "Guest4821") for a
+ *  brand-new profile, so the name field/display is never blank
+ *  before the player picks their own name — just a placeholder
+ *  identity they can freely overwrite via Profile → Save. */
+function generateGuestName() {
+    const id = Math.floor(1000 + Math.random() * 9000); // 4 digits
+    return `${GUEST_NAME_PREFIX}${id}`;
 }
 
 function persist() {
@@ -53,8 +63,9 @@ function notify() {
 
 /** Loads the profile from storage the first time it's needed, migrating
  *  the legacy avatar-only key if this is the first read after upgrading.
- *  A default profile (no custom name, default avatar) is created for
- *  brand-new players — never a forced setup screen. */
+ *  A default profile (random Guest#### name, default avatar) is created
+ *  for brand-new players — never a forced setup screen, never a blank
+ *  name either. */
 function ensureLoaded() {
     if (_profile) return;
 
@@ -67,32 +78,40 @@ function ensureLoaded() {
     }
 
     if (stored && typeof stored === "object") {
+        const storedName = (typeof stored.displayName === "string" && stored.displayName.trim())
+            ? stored.displayName.trim().slice(0, MAX_NAME_LENGTH)
+            : null;
+
         _profile = {
-            displayName: (typeof stored.displayName === "string" && stored.displayName.trim())
-                ? stored.displayName.trim().slice(0, MAX_NAME_LENGTH)
-                : null,
+            // Backfills a random Guest#### name for profiles saved
+            // before this default existed (or ones with an explicitly
+            // cleared name) — a name is never blank once loaded.
+            displayName: storedName || generateGuestName(),
             avatarId: isValidAvatarId(stored.avatarId) ? stored.avatarId : DEFAULT_PLAYER_AVATAR_ID,
         };
+        if (!storedName) persist();
         return;
     }
 
     // No profile yet — migrate the legacy avatar-only key if present,
-    // otherwise fall back to a fresh default profile.
+    // otherwise fall back to a fresh default profile with a random
+    // Guest#### name (never blank).
     let legacyAvatar = null;
     try { legacyAvatar = localStorage.getItem(LEGACY_AVATAR_KEY); } catch {
         legacyAvatar = null;
     }
 
     _profile = {
-        displayName: null,
+        displayName: generateGuestName(),
         avatarId: isValidAvatarId(legacyAvatar) ? legacyAvatar : DEFAULT_PLAYER_AVATAR_ID,
     };
     persist();
 }
 
 /** Returns a copy of the current profile: { displayName, avatarId }.
- *  displayName is `null` when the player hasn't set a custom one yet —
- *  callers should fall back to the localized default (t("you")). */
+ *  displayName is always a non-empty string — brand-new and legacy
+ *  profiles alike get a random Guest#### placeholder name, so callers
+ *  never need to fall back to t("you") for a blank name. */
 export function getProfile() {
     ensureLoaded();
     return { ..._profile };
@@ -109,11 +128,12 @@ export function getAvatarId() {
 }
 
 /** Sets the player's display name. Pass an empty/whitespace-only value
- *  to clear it back to the localized default. */
+ *  to reset it back to a fresh random Guest#### name — the name is
+ *  never left blank. */
 export function setDisplayName(name) {
     ensureLoaded();
     const trimmed = (name || "").trim().slice(0, MAX_NAME_LENGTH);
-    _profile.displayName = trimmed || null;
+    _profile.displayName = trimmed || generateGuestName();
     persist();
     notify();
 }

@@ -169,8 +169,25 @@
                     <div class="profile-avatar-grid" id="profileAvatarGrid"></div>
                     <div class="profile-name-row">
                         <label class="settings-label" for="profileNameInput" data-i18n="profileNameLabel">Display Name</label>
-                        <input id="profileNameInput" class="player-name-input" type="text" maxlength="20"
-                               data-i18n-placeholder="playerNamePlaceholder" placeholder="Enter your name...">
+
+                        <!-- Default (read) view: the current name as
+                             plain text + an Edit button. Shown whenever
+                             the name isn't actively being edited. -->
+                        <div class="profile-name-display" id="profileNameDisplay">
+                            <span class="profile-name-text" id="profileNameText"></span>
+                            <button id="profileEditNameBtn" type="button" class="icon-btn profile-name-edit-btn"
+                                    data-i18n-aria-label="profileEditName" aria-label="Edit name">
+                                <span data-icon="edit" aria-hidden="true"></span>
+                            </button>
+                        </div>
+
+                        <!-- Edit view: only shown after tapping the Edit
+                             button above; Save (below) commits it and
+                             returns to the read view. -->
+                        <div class="profile-name-edit-wrap hidden" id="profileNameEditWrap">
+                            <input id="profileNameInput" class="player-name-input" type="text" maxlength="20"
+                                   data-i18n-placeholder="playerNamePlaceholder" placeholder="Enter your name...">
+                        </div>
                     </div>
                     <button id="profileSaveBtn" class="screen-btn" type="button" data-i18n="profileSaveBtn">Save</button>
 
