@@ -3911,11 +3911,12 @@ body.gameplay-locked #playerHand .card {
     height: 64px;
     padding: 0;
     border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.15);
+    border: none;
     background: transparent;
     cursor: pointer;
     overflow: hidden;
-    transition: transform 0.15s ease, border-color 0.15s ease;
+    opacity: 0.55;
+    transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
 .profile-avatar-choice img {
@@ -3928,8 +3929,8 @@ body.gameplay-locked #playerHand .card {
 .profile-avatar-choice:hover { transform: scale(1.06); }
 
 .profile-avatar-choice.active {
-    border-color: #4ade80;
-    box-shadow: 0 0 0 3px rgba(74,222,128,0.25);
+    opacity: 1;
+    transform: scale(1.08);
 }
 
 .profile-name-row {
