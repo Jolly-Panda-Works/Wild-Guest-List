@@ -4096,10 +4096,10 @@ body.gameplay-locked #playerHand .card {
 }
 
 /* ── Profile → Achievements section ──────────────────────────
-   Empty/"coming soon" state today (no achievement system exists
-   yet — see docs/PRODUCT_ROADMAP.md). Once real achievement data
-   exists, states (locked/unlocked/progress) should render here
-   using this same section, not a separate implementation. */
+   Reads from js/services/achievements.js, the real achievement
+   system — see js/ui/profile-ui.js renderAchievements() and the
+   .profile-achievement-* rules further down this file for the actual
+   locked/unlocked/progress item styling. */
 .profile-achievements {
     display: flex;
     flex-direction: column;
@@ -4111,25 +4111,6 @@ body.gameplay-locked #playerHand .card {
     font-size: 15px;
     font-weight: 700;
     color: white;
-}
-
-.profile-achievements-empty {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 16px;
-    border-radius: var(--radius-md);
-    border: 1px dashed rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.04);
-    color: rgba(255,255,255,0.75);
-    font-size: 13px;
-    line-height: 1.4;
-}
-
-.profile-achievements-empty-icon {
-    flex-shrink: 0;
-    font-size: 22px;
-    opacity: 0.8;
 }
 
 /* ── Per-seat color trigger (Choose Bot Difficulty screen) ──
@@ -6051,6 +6032,194 @@ body.gameplay-locked #playerHand .card {
         left: 12px;
         right: 12px;
     }
+}
+
+/* ── Achievement Unlock toast (js/ui/achievementNotification-ui.js) ──
+   Same fixed-position fade/slide lifecycle as .feedback-toast above,
+   anchored top-center instead of bottom-right so it never collides
+   with the feedback toast or the in-game action bar. */
+
+.achievement-toast {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translate(-50%, -16px);
+    z-index: 1600;
+
+    width: min(360px, calc(100% - 24px));
+
+    opacity: 0;
+    transition: opacity .25s ease, transform .25s ease;
+
+    pointer-events: none;
+}
+
+.achievement-toast.visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+}
+
+.achievement-toast-bubble {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    box-sizing: border-box;
+
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+
+    background: linear-gradient(135deg, rgba(255, 199, 44, 0.16), rgba(10, 31, 15, 0.94));
+    border: 1px solid rgba(255, 199, 44, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .5);
+}
+
+.achievement-toast-icon {
+    font-size: 28px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.achievement-toast-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.achievement-toast-eyebrow {
+    margin: 0 0 2px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    color: #ffc72c;
+    text-transform: uppercase;
+}
+
+.achievement-toast-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.3;
+}
+
+.achievement-toast-desc {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.35;
+}
+
+.achievement-toast-close {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: .7;
+    padding: 2px;
+}
+
+.achievement-toast-close:hover {
+    opacity: 1;
+}
+
+@media (max-width: 600px) {
+    .achievement-toast {
+        width: calc(100% - 24px);
+    }
+}
+
+/* ── Profile → Achievements list (see index.html #profileAchievements,
+   js/ui/profile-ui.js renderAchievements) ── */
+
+.profile-achievements-summary {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.profile-achievements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.profile-achievement-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+}
+
+.profile-achievement-item.unlocked {
+    background: rgba(255, 199, 44, 0.08);
+    border-color: rgba(255, 199, 44, 0.35);
+}
+
+.profile-achievement-icon {
+    font-size: 22px;
+    line-height: 1;
+    flex-shrink: 0;
+    width: 30px;
+    text-align: center;
+    opacity: .55;
+}
+
+.profile-achievement-item.unlocked .profile-achievement-icon {
+    opacity: 1;
+}
+
+.profile-achievement-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-achievement-title {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.profile-achievement-item:not(.unlocked) .profile-achievement-title {
+    color: var(--text-muted);
+}
+
+.profile-achievement-desc {
+    margin: 2px 0 0;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.3;
+}
+
+.profile-achievement-progress {
+    margin: 4px 0 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: #ffc72c;
+}
+
+.profile-achievement-status {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+}
+
+.profile-achievement-item.unlocked .profile-achievement-status {
+    background: rgba(74, 222, 128, 0.18);
+    color: #4ade80;
 }
 
 

@@ -140,13 +140,9 @@ button. Individual popups (like Card Guide's nested card-detail view)
 can still layer their own close wiring on top of this without
 conflicting with it.
 
-**Profile now has an Achievements section** (`#profileAchievements`
-in `index.html`'s Profile popup). No achievement system exists in the
-project yet, so it's an honest empty state today — no invented
-unlocked achievements or progress — reusing the existing `trophy`
-icon from `data/config.json` rather than a new asset. Once a real
-achievement system exists (see `docs/PRODUCT_ROADMAP.md`), this is
-where its data should render.
+**Profile's Achievements section** (`#profileAchievements` in
+`index.html`'s Profile popup) is now backed by a real achievement
+system — see 🏆 Achievements below.
 
 **Player identity and settings are shared, not duplicated.** The
 player's profile (`js/services/profile.js`) and persisted settings
@@ -510,12 +506,14 @@ WildGuestList/
 │   │   └── turnManager.js
 │   │
 │   ├── services/
+│   │   ├── achievements.js  (the achievement system — progress/persistence/unlocking)
 │   │   ├── dataLoader.js
 │   │   ├── logger.js
 │   │   ├── profile.js   (the one authoritative player profile)
 │   │   └── soundManager.js
 │   │
 │   └── ui/
+│       ├── achievementNotification-ui.js (unlock toast)
 │       ├── endgame-ui.js
 │       ├── game-ui.js
 │       ├── home-ui.js
@@ -617,6 +615,60 @@ chooseKangarooJump()
 ```
 
 This keeps individual card behaviors separated from general queue manipulation.
+
+---
+
+### Achievement System
+
+```text
+js/services/achievements.js
+js/ui/profile-ui.js          (renders the list — Profile → Achievements)
+js/ui/achievementNotification-ui.js  (unlock toast)
+```
+
+A reusable, data-driven achievement system — not a one-off hardcoded
+implementation for its initial 10 achievements. Adding achievement #11
+means adding one entry to `ACHIEVEMENT_DEFS` in `achievements.js` (+ its
+icon in `data/config.json` → `icons`, its title/description in
+`data/i18n.json`) — no new UI, storage, or modal code.
+
+* **Definitions** live in `achievements.js` (`id`, `category`, `type`
+  `"binary"`/`"count"`, `target`, i18n keys). Thresholds
+  (`requiredCount`/`requiredUniqueAbilities`/`requiredPlayerCount`) are
+  overridable from `data/config.json` → `achievements` so they can be
+  retuned without editing code — `config.json` only ever holds these
+  static thresholds/icons, never a player's live progress.
+* **Progress** is per-player, persisted to `localStorage`
+  (`wgl_achievements`), following the exact same pattern as
+  `js/services/profile.js` (module state + `subscribeAchievements()`).
+* **Event-driven, not UI-coupled.** Achievement logic never reads UI
+  state — it's fed by the three existing authoritative points gameplay
+  already funnels through: `js/game/turnManager.js`'s ability/queue
+  capture batches (`beginCapture()`/`endCapture()` in
+  `js/presentation/events.js`, already consumed exactly once per real
+  play) and `js/game/gameOver.js`'s `finishGame()` (the single
+  authoritative, already double-call-guarded game result). No new
+  events were invented — see the file's own comments for exactly which
+  existing event each achievement reuses (e.g. "No Escape" reuses the
+  `CARD_REACTED`/`"block"` event a Zebra already emits against a
+  Crocodile, rather than a new escape mechanic).
+* **Session-only tracking** (e.g. Strategist's unique-abilities-in-one-
+  winning-game count) resets every new game via `notifyGameStarted()`
+  and is never persisted — only the final unlocked/progress state is.
+* **Unlock notification** is a non-blocking toast
+  (`js/ui/achievementNotification-ui.js`) mirroring `#feedbackToast`'s
+  existing lifecycle in `js/ui/feedback-ui.js`, not a second
+  notification framework.
+* **Known limitation — Duel Master:** this achievement ("win a
+  2-player Duel") is fully wired end-to-end, but the game currently
+  always deals exactly 1 human + 3 bots — there is no 2-player Duel
+  mode in the project. It will unlock correctly the moment
+  `gameState.players.length === 2` for a human win; that condition
+  just can't occur yet.
+
+See `tests/achievements.test.mjs` (`tests/README.md` explains why
+plain `node:test` — the project has no existing test framework) for
+the full set of unlock/non-unlock conditions this covers.
 
 ---
 
@@ -855,7 +907,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.20.0
+**Current version:** 1.21.0
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Home's Settings popup (`index.html` `#settingsModal`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

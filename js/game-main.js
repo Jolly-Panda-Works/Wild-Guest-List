@@ -31,6 +31,8 @@ import { maybeShowCardHelpHint } from "./ui/cardHelpHint.js";
 import { initCardColorPicker } from "./ui/cardColor-ui.js";
 import { initStepGuidanceToggle } from "./ui/cardGuidance-ui.js";
 import { getProfile } from "./services/profile.js";
+import { notifyGameStarted } from "./services/achievements.js";
+import { initAchievementNotifications } from "./ui/achievementNotification-ui.js";
 
 const PENDING_DIFFICULTIES_KEY = "wgl_pendingDifficulties";
 const DEFAULT_DIFFICULTIES = { p2: "easy", p3: "easy", p4: "easy" };
@@ -85,6 +87,11 @@ async function startGame() {
 
     gameState.players = players;
 
+    // Reset per-game achievement session tracking (e.g. Strategist's
+    // unique-abilities-this-game count) — must happen before the first
+    // card is ever played this game.
+    notifyGameStarted();
+
     // Starting player is picked at random each game, rather than always
     // being the human — except a brand-new player's very first game,
     // which keeps the human starting so the one-time walkthrough (which
@@ -126,6 +133,8 @@ async function startGame() {
 document.getElementById("playAgainBtn")?.addEventListener("click", () => {
     window.location.href = "index.html";
 });
+
+initAchievementNotifications();
 
 await startGame();
 playBackgroundMusic();

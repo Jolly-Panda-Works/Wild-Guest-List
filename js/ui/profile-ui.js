@@ -18,6 +18,8 @@ import { PLAYER_AVATARS } from "../constants/avatars.js";
 import { t } from "../i18n.js";
 import { getProfile, setDisplayName, setAvatarId } from "../services/profile.js";
 import { openModal, closeModal } from "./modal-ui.js";
+import { loadIcons } from "./icon-ui.js";
+import { getAchievements, subscribeAchievements } from "../services/achievements.js";
 
 let selectedAvatarId = null;
 
@@ -118,6 +120,57 @@ export function updateHomeProfileChip() {
     }
 }
 
+/** Renders the Achievements section (#profileAchievements) from the real
+ *  achievement system (js/services/achievements.js) — locked and
+ *  unlocked achievements both stay visible (none of the 10 initial
+ *  achievements are `hidden`), showing progress for count-type ones and
+ *  the unlock date for unlocked ones. Called on modal open and again
+ *  whenever achievement state changes (see subscribeAchievements() in
+ *  initProfilePage) so progress made mid-game is reflected the moment
+ *  the player reopens Profile. */
+async function renderAchievements() {
+    const summaryEl = document.getElementById("profileAchievementsSummary");
+    const listEl    = document.getElementById("profileAchievementsList");
+    if (!listEl) return;
+
+    const achievements = await getAchievements();
+    const unlockedCount = achievements.filter(a => a.unlocked).length;
+
+    if (summaryEl) {
+        summaryEl.textContent = t("profileAchievementsSummary")
+            .replace("{unlocked}", unlockedCount)
+            .replace("{total}", achievements.length);
+    }
+
+    listEl.innerHTML = achievements.map(a => {
+        const { def, unlocked, progress } = a;
+        const title = t(def.titleKey);
+        const desc  = t(def.descriptionKey);
+        const statusLabel = unlocked ? t("achievementUnlockedTag") : t("achievementLockedTag");
+
+        // Progress line: only shown for count-type achievements not yet
+        // unlocked (e.g. "3 / 5") — binary achievements just show their
+        // locked/unlocked status pill instead.
+        const progressLine = (!unlocked && def.type === "count")
+            ? `<p class="profile-achievement-progress">${progress} / ${def.target}</p>`
+            : "";
+
+        return `
+            <div class="profile-achievement-item${unlocked ? " unlocked" : ""}">
+                <span class="profile-achievement-icon" data-icon="${def.icon}" aria-hidden="true"></span>
+                <div class="profile-achievement-body">
+                    <p class="profile-achievement-title">${title}</p>
+                    <p class="profile-achievement-desc">${desc}</p>
+                    ${progressLine}
+                </div>
+                <span class="profile-achievement-status">${statusLabel}</span>
+            </div>
+        `;
+    }).join("");
+
+    loadIcons(listEl);
+}
+
 /** Boots the Profile modal's content: avatar grid + name field wiring.
  *  Both save immediately on their own action — no separate Save step
  *  for the whole popup. Call once from js/home-main.js at boot (the
@@ -146,7 +199,14 @@ export function initProfilePage() {
     window.addEventListener("langchange", () => {
         renderAvatarGrid();
         fillNameInput();
+        renderAchievements();
     });
+
+    // Keep the Achievements section live: any progress/unlock change
+    // (which, in practice, only ever happens on game.html while Profile
+    // itself is closed) is reflected the next time it renders.
+    subscribeAchievements(() => renderAchievements());
+    renderAchievements();
 }
 
 /** Opens the Profile modal — re-renders against the current profile
@@ -158,5 +218,6 @@ export function openProfileModal() {
     renderAvatarGrid();
     fillNameInput();
     setNameEditMode(false);
+    renderAchievements();
     openModal("profileModal");
 }
