@@ -182,11 +182,18 @@
                         </div>
 
                         <!-- Edit view: only shown after tapping the Edit
-                             button above; Save (below) commits it and
-                             returns to the read view. -->
+                             button above. The inline Save here commits
+                             just the name and returns to the read view
+                             without closing the popup; the full-width
+                             Save below still saves everything (name +
+                             avatar) and closes the popup, unchanged. -->
                         <div class="profile-name-edit-wrap hidden" id="profileNameEditWrap">
                             <input id="profileNameInput" class="player-name-input" type="text" maxlength="20"
                                    data-i18n-placeholder="playerNamePlaceholder" placeholder="Enter your name...">
+                            <button id="profileNameSaveBtn" type="button" class="icon-btn profile-name-save-btn"
+                                    data-i18n-aria-label="profileSaveBtn" aria-label="Save">
+                                <span data-icon="confirm" aria-hidden="true"></span>
+                            </button>
                         </div>
                     </div>
                     <button id="profileSaveBtn" class="screen-btn" type="button" data-i18n="profileSaveBtn">Save</button>

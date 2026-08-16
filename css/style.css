@@ -3976,8 +3976,39 @@ body.gameplay-locked #playerHand .card {
 
 .profile-name-edit-wrap {
     display: flex;
+    align-items: center;
     justify-content: center;
+    gap: 8px;
     width: 100%;
+}
+
+/* .hidden (display:none) is defined earlier in this file with the
+   same specificity as the two rules above — without this compound
+   override, source order would let .profile-name-display/.profile-
+   name-edit-wrap's own `display: flex` win, so toggling the `hidden`
+   class from js/ui/profile-ui.js wouldn't actually hide anything.
+   Same pattern as .tut-video-container.hidden elsewhere in this file. */
+.profile-name-display.hidden,
+.profile-name-edit-wrap.hidden {
+    display: none;
+}
+
+.profile-name-edit-wrap .player-name-input {
+    width: min(220px, 68%);
+}
+
+.profile-name-save-btn {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(74,222,128,0.4);
+    background: rgba(74,222,128,0.12);
+}
+
+.profile-name-save-btn:hover {
+    background: rgba(74,222,128,0.22);
 }
 
 /* ── Profile → Achievements section ──────────────────────────

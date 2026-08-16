@@ -83,6 +83,19 @@ function setNameEditMode(editing) {
     }
 }
 
+/** Commits just the display name from the input and returns to the
+ *  read view — used by the inline Save button and Enter-to-save.
+ *  Doesn't touch the avatar or close the popup (the full-width Save
+ *  below still does both, and still re-saves the name too, so
+ *  there's never a stale value either way). */
+function commitNameEdit() {
+    const input = document.getElementById("profileNameInput");
+    setDisplayName(input?.value ?? "");
+    fillNameInput();
+    setNameEditMode(false);
+    updateHomeProfileChip();
+}
+
 /** Keeps Home's compact avatar/name entry point in sync with the
  *  authoritative profile. Called once when Home boots (Home is a
  *  fresh page load every time the player lands on it, so a one-shot
@@ -116,9 +129,12 @@ export function initProfilePage() {
     document.getElementById("profileEditNameBtn")
         ?.addEventListener("click", () => setNameEditMode(true));
 
+    document.getElementById("profileNameSaveBtn")
+        ?.addEventListener("click", () => commitNameEdit());
+
     document.getElementById("profileNameInput")
         ?.addEventListener("keydown", e => {
-            if (e.key === "Enter") document.getElementById("profileSaveBtn")?.click();
+            if (e.key === "Enter") commitNameEdit();
         });
 
     document.getElementById("profileSaveBtn")

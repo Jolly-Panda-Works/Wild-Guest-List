@@ -1,6 +1,6 @@
 {
     "app": {
-        "version": "1.19.0"
+        "version": "1.19.2"
     },
     "icons": {
         "leaderboard": "assets/img/icons/leaderboard.png",
@@ -53,7 +53,8 @@
         "pauseResume": "assets/img/icons/resume.png",
         "pauseRestart": "assets/img/icons/restart.png",
         "home": "🏠",
-        "edit": "✏️"
+        "edit": "✏️",
+        "confirm": "✅"
     },
     "sounds": {
         "playCard": "",
