@@ -3910,7 +3910,7 @@ body.gameplay-locked #playerHand .card {
     width: 64px;
     height: 64px;
     padding: 0;
-    border-radius: 50%;
+    border-radius: var(--radius-md);
     border: none;
     background: transparent;
     cursor: pointer;
