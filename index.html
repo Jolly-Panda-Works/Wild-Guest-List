@@ -184,9 +184,10 @@
                         <!-- Edit view: only shown after tapping the Edit
                              button above. The inline Save here commits
                              just the name and returns to the read view
-                             without closing the popup; the full-width
-                             Save below still saves everything (name +
-                             avatar) and closes the popup, unchanged. -->
+                             without closing the popup. Avatar changes
+                             (below) save immediately on click too — see
+                             js/ui/profile-ui.js renderAvatarGrid — so
+                             there's no separate Save step for either. -->
                         <div class="profile-name-edit-wrap hidden" id="profileNameEditWrap">
                             <input id="profileNameInput" class="player-name-input" type="text" maxlength="20"
                                    data-i18n-placeholder="playerNamePlaceholder" placeholder="Enter your name...">
@@ -196,7 +197,6 @@
                             </button>
                         </div>
                     </div>
-                    <button id="profileSaveBtn" class="screen-btn" type="button" data-i18n="profileSaveBtn">Save</button>
 
                     <div class="settings-divider"></div>
 

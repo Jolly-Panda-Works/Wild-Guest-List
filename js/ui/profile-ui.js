@@ -42,6 +42,8 @@ function renderAvatarGrid() {
     grid.querySelectorAll(".profile-avatar-choice").forEach(btn => {
         btn.addEventListener("click", () => {
             selectedAvatarId = btn.dataset.avatar;
+            setAvatarId(selectedAvatarId); // saves immediately — no separate Save step
+            updateHomeProfileChip();
             grid.querySelectorAll(".profile-avatar-choice").forEach(b => {
                 const active = b === btn;
                 b.classList.toggle("active", active);
@@ -85,9 +87,8 @@ function setNameEditMode(editing) {
 
 /** Commits just the display name from the input and returns to the
  *  read view — used by the inline Save button and Enter-to-save.
- *  Doesn't touch the avatar or close the popup (the full-width Save
- *  below still does both, and still re-saves the name too, so
- *  there's never a stale value either way). */
+ *  This is the only save action left in Profile now: avatar changes
+ *  already save immediately on click (see renderAvatarGrid above). */
 function commitNameEdit() {
     const input = document.getElementById("profileNameInput");
     setDisplayName(input?.value ?? "");
@@ -117,9 +118,11 @@ export function updateHomeProfileChip() {
     }
 }
 
-/** Boots the Profile modal's content: avatar grid + name field + Save
- *  wiring. Call once from js/home-main.js at boot (the modal starts
- *  hidden — see openProfileModal() below for what runs on open). */
+/** Boots the Profile modal's content: avatar grid + name field wiring.
+ *  Both save immediately on their own action — no separate Save step
+ *  for the whole popup. Call once from js/home-main.js at boot (the
+ *  modal starts hidden — see openProfileModal() below for what runs
+ *  on open). */
 export function initProfilePage() {
     selectedAvatarId = getProfile().avatarId;
     renderAvatarGrid();
@@ -135,17 +138,6 @@ export function initProfilePage() {
     document.getElementById("profileNameInput")
         ?.addEventListener("keydown", e => {
             if (e.key === "Enter") commitNameEdit();
-        });
-
-    document.getElementById("profileSaveBtn")
-        ?.addEventListener("click", () => {
-            const input = document.getElementById("profileNameInput");
-            setDisplayName(input?.value ?? "");
-            if (selectedAvatarId) setAvatarId(selectedAvatarId);
-            fillNameInput();          // reflect the (possibly regenerated) name
-            setNameEditMode(false);   // back to the read view
-            updateHomeProfileChip();  // reflect the save immediately — no reload
-            closeModal("profileModal");
         });
 
     document.getElementById("closeProfile")
