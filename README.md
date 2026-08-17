@@ -529,6 +529,7 @@ WildGuestList/
 │       ├── mobile-ui.js
 │       ├── homeGameStart-ui.js (Home's Play vs Bot / Rank / Friendly tab bar)
 │       ├── modal-ui.js    (Home's popup modals: Profile, Settings, Card Guide, About, Feedback, Tutorial — plus Game's own in-game Settings/Help)
+│       ├── orientation-ui.js (landscape-only gate — every top-level page)
 │       ├── pause-ui.js
 │       ├── profile-ui.js  (Profile popup content — name + avatar; opened from Home's profile chip)
 │       ├── tutorial-ui.js
@@ -827,9 +828,61 @@ The game includes dedicated mobile UI logic:
 
 ```text
 js/ui/mobile-ui.js
+js/ui/orientation-ui.js  (landscape-only enforcement — see below)
 ```
 
 The interface adapts game controls and panels for smaller screens while maintaining the core gameplay experience.
+
+### Orientation Gate — landscape only
+
+Wild Guest List is designed for landscape orientation, especially on
+touch devices. A single, reusable gate (`js/ui/orientation-ui.js`) is
+wired into every real top-level page (`index.html`, `game.html`,
+`bot-difficulty.html`, `cards.html`, `game-modes.html`,
+`coming-soon.html` — each includes the same `#orientationGate` markup
+and calls `initOrientationGate()`, synchronously, before that page's
+own boot sequence):
+
+```text
+Application
+  ↓
+Orientation Check   (matchMedia — reactive, not polled)
+  ↓
+Landscape?
+├── Yes → Application
+└── No  → Rotate Device Screen
+```
+
+* **Detection** is `(pointer: coarse)` (touch-primary — phones and
+  tablets) combined with `(orientation: portrait)` — not user-agent
+  sniffing, and not a raw screen-size threshold, so it never blocks
+  desktop (even a narrow/tall browser window) while still correctly
+  covering tablets in portrait.
+* **Reacts immediately** via `MediaQueryList`'s own `change` event
+  (with `orientationchange`/`resize` as a defensive fallback) — rotate
+  the device either direction and the gate shows/hides itself with no
+  polling and no `transform: rotate(...)` trick.
+* **True orientation lock** (`screen.orientation.lock("landscape")`) is
+  attempted as a progressive enhancement where supported; the reactive
+  overlay above is the universal, reliable mechanism everywhere else
+  (notably iOS Safari, which doesn't implement that API at all).
+* **Never destroys game state.** The gate is a full-screen overlay
+  (its own top-most layer, above every `.modal` and `#startupScreen`)
+  that simply blocks pointer events from reaching whatever's
+  underneath — nothing underneath is torn down, reset, or reinitialized.
+  On `game.html` specifically, it also pauses the turn timer while
+  blocking (reusing the existing `js/game/turnTimer.js`
+  pause/resume — the same mechanism the Pause panel uses — via
+  `onOrientationBlocked()`/`onOrientationUnblocked()`) and auto-resumes
+  only if the gate itself was what paused it, never a game the player
+  paused manually.
+* **Accessible**: `role="status"`/`aria-live="polite"` (same pattern as
+  `#startupScreen`), with focus moved into the gate's own message while
+  shown and restored to whatever was focused once it hides.
+
+See `tests/orientation.test.mjs` (`tests/README.md`) for the covered
+scenarios (desktop/mobile/tablet × portrait/landscape, live rotation in
+both directions, no duplicate initialization).
 
 ---
 
@@ -912,7 +965,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.21.1
+**Current version:** 1.22.0
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Home's Settings popup (`index.html` `#settingsModal`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

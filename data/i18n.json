@@ -218,7 +218,9 @@
     "achDuelMasterTitle": "Duel Master",
     "achDuelMasterDesc": "Win a 2-player Duel.",
     "achWildChampionTitle": "Wild Champion",
-    "achWildChampionDesc": "Win 10 games."
+    "achWildChampionDesc": "Win 10 games.",
+    "orientationTitle": "Please rotate your device",
+    "orientationBody": "Wild Guest List is designed for landscape orientation."
   },
   "fa": {
     "dir": "rtl",
@@ -439,7 +441,9 @@
     "achDuelMasterTitle": "استاد نبرد تن‌به‌تن",
     "achDuelMasterDesc": "یک نبرد تن‌به‌تن دو نفره را ببرید.",
     "achWildChampionTitle": "قهرمان وحشی",
-    "achWildChampionDesc": "۱۰ بازی را ببرید."
+    "achWildChampionDesc": "۱۰ بازی را ببرید.",
+    "orientationTitle": "لطفاً دستگاه خود را بچرخانید",
+    "orientationBody": "وایلد گست لیست برای حالت افقی (Landscape) طراحی شده است."
   },
   "ar": {
     "dir": "rtl",
@@ -660,7 +664,9 @@
     "achDuelMasterTitle": "سيد المبارزة",
     "achDuelMasterDesc": "اربح مبارزة بين لاعبين اثنين.",
     "achWildChampionTitle": "بطل وايلد",
-    "achWildChampionDesc": "اربح 10 ألعاب."
+    "achWildChampionDesc": "اربح 10 ألعاب.",
+    "orientationTitle": "يرجى تدوير جهازك",
+    "orientationBody": "تم تصميم Wild Guest List للعمل في الوضع الأفقي."
   },
   "tr": {
     "dir": "ltr",
@@ -881,6 +887,8 @@
     "achDuelMasterTitle": "Düello Ustası",
     "achDuelMasterDesc": "2 oyunculu bir Düello'yu kazan.",
     "achWildChampionTitle": "Vahşi Şampiyon",
-    "achWildChampionDesc": "10 oyun kazan."
+    "achWildChampionDesc": "10 oyun kazan.",
+    "orientationTitle": "Lütfen cihazınızı çevirin",
+    "orientationBody": "Wild Guest List yatay (landscape) yönelim için tasarlanmıştır."
   }
 }

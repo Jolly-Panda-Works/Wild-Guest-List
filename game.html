@@ -9,6 +9,25 @@
         <link rel="stylesheet" href="css/style.css">
     </head>
     <body>
+        <!-- ── ORIENTATION GATE ──────────────────────────────────────
+             Reusable, page-agnostic gate — see
+             js/ui/orientation-ui.js (initOrientationGate()). Sits
+             above every other layer on this page, including
+             #startupScreen and any .modal, since it must be able to
+             block regardless of what else is showing. Hidden by
+             default; shown/hidden reactively based on device
+             orientation (matchMedia, not a CSS transform:rotate()
+             hack) without destroying or resetting anything
+             underneath it. Same markup/module on every real
+             top-level page. -->
+        <div id="orientationGate" class="orientation-gate hidden" role="status" aria-live="polite" tabindex="-1">
+            <div class="orientation-gate-content">
+                <span class="orientation-gate-icon" data-icon="orientationRotate" aria-hidden="true"></span>
+                <h2 class="orientation-gate-title" data-i18n="orientationTitle">Please rotate your device</h2>
+                <p class="orientation-gate-body" data-i18n="orientationBody">Wild Guest List is designed for landscape orientation.</p>
+            </div>
+        </div>
+
 
 
         <div id="pageLayout">

@@ -12,6 +12,10 @@
 
 import { loadI18n, t } from "./i18n.js";
 import { loadIcons } from "./ui/icon-ui.js";
+import { initOrientationGate } from "./ui/orientation-ui.js";
+
+initOrientationGate();
+
 
 // i18n key for each feature's display name. Extending Home with a
 // new "Coming Soon" entry point (Daily Challenge, Progress,

@@ -3,23 +3,23 @@
 This project has no existing test framework or runner (no `package.json`,
 no prior `tests/`/`spec/` folder, nothing wired into CI) — Wild Guest
 List is a plain static-file, ES-modules-in-the-browser app. Rather than
-inventing a full framework/build step for one feature, `achievements.test.mjs`
-uses Node's built-in `node:test` + `node:assert/strict`, with `fetch` and
-`localStorage` minimally polyfilled so it can import and exercise
-`js/services/achievements.js` exactly as shipped (no test-only code paths
-added to the module itself).
+inventing a full framework/build step per feature, these tests use
+Node's built-in `node:test` + `node:assert/strict`, with `fetch`/
+`localStorage`/a minimal DOM stubbed just enough for the real module
+under test to run unmodified (no test-only code paths added to
+`js/services/achievements.js` or `js/ui/orientation-ui.js`).
 
 ## Run
 
 ```
-node --test tests/achievements.test.mjs
+node --test tests/*.test.mjs
 ```
 
-Run from the project root — the polyfilled `fetch` resolves the module's
-real `./data/config.json` and `./data/cardInfo.json` requests relative
-to `process.cwd()`.
+Run from the project root — polyfilled `fetch` calls resolve real
+`./data/config.json` / `./data/cardInfo.json` requests relative to
+`process.cwd()`.
 
-## Coverage
+## achievements.test.mjs
 
 - **First Steps** — unlocks on any completed game (win or lose); does not
   unlock from session/tracking setup alone.
@@ -61,3 +61,34 @@ to `process.cwd()`.
   every achievement hook is purely additive (new function calls reading
   already-computed events/state) and never changes an existing return
   value, mutation, or control-flow branch.
+
+## orientation.test.mjs
+
+Exercises `js/ui/orientation-ui.js` with a hand-rolled `matchMedia`/DOM
+stub (not a general jsdom replacement — just enough surface for the
+real module to run unmodified):
+
+- **Desktop** (`pointer: fine`) never blocks, even in a tall/narrow
+  browser window shaped like portrait — confirms the gate is driven by
+  touch-primary detection, not raw window aspect ratio.
+- **Mobile portrait** (`pointer: coarse` + `orientation: portrait`)
+  blocks; **mobile landscape** and **tablet landscape** stay playable.
+- **Rotation is reactive**: flipping the underlying `matchMedia` value
+  in either direction shows/hides the gate immediately and fires the
+  corresponding `onOrientationBlocked`/`onOrientationUnblocked`
+  subscriber — no polling involved.
+- Redundant re-checks of the same state never double-fire listeners.
+- `initOrientationGate()` called twice (simulating an accidental
+  duplicate init) never results in a duplicated blocked/unblocked
+  firing — the "no duplicate initialization" requirement.
+- The gate never touches anything outside its own element's classes —
+  confirms it can't be the thing that destroys/resets game state.
+
+**Known gap:** no test drives the actual game.html pause/resume
+integration (`js/game-main.js`'s `onOrientationBlocked`/
+`onOrientationUnblocked` wiring to `js/game/turnTimer.js`) — that
+would need a much heavier gameplay-simulation harness than exists here.
+It was verified by manual code review: the wiring only calls
+`pauseTurnTimer()`/`resumeTurnTimer()` (already covered by the existing
+Pause panel) and tracks a local `pausedByOrientation` flag so it never
+auto-resumes a game the player paused manually.

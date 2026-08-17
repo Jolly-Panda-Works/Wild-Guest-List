@@ -126,6 +126,80 @@
 
 
 /* ==========================================================
+   ORIENTATION GATE — Rotate Your Device (js/ui/orientation-ui.js)
+   Reusable across every real top-level page. Sits above literally
+   everything else, including .startup-screen (20000) and every
+   .modal (10000/2000), since it must be able to block regardless of
+   what else is on screen. Deliberately its own thing rather than a
+   .modal: it's not dismissible, has no close button, and is driven
+   entirely by device state, not a user action. Same dark-glass
+   treatment as .startup-screen/.modal so it still reads as part of
+   the same app rather than a bolted-on warning page.
+========================================================== */
+
+.orientation-gate {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 999999;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: var(--bg-main);
+
+    /* Blocks every click/tap on whatever is rendered underneath —
+       this alone is what makes Gameplay/buttons/cards non-interactive
+       while shown; nothing underneath is disabled or torn down. */
+}
+
+.orientation-gate-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    max-width: min(340px, 84vw);
+    text-align: center;
+    padding: 32px 28px;
+    border-radius: var(--radius-lg);
+    background: var(--bg-panel);
+    box-shadow: var(--shadow-panel);
+}
+
+.orientation-gate-icon {
+    font-size: 56px;
+    line-height: 1;
+    /* Purely decorative flourish on the icon itself — NOT the feature's
+       blocking mechanism, which is entirely matchMedia/JS-driven (see
+       js/ui/orientation-ui.js). This has zero effect on whether the
+       gate shows or hides. */
+    animation: orientationGateRock 1.8s ease-in-out infinite;
+}
+
+@keyframes orientationGateRock {
+    0%, 100% { transform: rotate(0deg); }
+    25%      { transform: rotate(-12deg); }
+    75%      { transform: rotate(12deg); }
+}
+
+.orientation-gate-title {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.orientation-gate-body {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+
+/* ==========================================================
    GLOBAL
 ========================================================== */
 

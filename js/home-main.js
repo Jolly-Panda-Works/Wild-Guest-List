@@ -41,6 +41,14 @@ import { initStepGuidanceToggle } from "./ui/cardGuidance-ui.js";
 import { initHelp } from "./game/help.js";
 import { initHome } from "./ui/home-ui.js";
 import { runStartup } from "./ui/startup-ui.js";
+import { initOrientationGate } from "./ui/orientation-ui.js";
+
+// The orientation gate is deliberately NOT inside bootHome(): it's not
+// a boot *step* that needs Splash/Loading/Error representation (see
+// AGENTS.md rule 5) — it's an always-on device-state overlay that must
+// be able to block even while boot is still running or has failed, so
+// it's wired directly, synchronously, before runStartup() even starts.
+initOrientationGate();
 
 async function bootHome() {
     // ── i18n boot — runs before anything else ─────────────────

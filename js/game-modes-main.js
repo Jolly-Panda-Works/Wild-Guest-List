@@ -15,6 +15,10 @@
 
 import { loadI18n, t } from "./i18n.js";
 import { loadIcons } from "./ui/icon-ui.js";
+import { initOrientationGate } from "./ui/orientation-ui.js";
+
+initOrientationGate();
+
 import { initCardColorPicker, initColorTriggers } from "./ui/cardColor-ui.js";
 import { initAvatarTrigger } from "./ui/playerAvatar-ui.js";
 import {

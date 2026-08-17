@@ -12,6 +12,9 @@
 import { loadI18n } from "./i18n.js";
 import { loadIcons } from "./ui/icon-ui.js";
 import { initHelp, openHelp } from "./game/help.js";
+import { initOrientationGate } from "./ui/orientation-ui.js";
+
+initOrientationGate();
 
 await loadI18n();
 initHelp();

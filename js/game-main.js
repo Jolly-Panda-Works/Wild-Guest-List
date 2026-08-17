@@ -33,6 +33,35 @@ import { initStepGuidanceToggle } from "./ui/cardGuidance-ui.js";
 import { getProfile } from "./services/profile.js";
 import { notifyGameStarted } from "./services/achievements.js";
 import { initAchievementNotifications } from "./ui/achievementNotification-ui.js";
+import { initOrientationGate, onOrientationBlocked, onOrientationUnblocked } from "./ui/orientation-ui.js";
+import { pauseTurnTimer, resumeTurnTimer, isPaused } from "./game/turnTimer.js";
+
+// Wired synchronously, first thing, before any of this page's own
+// top-level awaits below — the gate must be able to block gameplay
+// immediately on load, not only once boot finishes.
+initOrientationGate();
+
+// Reuses the existing pause/resume architecture (js/game/turnTimer.js,
+// also used by the Pause panel — see js/ui/pause-ui.js) rather than a
+// second, orientation-specific pause mechanism. Only auto-resumes if
+// THIS gate is what paused the game — if the player had already paused
+// manually (Pause button) before rotating to portrait, rotating back to
+// landscape must not silently resume a game they paused on purpose.
+let pausedByOrientation = false;
+
+onOrientationBlocked(() => {
+    if (!isPaused()) {
+        pausedByOrientation = true;
+        pauseTurnTimer();
+    }
+});
+
+onOrientationUnblocked(() => {
+    if (pausedByOrientation) {
+        pausedByOrientation = false;
+        resumeTurnTimer();
+    }
+});
 
 const PENDING_DIFFICULTIES_KEY = "wgl_pendingDifficulties";
 const DEFAULT_DIFFICULTIES = { p2: "easy", p3: "easy", p4: "easy" };
