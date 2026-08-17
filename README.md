@@ -213,6 +213,16 @@ point, and a navigation destination like any other (see
   navigate to `coming-soon.html?feature=...`, a real, reachable,
   clearly-labeled future-state page rather than a Home-local toast.
   No purchasing, ranking, or matchmaking is implemented yet.
+  **Lucky Wheel** is also a Coming Soon placeholder here, but —
+  because it's a new Menu-type feature, not a conversion of an
+  existing page — it follows AGENTS.md rule 4's stated default
+  instead: a genuine popup (`#luckyWheelModal`), not a
+  `coming-soon.html` navigation. No wheel-spinning, reward
+  calculation, or currency logic exists yet; opening it only shows a
+  Coming Soon illustration/badge/copy. See
+  `js/ui/home-ui.js`/`index.html`'s `#luckyWheelModal` comment for
+  exactly what a future real implementation would replace
+  (`#luckyWheelBody`'s contents only — the popup shell/wiring stays).
 * **Coin pill** — a small balance indicator in the top-right, shown as
   `0` since there's no coin economy yet.
 
@@ -965,7 +975,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.22.0
+**Current version:** 1.23.0
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Home's Settings popup (`index.html` `#settingsModal`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

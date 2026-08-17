@@ -14,21 +14,27 @@
 // real-page exception is Choose Bot Difficulty (bot-difficulty.html):
 // it's a step in actually starting a match, not a menu lookup, so it
 // stays a real top-level destination with its own Back/refresh/
-// direct-URL support. Coming Soon entries are likewise real pages
-// (coming-soon.html) so even disabled/future features are
-// independently linkable. See docs/ARCHITECTURE_PLAN.md.
+// direct-URL support. Store/Tournament/Leaderboard are earlier Coming
+// Soon entries that were made real pages (coming-soon.html) instead —
+// see wireComingSoon() below. Lucky Wheel (added later, see
+// #luckyWheelModal) deliberately does NOT follow that page pattern:
+// per AGENTS.md rule 4's stated default, it's a genuine popup modal
+// instead, same as Settings/Card Guide/How-to-Play. See
+// docs/ARCHITECTURE_PLAN.md.
 // ══════════════════════════════════════════════════════════
 
-import { openModal } from "./modal-ui.js";
+import { openModal, closeModal } from "./modal-ui.js";
 import { loadIcons } from "./icon-ui.js";
 import { openTutorial } from "./tutorial-ui.js";
 import { openProfileModal } from "./profile-ui.js";
 import { initHomeGameStart } from "./homeGameStart-ui.js";
 import { openHelp } from "../game/help.js";
 
-/** Coming Soon entries navigate to their own page (coming-soon.html)
- *  instead of staying on Home — even disabled/future features must
- *  be architecturally independent destinations, not Home children. */
+/** Store/Tournament/Leaderboard Coming Soon entries navigate to their
+ *  own page (coming-soon.html) instead of staying on Home — an
+ *  earlier, still-supported pattern for these three specifically. Not
+ *  the default for new Menu-type features — see Lucky Wheel below,
+ *  which follows AGENTS.md rule 4's popup default instead. */
 function wireComingSoon(id, featureId) {
     document.getElementById(id)?.addEventListener("click", () => {
         window.location.href = `coming-soon.html?feature=${featureId}`;
@@ -83,4 +89,19 @@ export async function initHome() {
     wireComingSoon("homeStoreBtn", "shop");
     wireComingSoon("homeTournamentBtn", "tournament");
     wireComingSoon("homeLeaderboardBtn", "leaderboard");
+
+    // ── Lucky Wheel — a Menu feature (quick lookup, not a step in
+    //    starting a match), so per AGENTS.md rule 4 it's a popup
+    //    (#luckyWheelModal), not a coming-soon.html navigation like
+    //    the three buttons above. Coming Soon content only — no
+    //    spinning, rewards, or currency; see index.html's
+    //    #luckyWheelModal comment for what a future real
+    //    implementation would change. ─────────────────────────────
+    document.getElementById("homeLuckyWheelBtn")?.addEventListener("click", () => {
+        openModal("luckyWheelModal");
+    });
+
+    document.getElementById("closeLuckyWheel")?.addEventListener("click", () => {
+        closeModal("luckyWheelModal");
+    });
 }

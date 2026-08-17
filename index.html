@@ -193,6 +193,11 @@
                         <span data-i18n="homeLeaderboard">Leaderboard</span>
                         <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
                     </button>
+                    <button id="homeLuckyWheelBtn" class="home-bottom-btn" type="button">
+                        <span class="home-bottom-icon" data-icon="luckyWheel" aria-hidden="true"></span>
+                        <span data-i18n="homeLuckyWheel">Lucky Wheel</span>
+                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
+                    </button>
                 </div>
 
             </div>
@@ -418,6 +423,37 @@
                 </div>
             </div>
         </div>
+
+        <!-- Lucky Wheel — a menu-type feature, so per AGENTS.md rule 4
+             ("Menu pages default to popups") this is a genuine popup,
+             not a coming-soon.html page navigation like Store/
+             Tournament/Leaderboard above. Coming Soon only — see
+             js/ui/home-ui.js and README.md § Home Screen for why.
+             #luckyWheelBody is the one thing a future real
+             implementation would swap out; the modal id and its
+             open/close wiring (js/ui/modal-ui.js) stay exactly as-is. -->
+        <div id="luckyWheelModal" class="modal hidden">
+            <div class="modal-content small-popup lucky-wheel-panel">
+                <button id="closeLuckyWheel" class="icon-btn close lucky-wheel-close">
+                    <span data-icon="close"></span>
+                </button>
+
+                <h3 class="lucky-wheel-title" data-i18n="luckyWheelTitle">Lucky Wheel</h3>
+
+                <div id="luckyWheelBody" class="lucky-wheel-body">
+                    <div class="lucky-wheel-illustration">
+                        <span data-icon="luckyWheel" aria-hidden="true"></span>
+                    </div>
+
+                    <span class="home-coming-soon-tag lucky-wheel-badge" data-i18n="comingSoon">Coming Soon</span>
+
+                    <p class="lucky-wheel-desc" data-i18n="luckyWheelComingSoonDesc">
+                        More exciting rewards are coming soon.
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <!-- Feedback / Survey -->
         <div id="feedbackModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle">
             <div class="modal-content small-popup feedback-modal-content">

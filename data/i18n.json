@@ -220,7 +220,10 @@
     "achWildChampionTitle": "Wild Champion",
     "achWildChampionDesc": "Win 10 games.",
     "orientationTitle": "Please rotate your device",
-    "orientationBody": "Wild Guest List is designed for landscape orientation."
+    "orientationBody": "Wild Guest List is designed for landscape orientation.",
+    "homeLuckyWheel": "Lucky Wheel",
+    "luckyWheelTitle": "Lucky Wheel",
+    "luckyWheelComingSoonDesc": "More exciting rewards are coming soon."
   },
   "fa": {
     "dir": "rtl",
@@ -443,7 +446,10 @@
     "achWildChampionTitle": "قهرمان وحشی",
     "achWildChampionDesc": "۱۰ بازی را ببرید.",
     "orientationTitle": "لطفاً دستگاه خود را بچرخانید",
-    "orientationBody": "وایلد گست لیست برای حالت افقی (Landscape) طراحی شده است."
+    "orientationBody": "وایلد گست لیست برای حالت افقی (Landscape) طراحی شده است.",
+    "homeLuckyWheel": "چرخ شانس",
+    "luckyWheelTitle": "چرخ شانس",
+    "luckyWheelComingSoonDesc": "جایزه‌های هیجان‌انگیز بیشتری به‌زودی می‌آیند."
   },
   "ar": {
     "dir": "rtl",
@@ -666,7 +672,10 @@
     "achWildChampionTitle": "بطل وايلد",
     "achWildChampionDesc": "اربح 10 ألعاب.",
     "orientationTitle": "يرجى تدوير جهازك",
-    "orientationBody": "تم تصميم Wild Guest List للعمل في الوضع الأفقي."
+    "orientationBody": "تم تصميم Wild Guest List للعمل في الوضع الأفقي.",
+    "homeLuckyWheel": "عجلة الحظ",
+    "luckyWheelTitle": "عجلة الحظ",
+    "luckyWheelComingSoonDesc": "المزيد من الجوائز المثيرة قادمة قريباً."
   },
   "tr": {
     "dir": "ltr",
@@ -889,6 +898,9 @@
     "achWildChampionTitle": "Vahşi Şampiyon",
     "achWildChampionDesc": "10 oyun kazan.",
     "orientationTitle": "Lütfen cihazınızı çevirin",
-    "orientationBody": "Wild Guest List yatay (landscape) yönelim için tasarlanmıştır."
+    "orientationBody": "Wild Guest List yatay (landscape) yönelim için tasarlanmıştır.",
+    "homeLuckyWheel": "Şans Çarkı",
+    "luckyWheelTitle": "Şans Çarkı",
+    "luckyWheelComingSoonDesc": "Daha heyecan verici ödüller yakında geliyor."
   }
 }

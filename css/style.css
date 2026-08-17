@@ -2126,6 +2126,69 @@ body {
 
 }
 
+/* ── Lucky Wheel — Coming Soon (index.html #luckyWheelModal) ──────
+   Same visual language as .about-panel above (dark-glass popup,
+   centered icon + title + copy) rather than a new look. Only
+   #luckyWheelBody's contents are expected to change when a real
+   implementation replaces the Coming Soon state — this shell/layout
+   is meant to stay. */
+
+.lucky-wheel-panel {
+    position: relative;
+    text-align: center;
+    padding-top: 40px;
+}
+
+.lucky-wheel-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+}
+
+[dir="rtl"] .lucky-wheel-close {
+    right: auto;
+    left: 14px;
+}
+
+.lucky-wheel-title {
+    margin: 0 0 18px;
+    font-size: clamp(20px, 5vw, 26px);
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.lucky-wheel-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.lucky-wheel-illustration {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.lucky-wheel-illustration [data-icon] {
+    font-size: 72px;
+    line-height: 1;
+}
+
+.lucky-wheel-illustration .icon-image {
+    width: 96px;
+    height: 96px;
+    object-fit: contain;
+}
+
+.lucky-wheel-desc {
+    margin: 0;
+    max-width: 260px;
+    line-height: 1.6;
+    font-size: 15px;
+    color: var(--text-muted);
+}
+
 
 /* Row wrapper for the "Visit Website" / "Give Feedback" pair — keeps
    them side by side on one row (same height, same baseline) instead
