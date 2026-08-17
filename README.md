@@ -327,6 +327,24 @@ Any remaining animals in the queue are resolved.
 
 The player with the largest party wins.
 
+The Game Result screen (`#endGameScreen`, `js/ui/endgame-ui.js`) then
+shows Win/Lose and the final Leaderboard (`#finalScores`), with two
+primary actions below it:
+
+* **Play Again** — reloads `game.html`, reusing this match's bot
+  difficulties (still sitting in `sessionStorage`) so a rematch with
+  the same setup starts immediately, with no reconfiguration step.
+  This is a full reload, so it's the existing Game Start system
+  running again unmodified (see `js/game-main.js`) — transient state
+  (queue/party/trash/turn/ability/winner/game result/achievement
+  session tracking) is rebuilt fresh; persistent data (Profile,
+  Achievements, Settings — all `localStorage`) is untouched.
+* **Return to Home** — navigates to `index.html`, the same real
+  page-navigation pattern the in-game Pause panel's Home button uses
+  (`js/ui/pause-ui.js`). The match is already finalized by
+  `finishGame()` before this screen can ever be shown, so there's
+  nothing left to finalize on the way out.
+
 ---
 
 ## 🤖 AI System
@@ -975,7 +993,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.23.0
+**Current version:** 1.24.0
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Home's Settings popup (`index.html` `#settingsModal`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

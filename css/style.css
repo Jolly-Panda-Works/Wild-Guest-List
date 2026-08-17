@@ -3586,6 +3586,65 @@ body.gameplay-locked #playerHand .card {
 .power-score { color: #fbbf24; font-weight: 700; }
 .party-count { color: #86efac; font-weight: 600; }
 
+/* End game — primary actions (Play Again / Return to Home).
+   Two buttons with clear visual hierarchy: Play Again is the filled,
+   higher-emphasis primary action; Return to Home is the outlined
+   secondary action. Row layout on desktop/tablet/mobile-landscape
+   (the only orientation game.html is ever shown in — see the
+   Orientation Gate), stacking only as a narrow-viewport fallback. */
+.endgame-actions {
+    display: flex;
+    width: 100%;
+    gap: 12px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.endgame-actions .screen-btn {
+    margin-top: 0;
+    flex: 1 1 160px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 50px;
+    box-sizing: border-box;
+}
+
+.endgame-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    font-size: 18px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.endgame-btn-icon .icon-image { width: 100%; height: 100%; object-fit: contain; }
+
+.endgame-btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(189, 93, 56, 0.35);
+}
+.endgame-btn-primary:hover  { filter: brightness(1.08); }
+.endgame-btn-primary:active { filter: brightness(0.96); }
+
+.endgame-btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.endgame-btn-secondary:hover  { background: rgba(255, 255, 255, 0.14); }
+.endgame-btn-secondary:active { background: rgba(255, 255, 255, 0.06); }
+
+@media (max-width: 420px) {
+    .endgame-actions { flex-direction: column; }
+    .endgame-actions .screen-btn { width: 100%; }
+}
+
 /* Help */
 .help-tip {
     background: rgba(255,255,255,0.06);

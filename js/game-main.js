@@ -155,11 +155,34 @@ async function startGame() {
     }
 }
 
-// ── Play Again (end-game screen) ──────────────────────────
-// Returns to Home rather than restarting in place — Home is where a
-// new match's bot-difficulty/profile choices are made, so it's the
-// natural place to land after a match ends.
+// ── End-game screen actions ────────────────────────────────
+// Mirrors the exact pattern already established by the Pause panel's
+// Restart/Home buttons (js/ui/pause-ui.js) — same two behaviors,
+// same reasoning — rather than inventing a second mechanism.
+
+// Play Again → reload game.html. The simplest reliable way to get a
+// fully clean game state back (queue/party/trash/turn/ability/winner/
+// result/achievement-session state — everything module-level in
+// js/game/gameState.js and js/services/achievements.js — is rebuilt
+// from scratch by the normal boot path), while automatically reusing
+// this match's bot difficulties, since they're already sitting in
+// sessionStorage (PENDING_DIFFICULTIES_KEY) and a reload doesn't clear
+// it. This is also why it never needs to duplicate startGame()/the
+// bot-difficulty screen: the existing Game Start system just runs
+// again, unmodified. Persistent data (profile, achievements,
+// settings — all in localStorage) is untouched by a reload.
 document.getElementById("playAgainBtn")?.addEventListener("click", () => {
+    location.reload();
+});
+
+// Return to Home → a real page navigation. Every gameplay
+// listener/timer/animation from this match is torn down for free
+// (leaving the document unloads the module state) rather than
+// needing manual cleanup here. The match was already finalized by
+// finishGame() before this screen could ever be shown (see
+// js/game/gameOver.js — it's what calls showEndGame()), so there's
+// nothing left to finalize on the way out.
+document.getElementById("returnHomeBtn")?.addEventListener("click", () => {
     window.location.href = "index.html";
 });
 

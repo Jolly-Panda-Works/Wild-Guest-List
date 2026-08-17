@@ -479,7 +479,16 @@
                 <h1 id="endGameTitle"></h1>
                 <p id="endGameText"></p>
                 <div id="finalScores"></div>
-                <button id="playAgainBtn" class="screen-btn" data-i18n="playAgain">Play Again</button>
+                <div class="endgame-actions">
+                    <button id="returnHomeBtn" type="button" class="screen-btn endgame-btn-secondary">
+                        <span class="endgame-btn-icon" data-icon="home"></span>
+                        <span data-i18n="endReturnHome">Return to Home</span>
+                    </button>
+                    <button id="playAgainBtn" type="button" class="screen-btn endgame-btn-primary">
+                        <span class="endgame-btn-icon" data-icon="pauseRestart"></span>
+                        <span data-i18n="playAgain">Play Again</span>
+                    </button>
+                </div>
                 <button id="endgameFeedbackBtn" type="button" class="feedback-link-btn endgame-feedback-btn">
                     <span data-icon="feedback"></span>
                     <span data-i18n="endgameFeedbackBtn">Give Feedback</span>
