@@ -210,7 +210,7 @@
              consumer (this chip, Choose Bot Difficulty's read-only
              display) reflects a save here immediately. -->
         <div id="profileModal" class="modal hidden">
-            <div class="modal-content small-popup profile-panel">
+            <div class="modal-content small-popup profile-panel profile-panel--wide">
                 <div class="help-header">
                     <h3 data-i18n="profileModalTitle">Profile</h3>
                     <button id="closeProfile" class="icon-btn close"><span data-icon="close"></span></button>
@@ -257,11 +257,57 @@
                          on modal open and on every achievement change (see
                          subscribeAchievements()), so progress made during
                          the current game is reflected the moment Profile is
-                         reopened. -->
+                         reopened. Redesigned into a game-quality Achievement
+                         Collection: summary + overall progress bar, an
+                         optional "Recently Unlocked" featured card (only
+                         shown when real unlock data exists), category
+                         filter tabs, and a responsive card grid — all still
+                         inside this same Profile popup (see AGENTS.md rule 4
+                         — menu features stay popups, never a separate page). -->
                     <div class="profile-achievements" id="profileAchievements">
-                        <h4 class="profile-achievements-title" data-i18n="profileAchievementsTitle">Achievements</h4>
-                        <p class="profile-achievements-summary" id="profileAchievementsSummary"></p>
-                        <div class="profile-achievements-list" id="profileAchievementsList"></div>
+                        <div class="ach-header">
+                            <h4 class="profile-achievements-title">
+                                <span class="ach-header-icon" data-icon="trophy" aria-hidden="true"></span>
+                                <span data-i18n="profileAchievementsTitle">Achievements</span>
+                            </h4>
+                            <p class="profile-achievements-summary" id="profileAchievementsSummary"></p>
+                        </div>
+
+                        <!-- Overall progress bar — driven entirely by real
+                             achievement data (unlockedCount/total) computed
+                             in renderAchievements(), never hardcoded. -->
+                        <div class="ach-progress" id="achProgress" role="progressbar"
+                             aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+                             data-i18n-aria-label="achievementsOverallProgress" aria-label="Overall Progress">
+                            <div class="ach-progress-label-row">
+                                <span class="ach-progress-label" data-i18n="achievementsOverallProgress">Overall Progress</span>
+                                <span class="ach-progress-pct" id="achProgressPct">0%</span>
+                            </div>
+                            <div class="ach-progress-track">
+                                <div class="ach-progress-fill" id="achProgressFill"></div>
+                            </div>
+                        </div>
+
+                        <!-- Featured / "Recently Unlocked" — only shown when
+                             the player has at least one real unlock (see
+                             renderAchievements()); never a fabricated entry. -->
+                        <div class="ach-featured hidden" id="achFeatured">
+                            <span class="ach-featured-label" data-i18n="achievementsFeaturedTitle">Recently Unlocked</span>
+                            <div class="ach-featured-card" id="achFeaturedCard"></div>
+                        </div>
+
+                        <!-- Category filter tabs — only useful because there
+                             are already 3 real categories across 10
+                             achievements; architecture (data-category on
+                             each card) supports more without changes. -->
+                        <div class="ach-filters" id="achFilters" role="tablist" data-i18n-aria-label="achievementsFilterGroupLabel" aria-label="Filter achievements by category">
+                            <button type="button" class="ach-filter active" data-category="all" role="tab" aria-selected="true" data-i18n="achievementsCategoryAll">All</button>
+                            <button type="button" class="ach-filter" data-category="progression" role="tab" aria-selected="false" data-i18n="achievementsCategoryProgression">Progression</button>
+                            <button type="button" class="ach-filter" data-category="gameplay" role="tab" aria-selected="false" data-i18n="achievementsCategoryGameplay">Gameplay</button>
+                            <button type="button" class="ach-filter" data-category="modesParty" role="tab" aria-selected="false" data-i18n="achievementsCategoryModesParty">Modes</button>
+                        </div>
+
+                        <div class="profile-achievements-list ach-grid" id="profileAchievementsList"></div>
                     </div>
                 </div>
             </div>

@@ -693,6 +693,21 @@ icon in `data/config.json` → `icons`, its title/description in
   (`js/ui/achievementNotification-ui.js`) mirroring `#feedbackToast`'s
   existing lifecycle in `js/ui/feedback-ui.js`, not a second
   notification framework.
+* **Presentation — Achievement Collection.** Profile → Achievements
+  (`#profileAchievements` in `index.html`, rendered by
+  `js/ui/profile-ui.js` `renderAchievements()`) is a card grid, not a
+  plain list: a header summary + overall-progress bar (real
+  unlocked/total data, never hardcoded), an optional "Recently
+  Unlocked" featured card that only appears once a real unlock exists,
+  client-side category filter tabs (Progression/Gameplay/Modes — pure
+  display filtering, no change to achievement state), and a responsive
+  card grid (2 columns on mobile landscape, more on wider viewports).
+  This is presentation only — it reads the exact same
+  `getAchievements()`/`subscribeAchievements()` API as before and
+  never touches unlock conditions, progress calculation, or
+  persistence. The locked-state lock badge resolves through
+  `data/config.json` → `icons.lockClosed`, same config-driven pattern
+  as every other icon in the project.
 * **Known limitation — Duel Master:** this achievement ("win a
   2-player Duel") is fully wired end-to-end, but the game currently
   always deals exactly 1 human + 3 bots — there is no 2-player Duel
@@ -993,7 +1008,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.24.0
+**Current version:** 1.25.0
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Home's Settings popup (`index.html` `#settingsModal`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 
