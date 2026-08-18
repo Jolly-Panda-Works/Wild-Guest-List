@@ -62,7 +62,41 @@ Run from the project root — polyfilled `fetch` calls resolve real
   already-computed events/state) and never changes an existing return
   value, mutation, or control-flow branch.
 
-## orientation.test.mjs
+## profile.test.mjs
+
+Exercises the coins/gems currency foundation added to
+`js/services/profile.js` (storage only — no earn/spend/reward system
+exists yet, see the module's own header comment):
+
+- Coins and gems exist on the profile shape alongside `displayName`/
+  `avatarId`.
+- A brand-new profile starts at exactly `0` coins / `0` gems — no
+  invented free currency.
+- `setCoins()`/`setGems()` write through and `getCoins()`/`getGems()`
+  read the new value.
+- Balances persist across a simulated reload (fresh module import
+  against the same `localStorage`, mirroring how a real browser reload
+  works).
+- `setCoins()`/`setGems()` reject negative, `NaN`, and non-number
+  input, leaving the existing balance untouched — a balance can never
+  go negative or non-numeric through this API.
+- A profile saved before currencies existed (no `coins`/`gems` keys at
+  all) loads as `0`/`0`, not `undefined`/`NaN`.
+- A corrupted or negative stored balance (e.g. hand-edited
+  `localStorage`) is sanitized back to `0` on load rather than trusted
+  as-is.
+- Changing currency never touches `displayName`/`avatarId`, and vice
+  versa — confirms the fields are independent, not accidentally
+  coupled by a shared code path.
+
+**Known gap:** no test drives the actual DOM (Home's `#homeCoinPill`/
+`#homeGemPill`, `js/ui/profile-ui.js`
+`updateHomeCurrencyDisplay()`/`initHomeCurrencyDisplay()`) — same
+DOM-test-harness gap noted under `achievements.test.mjs` above. This
+was verified by manual code review against the existing
+`updateHomeProfileChip()` pattern it mirrors, plus a manual reload
+check (see Final Report).
+
 
 Exercises `js/ui/orientation-ui.js` with a hand-rolled `matchMedia`/DOM
 stub (not a general jsdom replacement — just enough surface for the

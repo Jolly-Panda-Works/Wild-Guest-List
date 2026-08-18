@@ -16,7 +16,7 @@
 
 import { PLAYER_AVATARS } from "../constants/avatars.js";
 import { t, getLang } from "../i18n.js";
-import { getProfile, setDisplayName, setAvatarId } from "../services/profile.js";
+import { getProfile, setDisplayName, setAvatarId, getCoins, getGems, subscribeProfile } from "../services/profile.js";
 import { openModal, closeModal } from "./modal-ui.js";
 import { loadIcons } from "./icon-ui.js";
 import { getAchievements, subscribeAchievements } from "../services/achievements.js";
@@ -118,6 +118,45 @@ export function updateHomeProfileChip() {
         imgEl.src = avatar.src;
         imgEl.alt = t(avatar.labelKey);
     }
+}
+
+// ── Currency display (foundation only) ───────────────────────────
+// Coins/gems have no earn/spend/reward code path anywhere yet (see
+// js/services/profile.js header comment) — this only ever *displays*
+// whatever the persisted balance currently is (0/0 for every player
+// today). Subscribed to subscribeProfile() rather than one-shot like
+// the chip above, since a future Shop/Lucky Wheel call to
+// setCoins()/setGems() should update Home's pills immediately without
+// this file needing to change.
+let _currencyUnsubscribe = null;
+
+/** Keeps Home's Coins/Gems pills in sync with the authoritative
+ *  profile. No-ops on pages without the pills (e.g. bot-difficulty.html). */
+export function updateHomeCurrencyDisplay() {
+    const coinPill = document.getElementById("homeCoinPill");
+    const gemPill  = document.getElementById("homeGemPill");
+    if (!coinPill && !gemPill) return;
+
+    const coins = getCoins();
+    const gems  = getGems();
+
+    const coinValueEl = document.getElementById("homeCoinValue");
+    if (coinValueEl) coinValueEl.textContent = String(coins);
+    if (coinPill) coinPill.setAttribute("aria-label", t("homeCoinsAriaLabel").replace("{value}", coins));
+
+    const gemValueEl = document.getElementById("homeGemValue");
+    if (gemValueEl) gemValueEl.textContent = String(gems);
+    if (gemPill) gemPill.setAttribute("aria-label", t("homeGemsAriaLabel").replace("{value}", gems));
+}
+
+/** Wires the currency pills to live profile updates. Safe to call
+ *  more than once (e.g. Retry after a failed boot step — see
+ *  js/home-main.js) since it tears down any previous subscription
+ *  first rather than stacking listeners. */
+export function initHomeCurrencyDisplay() {
+    updateHomeCurrencyDisplay();
+    if (_currencyUnsubscribe) _currencyUnsubscribe();
+    _currencyUnsubscribe = subscribeProfile(() => updateHomeCurrencyDisplay());
 }
 
 // ── Achievement Collection UI state ──────────────────────────────

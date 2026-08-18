@@ -1,6 +1,6 @@
 {
   "app": {
-    "version": "1.25.0"
+    "version": "1.26.0"
   },
   "icons": {
     "leaderboard": "assets/img/icons/leaderboard.png",
@@ -67,7 +67,9 @@
     "achWildChampion": "🏆",
     "orientationRotate": "🔄",
     "luckyWheel": "🎡",
-    "lockClosed": "🔒"
+    "lockClosed": "🔒",
+    "coin": "🪙",
+    "gem": "💎"
   },
   "branding": {
     "developerLogo": "assets/img/branding/jolly-panda-logo.png"

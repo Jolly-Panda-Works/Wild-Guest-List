@@ -105,9 +105,25 @@
                         <span id="homeProfileChipName" class="home-profile-chip-name"></span>
                     </button>
 
-                    <div class="home-coin-pill" id="homeCoinPill" aria-label="Coins: 0">
-                        <span class="home-coin-icon" aria-hidden="true">🪙</span>
-                        <span class="home-coin-value" id="homeCoinValue">0</span>
+                    <!-- Currency display — Coins + Gems (foundation
+                         only, see js/services/profile.js). Real,
+                         persisted balances (default 0/0), rendered via
+                         updateHomeCurrencyDisplay() in
+                         js/ui/profile-ui.js; icons resolve through
+                         data/config.json (icons.coin / icons.gem), not
+                         hardcoded emoji. Nothing spends, earns, or
+                         otherwise changes these values yet — Shop and
+                         Lucky Wheel remain unconnected per the current
+                         scope. -->
+                    <div class="home-currency-group" id="homeCurrencyGroup">
+                        <div class="home-coin-pill" id="homeCoinPill" role="status" aria-label="Coins: 0">
+                            <span class="home-coin-icon" data-icon="coin" aria-hidden="true"></span>
+                            <span class="home-coin-value" id="homeCoinValue">0</span>
+                        </div>
+                        <div class="home-gem-pill" id="homeGemPill" role="status" aria-label="Gems: 0">
+                            <span class="home-gem-icon" data-icon="gem" aria-hidden="true"></span>
+                            <span class="home-gem-value" id="homeGemValue">0</span>
+                        </div>
                     </div>
                 </div>
 

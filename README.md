@@ -223,8 +223,18 @@ point, and a navigation destination like any other (see
   `js/ui/home-ui.js`/`index.html`'s `#luckyWheelModal` comment for
   exactly what a future real implementation would replace
   (`#luckyWheelBody`'s contents only — the popup shell/wiring stays).
-* **Coin pill** — a small balance indicator in the top-right, shown as
-  `0` since there's no coin economy yet.
+* **Currency pills (Coins + Gems)** — a small balance indicator in the
+  top-right for each currency (`js/ui/profile-ui.js`
+  `updateHomeCurrencyDisplay()`/`initHomeCurrencyDisplay()`), backed by
+  a real, persisted balance on the player profile
+  (`js/services/profile.js` `getCoins()`/`getGems()`/`setCoins()`/
+  `setGems()`) rather than a hardcoded `0`. Both still show `0` for
+  every player today because nothing earns, spends, exchanges, or
+  rewards either currency yet — this is intentionally foundation only.
+  Icons resolve through `data/config.json` (`icons.coin`/`icons.gem`),
+  not hardcoded emoji. See `docs/ECONOMY_PLAN.md` for the eventual
+  server-authoritative coin ledger this is a client-side placeholder
+  for, same as the rest of the Player Profile today.
 
 Home is implemented in `js/home-main.js` + `js/ui/home-ui.js` +
 `js/ui/homeGameStart-ui.js` (tab switching) + `js/ui/modal-ui.js`
@@ -1008,7 +1018,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.25.0
+**Current version:** 1.26.0
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Home's Settings popup (`index.html` `#settingsModal`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

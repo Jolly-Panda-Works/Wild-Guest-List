@@ -35,7 +35,7 @@ import { playBackgroundMusic } from "./services/soundManager.js";
 import { initSoundToggle } from "./services/soundManager.js";
 import { initializeTutorial } from "./ui/tutorial-ui.js";
 import { initializeModals } from "./ui/modal-ui.js";
-import { updateHomeProfileChip, initProfilePage } from "./ui/profile-ui.js";
+import { updateHomeProfileChip, initProfilePage, initHomeCurrencyDisplay } from "./ui/profile-ui.js";
 import { initCardColorPicker } from "./ui/cardColor-ui.js";
 import { initStepGuidanceToggle } from "./ui/cardGuidance-ui.js";
 import { initHelp } from "./game/help.js";
@@ -64,6 +64,7 @@ async function bootHome() {
 
     initProfilePage();
     updateHomeProfileChip();
+    initHomeCurrencyDisplay();
 
     buildLangSelector(document.getElementById("langSelector"));
     await initCardColorPicker();

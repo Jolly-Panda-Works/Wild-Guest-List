@@ -6803,8 +6803,22 @@ body.gameplay-locked #playerHand .card {
     text-overflow: ellipsis;
 }
 
-/* Coin pill — honest placeholder (real value: 0, no economy yet).
-   Reused by Store/Rewards once Phase 4 wires a real balance. */
+/* Currency group — wraps the Coins + Gems pills so .home-topbar's
+   space-between still puts exactly two items (profile chip, this
+   group) on opposite ends, regardless of how many currencies exist. */
+.home-currency-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+/* Coin pill — a real, persisted balance (js/services/profile.js),
+   defaulting to 0 for every player since nothing can earn/spend it
+   yet (see docs/ECONOMY_PLAN.md and the Achievement/Shop/Lucky Wheel
+   foundation notes in profile.js). Reused by Store/Rewards once a
+   real economy is wired up. */
 .home-coin-pill {
     display: inline-flex;
     align-items: center;
@@ -6819,6 +6833,28 @@ body.gameplay-locked #playerHand .card {
 }
 
 .home-coin-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* Gem pill — same shape/behavior as the coin pill, tinted toward the
+   existing --p4 (purple) player color token rather than a new color
+   system, so it reads as a distinct currency without introducing a
+   parallel palette. */
+.home-gem-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(var(--p4-rgb), 0.12);
+    border: 1px solid rgba(var(--p4-rgb), 0.35);
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-main);
+}
+
+.home-gem-icon {
     font-size: 16px;
     line-height: 1;
 }
@@ -7068,7 +7104,8 @@ body.gameplay-locked #playerHand .card {
 .home-primary-btn:focus-visible,
 .home-nav-btn:focus-visible,
 .home-bottom-btn:focus-visible,
-.home-coin-pill:focus-visible {
+.home-coin-pill:focus-visible,
+.home-gem-pill:focus-visible {
     outline: 2px solid #fff;
     outline-offset: 2px;
 }
@@ -7098,6 +7135,16 @@ body.gameplay-locked #playerHand .card {
 
     .home-secondary-row {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .home-coin-pill,
+    .home-gem-pill {
+        padding: 5px 10px;
+        font-size: 12.5px;
+    }
+
+    .home-currency-group {
+        gap: 6px;
     }
 }
 
