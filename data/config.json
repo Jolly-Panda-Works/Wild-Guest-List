@@ -1,6 +1,6 @@
 {
   "app": {
-    "version": "1.26.0"
+    "version": "1.25.0"
   },
   "icons": {
     "leaderboard": "assets/img/icons/leaderboard.png",
@@ -22,12 +22,15 @@
     "previous": "assets/img/icons/previous.png",
     "next": "assets/img/icons/next.png",
     "play": "assets/img/icons/play.png",
-    "globe": "🌐",
-    "cards": "🃏",
+    "globe": "assets/img/icons/globe.png",
+    "cards": "assets/img/icons/card guide.png",
     "users": "👥",
     "profile": "👤",
-    "store": "🛒",
-    "tournament": "🏅",
+    "playWith1Bot":"assets/img/icons/play with 1 bot.png",
+    "playWith2Bots":"assets/img/icons/play with 2 bots.png",
+    "playWith3Bots":"assets/img/icons/play with 3 bots.png",
+    "store": "assets/img/icons/shop.png",
+    "tournament": "assets/img/icons/tournament.png",
     "bot-easy": "assets/img/icons/bot-easy.png",
     "bot-medium": "assets/img/icons/bot-normal.png",
     "bot-hard": "assets/img/icons/bot-hard.png",
@@ -52,7 +55,7 @@
     "feedback": "assets/img/icons/feedback.png",
     "pauseResume": "assets/img/icons/resume.png",
     "pauseRestart": "assets/img/icons/restart.png",
-    "home": "🏠",
+    "home": "assets/img/icons/home.png",
     "edit": "✏️",
     "confirm": "✅",
     "achFirstSteps": "🎮",
@@ -66,10 +69,10 @@
     "achDuelMaster": "⚔️",
     "achWildChampion": "🏆",
     "orientationRotate": "🔄",
-    "luckyWheel": "🎡",
+    "luckyWheel": "assets/img/icons/lucky wheel.png",
     "lockClosed": "🔒",
-    "coin": "🪙",
-    "gem": "💎"
+    "coin":"assets/img/icons/coin.png",
+    "gem":"assets/img/icons/gem.png"
   },
   "branding": {
     "developerLogo": "assets/img/branding/jolly-panda-logo.png"
