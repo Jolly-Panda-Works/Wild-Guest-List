@@ -1,6 +1,10 @@
 let _iconConfig = null;
 
-async function getIconConfig() {
+/** Fetches + caches data/config.json — the project's single centralized
+ *  asset config (icons, sounds, branding). Exported so other modules
+ *  (e.g. js/ui/startup-ui.js for the splash logo) can resolve assets
+ *  through the same cached fetch instead of hitting config.json again. */
+export async function getIconConfig() {
 
     if (_iconConfig) return _iconConfig;
 
@@ -52,6 +56,14 @@ export async function loadIcons(root = document) {
             img.src = value;
             img.alt = name;
             img.className = "icon-image";
+
+            // Asset fallback: a missing/broken image file must never
+            // show the browser's broken-image icon or crash anything —
+            // just fall back to an empty (but still laid-out) element.
+            img.addEventListener("error", () => {
+                element.replaceChildren();
+                element.dataset.iconLoaded = "";
+            }, { once: true });
 
             element.replaceChildren(img);
 

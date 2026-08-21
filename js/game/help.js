@@ -28,33 +28,58 @@ export async function openCardInfoByPower(power) {
     openCardInfo(card);
 }
 
+/** Opens the Card Guide (the existing Help modal's animal grid) and
+ *  loads its data if needed. Called by the in-game helpBtn (top bar,
+ *  game.html) to reveal the in-game Help modal, and by Home's Card
+ *  Guide entry (js/ui/home-ui.js) to reveal the same modal there —
+ *  one loader, one modal markup shape, either way. */
+export function openHelp() {
+    document.getElementById("helpModal")?.classList.remove("hidden");
+    loadHelpCards();
+}
+
+let _initialized = false;
+
 export function initHelp() {
+    // Guard against double-binding: initHelp() is called once at boot
+    // on both game.html (in-game Help modal) and index.html/Home
+    // (Home's Card Guide entry — also a genuine modal now).
+    if (_initialized) return;
+    _initialized = true;
+
     const helpBtn   = document.getElementById("helpBtn");
     const helpModal = document.getElementById("helpModal");
     const closeHelp = document.getElementById("closeHelp");
     const cardModal    = document.getElementById("cardModal");
     const cardBackBtn  = document.getElementById("cardBackBtn");
 
-    helpBtn.addEventListener("click", () => {
-        helpModal.classList.remove("hidden");
-        loadHelpCards();
-    });
+    // helpBtn is the in-game top-bar icon (game.html only) — Home has
+    // its own Card Guide entry (js/ui/home-ui.js) that calls openHelp()
+    // directly, so this is a safe no-op there.
+    helpBtn?.addEventListener("click", openHelp);
 
-    closeHelp.addEventListener("click", () => helpModal.classList.add("hidden"));
+    // closeHelp / backdrop-click-to-close apply anywhere Help is shown
+    // as an actual modal — both game.html's in-game Help and Home's
+    // Card Guide popup share this exact markup shape (#closeHelp
+    // button + #helpModal as the overlay backdrop), so one guarded
+    // block covers both.
+    if (closeHelp && helpModal) {
+        closeHelp.addEventListener("click", () => helpModal.classList.add("hidden"));
 
-    helpModal.addEventListener("click", e => {
-        if (e.target === helpModal) helpModal.classList.add("hidden");
-    });
+        helpModal.addEventListener("click", e => {
+            if (e.target === helpModal) helpModal.classList.add("hidden");
+        });
+    }
 
-    cardBackBtn.addEventListener("click", () => cardModal.classList.add("hidden"));
+    cardBackBtn?.addEventListener("click", () => cardModal?.classList.add("hidden"));
 
-    cardModal.addEventListener("click", e => {
+    cardModal?.addEventListener("click", e => {
         if (e.target === cardModal) cardModal.classList.add("hidden");
     });
 
     // Re-render help grid when language changes
     window.addEventListener("langchange", () => {
-        if (!helpModal.classList.contains("hidden") && helpCards) {
+        if (helpModal && !helpModal.classList.contains("hidden") && helpCards) {
             renderHelpCards(helpCards);
         }
     });

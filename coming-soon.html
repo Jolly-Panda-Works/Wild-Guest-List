@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Wild Guest List — Coming Soon</title>
+        <link rel="icon" type="image/x-icon" href="assets/img/branding/favicon.ico" />
+        <link rel="stylesheet" href="assets/fonts/fonts.css">
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+    <body>
+        <!-- ── ORIENTATION GATE ──────────────────────────────────────
+             Reusable, page-agnostic gate — see
+             js/ui/orientation-ui.js (initOrientationGate()). Sits
+             above every other layer on this page, including
+             #startupScreen and any .modal, since it must be able to
+             block regardless of what else is showing. Hidden by
+             default; shown/hidden reactively based on device
+             orientation (matchMedia, not a CSS transform:rotate()
+             hack) without destroying or resetting anything
+             underneath it. Same markup/module on every real
+             top-level page. -->
+        <div id="orientationGate" class="orientation-gate hidden" role="status" aria-live="polite" tabindex="-1">
+            <div class="orientation-gate-content">
+                <span class="orientation-gate-icon" data-icon="orientationRotate" aria-hidden="true"></span>
+                <h2 class="orientation-gate-title" data-i18n="orientationTitle">Please rotate your device</h2>
+                <p class="orientation-gate-body" data-i18n="orientationBody">Wild Guest List is designed for landscape orientation.</p>
+            </div>
+        </div>
+
+
+        <!-- ── COMING SOON ────────────────────────────────────
+             A shared top-level destination for Home's not-yet-built
+             features (Shop, Tournament, Leaderboard today; the same
+             ?feature= pattern covers Daily Challenge, Progress,
+             Achievements, News/Events, and Friends whenever Home
+             adds entry points for them). Each still gets its own
+             real, bookmarkable/refreshable URL
+             (coming-soon.html?feature=shop) and is architecturally
+             independent from Home — it's just one shared page
+             instead of near-duplicate files per feature. See
+             js/coming-soon-main.js. -->
+        <div class="screen-overlay">
+            <div class="screen-content">
+
+                <a href="index.html" class="page-back-link">
+                    <span aria-hidden="true">←</span> <span data-i18n="backToHome">Home</span>
+                </a>
+
+                <div class="modal-content small-popup">
+                    <div class="help-header">
+                        <h3 id="comingSoonFeatureName">…</h3>
+                    </div>
+                    <p class="diff-subtitle" data-i18n="comingSoonText">This feature isn't available yet — check back soon!</p>
+                    <span class="home-coming-soon-tag" data-i18n="comingSoonTitle">Coming Soon</span>
+                </div>
+
+            </div>
+        </div>
+
+        <script type="module" src="js/coming-soon-main.js"></script>
+
+    </body>
+</html>

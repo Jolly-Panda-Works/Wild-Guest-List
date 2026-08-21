@@ -47,6 +47,159 @@
 
 
 /* ==========================================================
+   STARTUP — Splash → Loading → Error (js/ui/startup-ui.js)
+   The very first thing painted; sits above Home (z-index 9999)
+   and every modal (z-index 10000) since it can cover both while
+   js/home-main.js's bootHome() is still running. Fixed background
+   matches .screen-overlay/.modal's existing dark-glass treatment
+   so it reads as part of the same app, not a separate splash app.
+========================================================== */
+
+.startup-screen {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 20000;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: var(--bg-main);
+
+    transition: opacity 0.4s ease;
+}
+
+.startup-screen-exit {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.startup-splash,
+.startup-loading,
+.startup-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.startup-logo {
+    width: min(160px, 40vw);
+    height: min(160px, 40vw);
+    object-fit: contain;
+    animation: startupLogoIn 1.4s ease forwards;
+}
+
+@keyframes startupLogoIn {
+    0%   { opacity: 0; transform: scale(0.85); }
+    35%  { opacity: 1; transform: scale(1.04); }
+    55%  { opacity: 1; transform: scale(1); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.startup-spinner {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.15);
+    border-top-color: var(--accent);
+    animation: startupSpin 0.8s linear infinite;
+}
+
+@keyframes startupSpin {
+    to { transform: rotate(360deg); }
+}
+
+.startup-status {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.startup-error .startup-status {
+    color: var(--text-main);
+}
+
+
+/* ==========================================================
+   ORIENTATION GATE — Rotate Your Device (js/ui/orientation-ui.js)
+   Reusable across every real top-level page. Sits above literally
+   everything else, including .startup-screen (20000) and every
+   .modal (10000/2000), since it must be able to block regardless of
+   what else is on screen. Deliberately its own thing rather than a
+   .modal: it's not dismissible, has no close button, and is driven
+   entirely by device state, not a user action. Same dark-glass
+   treatment as .startup-screen/.modal so it still reads as part of
+   the same app rather than a bolted-on warning page.
+========================================================== */
+
+.orientation-gate {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 999999;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: var(--bg-main);
+
+    /* Blocks every click/tap on whatever is rendered underneath —
+       this alone is what makes Gameplay/buttons/cards non-interactive
+       while shown; nothing underneath is disabled or torn down. */
+}
+
+.orientation-gate-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    max-width: min(340px, 84vw);
+    text-align: center;
+    padding: 32px 28px;
+    border-radius: var(--radius-lg);
+    background: var(--bg-panel);
+    box-shadow: var(--shadow-panel);
+}
+
+.orientation-gate-icon {
+    font-size: 56px;
+    line-height: 1;
+    /* Purely decorative flourish on the icon itself — NOT the feature's
+       blocking mechanism, which is entirely matchMedia/JS-driven (see
+       js/ui/orientation-ui.js). This has zero effect on whether the
+       gate shows or hides. */
+    animation: orientationGateRock 1.8s ease-in-out infinite;
+}
+
+@keyframes orientationGateRock {
+    0%, 100% { transform: rotate(0deg); }
+    25%      { transform: rotate(-12deg); }
+    75%      { transform: rotate(12deg); }
+}
+
+.orientation-gate-title {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.orientation-gate-body {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+
+/* ==========================================================
    GLOBAL
 ========================================================== */
 
@@ -393,9 +546,10 @@ body {
 .pause-actions {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     justify-content: center;
     align-items: flex-start;
-    gap: clamp(20px, 6vw, 36px);
+    gap: clamp(16px, 5vw, 36px);
     margin-top: 8px;
 }
 
@@ -624,6 +778,30 @@ body {
 
     object-fit:contain;
 
+}
+
+/* ── Back-to-Home link ────────────────────────────────────
+   Every standalone top-level page (Profile, Settings, Cards,
+   Game Modes, Coming Soon — see profile.html, settings.html,
+   cards.html, game-modes.html, coming-soon.html) uses this same
+   affordance to return to Home. It's a real navigation (an <a>
+   to index.html), not a modal close — browser Back already does
+   the same thing, this is just a visible, clickable equivalent. */
+.page-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    margin-bottom: 14px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: color .15s ease;
+}
+
+.page-back-link:hover {
+    color: var(--text-main);
 }
 
 /* دسکتاپ بزرگ */
@@ -1581,7 +1759,7 @@ body {
 }
 
 /* The player's own deck (data-player="p1" — always the human seat, see
-   js/main.js) — colored the same way the opponents' .other-deck-back
+   js/game-main.js) — colored the same way the opponents' .other-deck-back
    already is, from the live --p1 variable set in
    js/ui/cardColor-ui.js applyCardColors(). */
 .deck-back[data-player="p1"] {
@@ -1837,7 +2015,11 @@ body {
     align-items: center;
 
 
-    z-index: 1000;
+    /* Home (index.html) is itself a .screen-overlay at z-index 9999
+       (see above) — About Developer and the How-to-Play tutorial are
+       genuine modals opened *on top of* Home, not a separate page, so
+       they need a higher z-index or they'd render underneath it. */
+    z-index: 10000;
 }
 
 
@@ -1942,6 +2124,69 @@ body {
 
     font-weight:700;
 
+}
+
+/* ── Lucky Wheel — Coming Soon (index.html #luckyWheelModal) ──────
+   Same visual language as .about-panel above (dark-glass popup,
+   centered icon + title + copy) rather than a new look. Only
+   #luckyWheelBody's contents are expected to change when a real
+   implementation replaces the Coming Soon state — this shell/layout
+   is meant to stay. */
+
+.lucky-wheel-panel {
+    position: relative;
+    text-align: center;
+    padding-top: 40px;
+}
+
+.lucky-wheel-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+}
+
+[dir="rtl"] .lucky-wheel-close {
+    right: auto;
+    left: 14px;
+}
+
+.lucky-wheel-title {
+    margin: 0 0 18px;
+    font-size: clamp(20px, 5vw, 26px);
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.lucky-wheel-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.lucky-wheel-illustration {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.lucky-wheel-illustration [data-icon] {
+    font-size: 72px;
+    line-height: 1;
+}
+
+.lucky-wheel-illustration .icon-image {
+    width: 96px;
+    height: 96px;
+    object-fit: contain;
+}
+
+.lucky-wheel-desc {
+    margin: 0;
+    max-width: 260px;
+    line-height: 1.6;
+    font-size: 15px;
+    color: var(--text-muted);
 }
 
 
@@ -3341,6 +3586,65 @@ body.gameplay-locked #playerHand .card {
 .power-score { color: #fbbf24; font-weight: 700; }
 .party-count { color: #86efac; font-weight: 600; }
 
+/* End game — primary actions (Play Again / Return to Home).
+   Two buttons with clear visual hierarchy: Play Again is the filled,
+   higher-emphasis primary action; Return to Home is the outlined
+   secondary action. Row layout on desktop/tablet/mobile-landscape
+   (the only orientation game.html is ever shown in — see the
+   Orientation Gate), stacking only as a narrow-viewport fallback. */
+.endgame-actions {
+    display: flex;
+    width: 100%;
+    gap: 12px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.endgame-actions .screen-btn {
+    margin-top: 0;
+    flex: 1 1 160px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 50px;
+    box-sizing: border-box;
+}
+
+.endgame-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    font-size: 18px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.endgame-btn-icon .icon-image { width: 100%; height: 100%; object-fit: contain; }
+
+.endgame-btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(189, 93, 56, 0.35);
+}
+.endgame-btn-primary:hover  { filter: brightness(1.08); }
+.endgame-btn-primary:active { filter: brightness(0.96); }
+
+.endgame-btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.endgame-btn-secondary:hover  { background: rgba(255, 255, 255, 0.14); }
+.endgame-btn-secondary:active { background: rgba(255, 255, 255, 0.06); }
+
+@media (max-width: 420px) {
+    .endgame-actions { flex-direction: column; }
+    .endgame-actions .screen-btn { width: 100%; }
+}
+
 /* Help */
 .help-tip {
     background: rgba(255,255,255,0.06);
@@ -3706,9 +4010,19 @@ body.gameplay-locked #playerHand .card {
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: var(--radius-md);
     padding: 14px 16px;
-    border-left: 4px solid var(--bot-color, #4ade80);
+    border-left: 4px solid #4ade80;
     transition: border-color 0.3s;
 }
+
+/* Each row's left border reflects that seat's *actually selected*
+   card color (js/ui/cardColor-ui.js sets --p2/--p3/--p4 on :root),
+   not the bot's difficulty — difficulty is only shown via the
+   Easy/Medium/Hard toggle and the avatar icon above. Reads live off
+   the shared --p2..--p4 variables, so it updates the instant the
+   color-trigger popover changes a seat's color, no extra JS needed. */
+.bot-row[data-player="p2"] { border-left-color: var(--p2, #4ade80); }
+.bot-row[data-player="p3"] { border-left-color: var(--p3, #f59e0b); }
+.bot-row[data-player="p4"] { border-left-color: var(--p4, #ef4444); }
 
 .bot-avatar {
     font-size: 36px;
@@ -3753,12 +4067,23 @@ body.gameplay-locked #playerHand .card {
    reflects the player's own card color instead of a bot's. */
 .player-row { border-left-color: var(--p1, #4ade80); }
 
-/* ── Player avatar trigger (Choose Bot Difficulty screen) ──
-   Borderless portrait button showing the player's currently chosen
-   avatar, sized to match the bot avatar icons in the rows below it;
-   clicking it opens a popover to pick between the available options.
-   Same interaction shape as .color-trigger just above, and takes the
-   .bot-avatar row slot the plain emoji icon used to sit in. */
+/* ── Player avatar display (Choose Bot Difficulty screen) ──
+   Read-only portrait showing the player's current avatar, sized to
+   match the bot avatar icons in the rows below it. Not a button —
+   this screen never lets avatar or name be changed; editing only
+   happens on profile.html (see .profile-avatar-grid further down). */
+.player-avatar-mount { flex-shrink: 0; width: 52px; text-align: center; }
+
+.player-avatar-display {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+}
+
+/* Retained for the legacy avatar-trigger-mount width (still used by
+   other emoji-icon rows); not used for the player avatar anymore. */
 .avatar-trigger-mount { flex-shrink: 0; width: 52px; text-align: center; }
 
 .avatar-trigger { position: relative; }
@@ -3834,6 +4159,168 @@ body.gameplay-locked #playerHand .card {
     box-shadow: 0 0 0 3px rgba(74,222,128,0.25);
 }
 
+/* ── Profile modal (js/ui/profile-ui.js) ─────────────────────
+   Display name + avatar — the only place either is edited. Reuses
+   the .avatar-choice look above at a slightly larger size since this
+   grid isn't squeezed into a popover. */
+.profile-panel {
+    max-width: 360px;
+}
+
+/* The Achievement Collection redesign (grid + featured card + filter
+   tabs) needs more breathing room than the avatar/name section above —
+   still the same popup (per AGENTS.md rule 4), just a wider variant.
+   Capped by .modal-content's own min(700px, 92vw)/88vh, so this never
+   causes horizontal overflow on any viewport. */
+.profile-panel.profile-panel--wide {
+    /* .small-popup sets a fixed width: 350px — override it directly
+       (not just max-width) so the wider layout actually takes effect. */
+    width: min(560px, 92vw);
+    max-width: 560px;
+}
+
+.profile-content {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 4px 4px 8px;
+}
+
+.profile-avatar-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+}
+
+/* Matches .player-avatar-display's untouched, uncropped look on the
+   Choose Bot Difficulty screen — no border-radius/overflow-clipping,
+   object-fit: contain so the whole illustration shows instead of
+   being cover-cropped into the button's box. */
+.profile-avatar-choice {
+    width: 72px;
+    height: 72px;
+    padding: 0;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    overflow: visible;
+    opacity: 0.55;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.profile-avatar-choice img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.profile-avatar-choice:hover { transform: scale(1.06); }
+
+.profile-avatar-choice.active {
+    opacity: 1;
+    transform: scale(1.08);
+}
+
+.profile-name-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ── Name row: read view (text + Edit) vs edit view (input) ──
+   Read view is the default; tapping Edit swaps to the input (see
+   js/ui/profile-ui.js setNameEditMode). Both share the row's
+   centered layout so nothing shifts horizontally when toggling. */
+.profile-name-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+}
+
+.profile-name-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-name-edit-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+}
+
+.profile-name-edit-btn:hover {
+    background: rgba(255,255,255,0.12);
+}
+
+.profile-name-edit-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+}
+
+/* .hidden (display:none) is defined earlier in this file with the
+   same specificity as the two rules above — without this compound
+   override, source order would let .profile-name-display/.profile-
+   name-edit-wrap's own `display: flex` win, so toggling the `hidden`
+   class from js/ui/profile-ui.js wouldn't actually hide anything.
+   Same pattern as .tut-video-container.hidden elsewhere in this file. */
+.profile-name-display.hidden,
+.profile-name-edit-wrap.hidden {
+    display: none;
+}
+
+.profile-name-edit-wrap .player-name-input {
+    width: min(220px, 68%);
+}
+
+.profile-name-save-btn {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(74,222,128,0.4);
+    background: rgba(74,222,128,0.12);
+}
+
+.profile-name-save-btn:hover {
+    background: rgba(74,222,128,0.22);
+}
+
+/* ── Profile → Achievements section ──────────────────────────
+   Reads from js/services/achievements.js, the real achievement
+   system — see js/ui/profile-ui.js renderAchievements() and the
+   .profile-achievement-* rules further down this file for the actual
+   locked/unlocked/progress item styling. */
+.profile-achievements {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.profile-achievements-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+}
+
 /* ── Per-seat color trigger (Choose Bot Difficulty screen) ──
    A small circle showing the seat's current card color; clicking it
    opens a popover with the full palette. Same underlying color state
@@ -3894,6 +4381,36 @@ body.gameplay-locked #playerHand .card {
 }
 
 .settings-label { font-size: 14px; font-weight: 600; }
+
+/* About Developer's entry row inside Settings — a clickable
+   .settings-row (see the shared layout rule above) rather than a new
+   row style, opening the existing #aboutModal nested on top of
+   #settingsModal (js/ui/modal-ui.js already supports this — same
+   pattern as #cardModal over #helpModal). */
+.settings-row-link {
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+}
+
+.settings-row-link .settings-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.settings-row-chevron {
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+[dir="rtl"] .settings-row-chevron {
+    transform: scaleX(-1);
+}
 
 .settings-divider {
     height: 1px;
@@ -5752,5 +6269,911 @@ body.gameplay-locked #playerHand .card {
     :lang(ar) .feedback-toast {
         left: 12px;
         right: 12px;
+    }
+}
+
+/* ── Achievement Unlock toast (js/ui/achievementNotification-ui.js) ──
+   Same fixed-position fade/slide lifecycle as .feedback-toast above,
+   anchored top-center instead of bottom-right so it never collides
+   with the feedback toast or the in-game action bar. */
+
+.achievement-toast {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translate(-50%, -16px);
+    z-index: 1600;
+
+    width: min(360px, calc(100% - 24px));
+
+    opacity: 0;
+    transition: opacity .25s ease, transform .25s ease;
+
+    pointer-events: none;
+}
+
+.achievement-toast.visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+}
+
+.achievement-toast-bubble {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    box-sizing: border-box;
+
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+
+    background: linear-gradient(135deg, rgba(255, 199, 44, 0.16), rgba(10, 31, 15, 0.94));
+    border: 1px solid rgba(255, 199, 44, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .5);
+}
+
+.achievement-toast-icon {
+    font-size: 28px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.achievement-toast-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.achievement-toast-eyebrow {
+    margin: 0 0 2px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    color: #ffc72c;
+    text-transform: uppercase;
+}
+
+.achievement-toast-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.3;
+}
+
+.achievement-toast-desc {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.35;
+}
+
+.achievement-toast-close {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: .7;
+    padding: 2px;
+}
+
+.achievement-toast-close:hover {
+    opacity: 1;
+}
+
+@media (max-width: 600px) {
+    .achievement-toast {
+        width: calc(100% - 24px);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════
+   ACHIEVEMENT COLLECTION (see index.html #profileAchievements,
+   js/ui/profile-ui.js renderAchievements()/renderAchievementCard())
+
+   A game-quality collection UI, not a settings list: header summary +
+   overall progress bar, an optional "Recently Unlocked" featured card,
+   category filter tabs, then a responsive card grid. All colors/radii/
+   shadows reuse the existing design tokens from :root — no parallel
+   token system. Locked/unlocked/progress are always communicated with
+   an icon + text label, never color alone.
+   ══════════════════════════════════════════════════════════ */
+
+.ach-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    text-align: center;
+}
+
+.profile-achievements-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.ach-header-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.profile-achievements-summary {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* ── Overall progress bar ── */
+.ach-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ach-progress-label-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-size: 11.5px;
+}
+
+.ach-progress-label {
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.ach-progress-pct {
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+.ach-progress-track {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.ach-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), #ffc72c);
+    transition: width 0.5s cubic-bezier(.4,0,.2,1);
+}
+
+/* ── Featured / "Recently Unlocked" ──
+   Only ever shown when real unlock data exists (see
+   renderAchievements()) — the section itself stays .hidden otherwise. */
+.ach-featured {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ach-featured-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #ffc72c;
+}
+
+.ach-featured-card .ach-card {
+    animation: ach-featured-in 0.4s cubic-bezier(.4,0,.2,1);
+}
+
+@keyframes ach-featured-in {
+    from { opacity: 0; transform: translateY(4px) scale(.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Category filter tabs ── */
+.ach-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+
+.ach-filter {
+    padding: 5px 12px;
+    font-size: 11.5px;
+    font-weight: 600;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.ach-filter:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+}
+
+.ach-filter.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.ach-filter:focus-visible,
+.ach-card:focus-visible {
+    outline: 2px solid #ffc72c;
+    outline-offset: 2px;
+}
+
+/* ── Card grid ──
+   auto-fill/minmax reflows naturally from a single mobile-landscape
+   column up to several desktop columns with no per-breakpoint rules
+   needed — see the max-width media query below only for a floor on
+   very narrow mobile-landscape heights. */
+.ach-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 2px;
+}
+
+.ach-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 4px;
+
+    padding: 12px 8px 10px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.ach-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card);
+}
+
+.ach-card--filtered-out {
+    display: none;
+}
+
+/* Unlocked state — communicated via a stronger icon presentation, a
+   completed badge/status pill, and a subtle warm border/glow, never by
+   color alone (the badge icon + status text carry the meaning). */
+.ach-card.unlocked {
+    background: rgba(255, 199, 44, 0.08);
+    border-color: rgba(255, 199, 44, 0.4);
+}
+
+.ach-card.locked {
+    opacity: 0.82;
+}
+
+.ach-card-icon-wrap {
+    position: relative;
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+}
+
+.ach-card.unlocked .ach-card-icon-wrap {
+    background: rgba(255, 199, 44, 0.15);
+    border-color: rgba(255, 199, 44, 0.5);
+    box-shadow: 0 0 0 4px rgba(255, 199, 44, 0.08);
+}
+
+.ach-card-icon {
+    font-size: 24px;
+    line-height: 1;
+    opacity: .6;
+}
+
+.ach-card.unlocked .ach-card-icon {
+    opacity: 1;
+}
+
+.ach-card-badge {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    border-radius: 50%;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+}
+
+.ach-card.unlocked .ach-card-badge {
+    border-color: rgba(74, 222, 128, 0.5);
+}
+
+.ach-card-title {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.ach-card.locked .ach-card-title {
+    color: var(--text-muted);
+}
+
+.ach-card-desc {
+    margin: 0;
+    font-size: 10.5px;
+    line-height: 1.3;
+    color: var(--text-muted);
+}
+
+.ach-card-progress {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 2px;
+}
+
+.ach-card-progress-track {
+    width: 100%;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+.ach-card-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--accent);
+    transition: width 0.4s cubic-bezier(.4,0,.2,1);
+}
+
+.ach-card-progress-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #ffc72c;
+}
+
+.ach-card-unlockdate {
+    margin: 2px 0 0;
+    font-size: 9.5px;
+    color: var(--text-muted);
+}
+
+.ach-card-status {
+    margin-top: 4px;
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+}
+
+.ach-card.unlocked .ach-card-status {
+    background: rgba(74, 222, 128, 0.18);
+    color: #4ade80;
+}
+
+/* Featured card variant: same card, slightly larger/centered, no
+   duplicate rules needed since it reuses .ach-card directly. */
+.ach-featured-card .ach-card {
+    max-width: 220px;
+    margin: 0 auto;
+    padding: 16px 12px 12px;
+}
+
+.ach-featured-card .ach-card-icon-wrap {
+    width: 56px;
+    height: 56px;
+}
+
+.ach-featured-card .ach-card-icon {
+    font-size: 28px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ach-progress-fill,
+    .ach-card-progress-fill,
+    .ach-card,
+    .ach-filter {
+        transition: none;
+    }
+    .ach-featured-card .ach-card {
+        animation: none;
+    }
+}
+
+/* ── Mobile landscape (the game is landscape-only — see
+   js/ui/orientation-ui.js) — keep the grid to two columns and trim
+   vertical paddings so the whole Achievements section stays reachable
+   within a short viewport without introducing horizontal overflow;
+   .modal-content's own mobile rule already caps width at
+   calc(100vw - 24px). ── */
+@media (max-width: 700px) {
+    .ach-grid {
+        grid-template-columns: repeat(2, 1fr);
+        max-height: 240px;
+    }
+    .ach-card { padding: 10px 6px 8px; }
+    .ach-filters { gap: 5px; }
+    .ach-filter { padding: 4px 10px; font-size: 11px; }
+}
+
+@media (max-height: 420px) and (orientation: landscape) {
+    .ach-grid { max-height: 160px; }
+    .ach-featured { display: none; }
+}
+
+
+/* ==========================================================
+   HOME / MAIN HUB
+   New default landing screen between the splash name-entry
+   step and the existing splash->difficulty->match flow.
+   Reuses existing tokens (--bg-panel, --radius-*, --shadow-*,
+   --accent) and the .screen-overlay/.screen-content/.top-btn
+   visual language already established by the splash screen and
+   in-game top bar, per docs/UI_UX_PLAN.md secs 1-2, 11-16.
+========================================================== */
+
+.home-screen {
+    align-items: stretch;
+}
+
+.home-content {
+    width: 100%;
+    height: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+    padding: 18px 20px 14px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background: var(--bg-panel);
+}
+
+.home-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ── Profile entry point ──────────────────────────────────
+   Compact avatar + name chip — the one place on Home that
+   surfaces the player's identity (js/services/profile.js).
+   Tapping it opens #profileModal (js/ui/profile-ui.js). */
+.home-profile-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px 5px 5px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-main);
+    font-family: inherit;
+    cursor: pointer;
+    max-width: 42vw;
+    transition: background .18s ease, transform .18s ease;
+}
+
+.home-profile-chip:hover {
+    background: rgba(255, 255, 255, 0.14);
+    transform: translateY(-1px);
+}
+
+.home-profile-chip-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.home-profile-chip-name {
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Currency group — wraps the Coins + Gems pills so .home-topbar's
+   space-between still puts exactly two items (profile chip, this
+   group) on opposite ends, regardless of how many currencies exist. */
+.home-currency-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+/* Coin pill — a real, persisted balance (js/services/profile.js),
+   defaulting to 0 for every player since nothing can earn/spend it
+   yet (see docs/ECONOMY_PLAN.md and the Achievement/Shop/Lucky Wheel
+   foundation notes in profile.js). Reused by Store/Rewards once a
+   real economy is wired up. */
+.home-coin-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-main);
+}
+
+.home-coin-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* Gem pill — same shape/behavior as the coin pill, tinted toward the
+   existing --p4 (purple) player color token rather than a new color
+   system, so it reads as a distinct currency without introducing a
+   parallel palette. */
+.home-gem-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(var(--p4-rgb), 0.12);
+    border: 1px solid rgba(var(--p4-rgb), 0.35);
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-main);
+}
+
+.home-gem-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.home-banner {
+    width: min(420px, 78vw);
+    max-height: 22vh;
+    object-fit: contain;
+    margin: 0 auto;
+}
+
+/* ── Start Game tabs ──────────────────────────────────────
+   Kept as the dominant, vertically-centered focus of Home
+   regardless of where the secondary nav/profile chip above it end
+   up sizing to (auto margins share the flex column's remaining
+   space with .home-bottom-nav's own margin-top: auto). Only Play vs
+   Bot is active; Rank/Friendly are real switchable tabs whose panel
+   honestly says Coming Soon rather than pretending to start a
+   match. */
+.home-gamestart {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.home-gamestart-title {
+    margin: 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.home-tabs {
+    display: flex;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 4px;
+}
+
+.home-tab {
+    flex: 1;
+    border: none;
+    border-radius: calc(var(--radius-md) - 4px);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 10px 8px;
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease;
+}
+
+.home-tab:hover {
+    color: var(--text);
+}
+
+.home-tab[aria-selected="true"] {
+    background: linear-gradient(145deg, var(--accent), #8f4527);
+    color: #fff;
+}
+
+.home-tab-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.home-tab-panel.hidden {
+    display: none;
+}
+
+.home-tab-comingsoon {
+    margin: 0;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 15px;
+    padding: 22px 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-md);
+}
+
+.home-primary-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 18px 24px;
+    font-size: 19px;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.home-play-btn {
+    background: linear-gradient(145deg, var(--accent), #8f4527);
+    color: #fff;
+    box-shadow: var(--shadow-card);
+    font-size: 22px;
+    padding: 22px 24px;
+}
+
+.home-play-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+}
+
+.home-btn-icon {
+    font-size: 1.1em;
+    line-height: 1;
+}
+
+.home-coming-soon-tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: var(--text-muted);
+    padding: 3px 8px;
+    border-radius: 999px;
+}
+
+/* ── Secondary nav row ────────────────────────────────────
+   Same icon-button visual language as the in-game top bar
+   (.top-btn), extended with a text label since these sit on
+   their own screen rather than a cramped top bar. */
+.home-secondary-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+    gap: 10px;
+}
+
+.home-nav-btn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    color: var(--text-main);
+    padding: 12px 8px 10px;
+    min-height: 76px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .18s ease, transform .18s ease;
+}
+
+.home-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.home-nav-icon {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.home-nav-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.25;
+}
+
+.home-nav-soon {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 6px;
+    padding: 2px 5px;
+    color: var(--text-muted);
+    letter-spacing: .3px;
+}
+
+/* ── Bottom nav (Store / Tournament / Leaderboard) ───────── */
+.home-bottom-nav {
+    margin-top: auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+
+.home-bottom-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 4px;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background .18s ease, color .18s ease;
+}
+
+.home-bottom-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+}
+
+.home-bottom-icon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.home-bottom-btn .home-coming-soon-tag {
+    font-size: 9px;
+    padding: 2px 6px;
+}
+
+/* ── Disabled-state primitive (reused wherever a Home feature
+   is gated: Online Game today, future locked nav entries) ── */
+[aria-disabled="true"] {
+    opacity: .72;
+}
+
+/* ── Keyboard focus (Home introduces plain <button> elements
+   that had no prior focus-visible treatment in this project) ── */
+.home-primary-btn:focus-visible,
+.home-nav-btn:focus-visible,
+.home-bottom-btn:focus-visible,
+.home-coin-pill:focus-visible,
+.home-gem-pill:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+/* ── Responsive ───────────────────────────────────────────
+   Mirrors the existing splash-screen breakpoints so Home reads
+   as part of the same shell rather than a bolted-on screen. */
+@media (max-width: 600px) {
+    .home-content {
+        padding: 14px 14px 10px;
+        gap: 14px;
+    }
+
+    .home-banner {
+        width: 82vw;
+        max-height: 16vh;
+    }
+
+    .home-primary-btn {
+        padding: 16px 18px;
+    }
+
+    .home-play-btn {
+        font-size: 19px;
+        padding: 18px 18px;
+    }
+
+    .home-secondary-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .home-coin-pill,
+    .home-gem-pill {
+        padding: 5px 10px;
+        font-size: 12.5px;
+    }
+
+    .home-currency-group {
+        gap: 6px;
+    }
+}
+
+@media (min-width: 900px) {
+    .home-gamestart {
+        max-width: 420px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* RTL (Persian/Arabic) — reuse the same button/icon layout since
+   flex/grid already flip correctly under dir="rtl"; only the
+   coming-soon badge's absolute offset needs mirroring. */
+:lang(fa) .home-nav-soon,
+:lang(ar) .home-nav-soon {
+    right: auto;
+    left: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-play-btn,
+    .home-nav-btn,
+    .home-bottom-btn {
+        transition: none;
+    }
+
+    .home-play-btn:hover,
+    .home-nav-btn:hover {
+        transform: none;
     }
 }

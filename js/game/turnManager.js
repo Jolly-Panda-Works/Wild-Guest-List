@@ -59,6 +59,8 @@ import { playSound } from "../services/soundManager.js";
 
 import { maybeOfferFeedbackToast } from "../ui/feedback-ui.js";
 
+import { notifyTurnTimerExpired, notifyAbilityResolved, notifyQueueEvents } from "../services/achievements.js";
+
 export function startTurn(gameState){
 
     const player =
@@ -99,6 +101,7 @@ export function startTurn(gameState){
         onExpire: () => {
             if (isPaused()) return; // frozen by pauseTurnTimer(); nothing to expire
             if (director.isBusy()) return; // a play is already underway
+            notifyTurnTimerExpired(player); // Achievement: Perfect Timing — a turn was missed
             const index = getRandomCardIndex(player, gameState);
             playCard(player, index, gameState);
         },
@@ -254,6 +257,11 @@ export async function playCard(
         // from a generic reason/cause string alone.
         abilityEvents.forEach(evt => { evt.abilityPower = card.power; });
 
+        // Achievement tracking (Crocodile Hunter / No Escape / Strategist)
+        // — fed from this exact single-capture batch, processed exactly
+        // once, before the presentation Director plays it back.
+        await notifyAbilityResolved(card, abilityEvents);
+
         if (abilityEvents.length > 0) {
             playSound("abilityActivated");
         }
@@ -282,7 +290,9 @@ export async function playCard(
 
             beginCapture();
             await resolveQueue(gameState);
-            await director.run(endCapture());
+            const queueEvents = endCapture();
+            await notifyQueueEvents(queueEvents); // Achievement: Party Animal / Party Starter
+            await director.run(queueEvents);
 
             await updateNonBoardUI(gameState);
 
@@ -300,7 +310,10 @@ export async function playCard(
             resolveRemainingQueue(
                 gameState
             );
-            await director.run(endCapture());
+            const finalQueueEvents = endCapture();
+            // Achievement: Party Animal / Party Starter / Last One Standing
+            await notifyQueueEvents(finalQueueEvents);
+            await director.run(finalQueueEvents);
 
             await updateNonBoardUI(gameState);
 

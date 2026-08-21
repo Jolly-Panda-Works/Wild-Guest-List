@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Wild Guest List — Cards</title>
+        <link rel="icon" type="image/x-icon" href="assets/img/branding/favicon.ico" />
+        <link rel="stylesheet" href="assets/fonts/fonts.css">
+        <link rel="stylesheet" href="css/style.css">
+    </head>
+    <body>
+        <!-- ── ORIENTATION GATE ──────────────────────────────────────
+             Reusable, page-agnostic gate — see
+             js/ui/orientation-ui.js (initOrientationGate()). Sits
+             above every other layer on this page, including
+             #startupScreen and any .modal, since it must be able to
+             block regardless of what else is showing. Hidden by
+             default; shown/hidden reactively based on device
+             orientation (matchMedia, not a CSS transform:rotate()
+             hack) without destroying or resetting anything
+             underneath it. Same markup/module on every real
+             top-level page. -->
+        <div id="orientationGate" class="orientation-gate hidden" role="status" aria-live="polite" tabindex="-1">
+            <div class="orientation-gate-content">
+                <span class="orientation-gate-icon" data-icon="orientationRotate" aria-hidden="true"></span>
+                <h2 class="orientation-gate-title" data-i18n="orientationTitle">Please rotate your device</h2>
+                <p class="orientation-gate-body" data-i18n="orientationBody">Wild Guest List is designed for landscape orientation.</p>
+            </div>
+        </div>
+
+
+        <!-- ── CARDS ──────────────────────────────────────────
+             Home's Card Guide destination — a top-level page, sibling
+             of Home, not something rendered inside it. The in-game
+             Help (topBar helpBtn, game.html) stays a genuine modal on
+             purpose — looking up an ability mid-match shouldn't unload
+             the active game. Both share the exact same content loader
+             (js/game/help.js's initHelp/openHelp) — only the
+             surrounding page/modal shell differs (see the guard in
+             initHelp() around the closeHelp/backdrop-click wiring). -->
+        <div class="screen-overlay">
+            <div class="screen-content">
+
+                <a href="index.html" class="page-back-link">
+                    <span aria-hidden="true">←</span> <span data-i18n="backToHome">Home</span>
+                </a>
+
+                <div id="helpModal" class="modal-content help-layout">
+                    <div class="help-header">
+                        <h1 data-i18n="helpModalTitle">Help</h1>
+                    </div>
+                    <div class="help-text">
+                        <span data-i18n="helpIntro">Invite wild animals to the party queue!</span>
+                        <p data-i18n="helpWhenQueue">When the queue reaches 5 animals:</p>
+                        <ul>
+                            <li data-i18n="helpRule1">The first 2 guests make it into the party.</li>
+                            <li data-i18n="helpRule2">The last guest gets turned away and sent to the trash.</li>
+                            <li data-i18n="helpRule3">The remaining guests stay in line.</li>
+                        </ul>
+                        <span data-i18n="helpGoal">Gather the biggest party and become the ultimate host!</span>
+                    </div>
+                    <div class="help-divider"></div>
+                    <h2 class="animal-guide-title" data-i18n="animalAbilities">Animal Abilities</h2>
+                    <div id="animalGrid"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Card detail — a genuine nested modal (opens on top of the
+             grid above when an animal is clicked). -->
+        <div id="cardModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button id="cardBackBtn" class="icon-btn"><span data-icon="back"></span></button>
+                </div>
+                <div id="cardModalContent"></div>
+            </div>
+        </div>
+
+        <script type="module" src="js/cards-main.js"></script>
+
+    </body>
+</html>

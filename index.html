@@ -9,208 +9,333 @@
         <link rel="stylesheet" href="css/style.css">
     </head>
     <body>
+        <!-- ── ORIENTATION GATE ──────────────────────────────────────
+             Reusable, page-agnostic gate — see
+             js/ui/orientation-ui.js (initOrientationGate()). Sits
+             above every other layer on this page, including
+             #startupScreen and any .modal, since it must be able to
+             block regardless of what else is showing. Hidden by
+             default; shown/hidden reactively based on device
+             orientation (matchMedia, not a CSS transform:rotate()
+             hack) without destroying or resetting anything
+             underneath it. Same markup/module on every real
+             top-level page. -->
+        <div id="orientationGate" class="orientation-gate hidden" role="status" aria-live="polite" tabindex="-1">
+            <div class="orientation-gate-content">
+                <span class="orientation-gate-icon" data-icon="orientationRotate" aria-hidden="true"></span>
+                <h2 class="orientation-gate-title" data-i18n="orientationTitle">Please rotate your device</h2>
+                <p class="orientation-gate-body" data-i18n="orientationBody">Wild Guest List is designed for landscape orientation.</p>
+            </div>
+        </div>
 
-        <div id="pageLayout">
+        <!-- ── STARTUP (Splash → Loading → Ready) ──────────────
+             Covers Home while js/ui/startup-ui.js runs bootHome()
+             (js/home-main.js's real boot sequence: i18n, config/
+             icons, Home's modals and wiring — nothing duplicated
+             here, this UI just gates it). Shows the Jolly Panda
+             logo (config.json → branding.developerLogo) for a
+             short minimum duration; only shows the Loading state
+             if boot genuinely takes longer than that. Removed from
+             the DOM once boot succeeds — Home underneath has been
+             booting the whole time regardless. On failure, shows
+             Retry, which re-runs bootHome(). See
+             docs/ARCHITECTURE_PLAN.md. -->
+        <div id="startupScreen" class="startup-screen" role="status" aria-live="polite">
 
-            <!-- LEFT SIDEBAR (desktop only) -->
-            <div id="leftSidebar">
+            <div id="startupSplash" class="startup-splash">
+                <img id="startupLogo" class="startup-logo" alt="" data-i18n-alt="startupLogoAlt">
+            </div>
 
-                <div id="leaderboard">
-                    <h3><span data-icon="leaderboard"></span> <span data-i18n="leaderboard">Leaderboard</span></h3>
-                    <div id="leaderboardRows"></div>
+            <div id="startupLoading" class="startup-loading hidden">
+                <div class="startup-spinner" aria-hidden="true"></div>
+                <p class="startup-status" data-i18n="startupLoading">Loading...</p>
+            </div>
+
+            <div id="startupError" class="startup-error hidden">
+                <p class="startup-status" data-i18n="startupError">Unable to load the game.</p>
+                <button id="startupRetryBtn" type="button" class="screen-btn" data-i18n="startupRetry">Retry</button>
+            </div>
+
+        </div>
+
+        <!-- ── HOME ───────────────────────────────────────────
+             index.html IS Home — a top-level navigation destination,
+             not a persistent parent/container for the rest of the
+             app. It never initializes gameplay.
+
+             Menu-type destinations default to popups over Home,
+             not separate pages: Profile, Settings, Card Guide,
+             About, and How-to-Play are all genuine modals defined
+             below, opened via js/ui/home-ui.js — nothing to
+             navigate away from or back to. The one exception is
+             Choose Bot Difficulty (bot-difficulty.html): a step in
+             starting a match, not a menu lookup, so it's a real
+             top-level document reached via real navigation. The
+             bottom-nav entries route to coming-soon.html for the
+             same reason (independently linkable placeholders). See
+             docs/ARCHITECTURE_PLAN.md.
+
+             There is no separate Game Modes screen. Home's Start
+             Game section is a tab bar — Play vs Bot, Rank, Friendly
+             (see .home-gamestart / .home-tabs below and
+             js/ui/homeGameStart-ui.js). Only Play vs Bot is active
+             today: it navigates straight to bot-difficulty.html, a
+             real top-level page (not a Home sub-state) — still
+             exactly the current 1-human + 3-bot match. Rank and
+             Friendly are visible, selectable tabs whose panel says
+             Coming Soon; neither has a backend or game flow yet, so
+             neither starts a match.
+
+             Visual hierarchy (top → bottom): logo, secondary
+             nav/profile, then the Start Game tabs centered and
+             dominant — see .home-content / .home-gamestart in
+             css/style.css. -->
+        <div id="homeScreen" class="screen-overlay home-screen" role="region" aria-label="Home">
+            <div id="homeMainContent" class="home-content">
+
+                <div class="home-topbar">
+                    <!-- Profile entry point: shows the player's current
+                         avatar + name, opens #profileModal (a genuine
+                         popup — see js/ui/home-ui.js). Player identity
+                         itself lives only in js/services/profile.js;
+                         this chip just displays it (js/ui/profile-ui.js). -->
+                    <button id="homeProfileChip" class="home-profile-chip" type="button"
+                            aria-label="Profile" data-title-key="homeProfileAriaLabel">
+                        <img id="homeProfileChipAvatar" class="home-profile-chip-avatar" alt="">
+                        <span id="homeProfileChipName" class="home-profile-chip-name"></span>
+                    </button>
+
+                    <!-- Currency display — Coins + Gems (foundation
+                         only, see js/services/profile.js). Real,
+                         persisted balances (default 0/0), rendered via
+                         updateHomeCurrencyDisplay() in
+                         js/ui/profile-ui.js; icons resolve through
+                         data/config.json (icons.coin / icons.gem), not
+                         hardcoded emoji. Nothing spends, earns, or
+                         otherwise changes these values yet — Shop and
+                         Lucky Wheel remain unconnected per the current
+                         scope. -->
+                    <div class="home-currency-group" id="homeCurrencyGroup">
+                        <div class="home-coin-pill" id="homeCoinPill" role="status" aria-label="Coins: 0">
+                            <span class="home-coin-icon" data-icon="coin" aria-hidden="true"></span>
+                            <span class="home-coin-value" id="homeCoinValue">0</span>
+                        </div>
+                        <div class="home-gem-pill" id="homeGemPill" role="status" aria-label="Gems: 0">
+                            <span class="home-gem-icon" data-icon="gem" aria-hidden="true"></span>
+                            <span class="home-gem-value" id="homeGemValue">0</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="gameLog">
-                    <h3><span data-icon="gameLog"></span> <span data-i18n="gameLog">Game Log</span></h3>
-                    <div id="logEntries"></div>
+                <img src="assets/img/branding/banner.png" alt="Wild Guest List" class="home-banner">
+
+                <nav class="home-secondary-row" aria-label="More">
+                    <button id="homeCardsBtn" class="home-nav-btn" type="button">
+                        <span class="home-nav-icon" data-icon="cards" aria-hidden="true"></span>
+                        <span class="home-nav-label" data-i18n="homeCards">Card Guide</span>
+                    </button>
+                    <button id="homeSettingsBtn" class="home-nav-btn" type="button">
+                        <span class="home-nav-icon" data-icon="settings" aria-hidden="true"></span>
+                        <span class="home-nav-label" data-i18n="settingsTitle">Settings</span>
+                    </button>
+                    <button id="homeHowToPlayBtn" class="home-nav-btn" type="button">
+                        <span class="home-nav-icon" data-icon="tutorial" aria-hidden="true"></span>
+                        <span class="home-nav-label" data-i18n="homeHowToPlay">How to Play</span>
+                    </button>
+                </nav>
+
+                <!-- Start Game — a tab bar, not three separate Home
+                     buttons and not a Game Modes screen. Only "Play
+                     vs Bot" is active: it navigates straight to
+                     bot-difficulty.html, its own top-level page. Rank
+                     and Friendly are real, switchable tabs — you can
+                     see their panel — but neither has a game flow
+                     yet, so their panel honestly says Coming Soon
+                     rather than pretending to start a match. See
+                     js/ui/homeGameStart-ui.js. -->
+                <div class="home-gamestart">
+                    <h2 class="home-gamestart-title" data-i18n="homeStartGame">Start Game</h2>
+
+                    <div class="home-tabs" role="tablist" aria-label="Game mode">
+                        <button id="homeTabPlayVsBot" class="home-tab" type="button"
+                                role="tab" aria-selected="true" aria-controls="homeTabPanelPlayVsBot"
+                                data-tab="playVsBot">
+                            <span data-i18n="gameModesPlayVsBot">Play vs Bot</span>
+                        </button>
+                        <button id="homeTabRank" class="home-tab" type="button"
+                                role="tab" aria-selected="false" aria-controls="homeTabPanelRank"
+                                data-tab="rank" tabindex="-1">
+                            <span data-i18n="homeTabRank">Rank</span>
+                        </button>
+                        <button id="homeTabFriendly" class="home-tab" type="button"
+                                role="tab" aria-selected="false" aria-controls="homeTabPanelFriendly"
+                                data-tab="friendly" tabindex="-1">
+                            <span data-i18n="homeTabFriendly">Friendly</span>
+                        </button>
+                    </div>
+
+                    <div id="homeTabPanelPlayVsBot" class="home-tab-panel" role="tabpanel"
+                         aria-labelledby="homeTabPlayVsBot" tabindex="0">
+                        <button id="homePlayVsBotBtn" class="home-primary-btn home-play-btn" type="button">
+                            <span class="home-btn-icon" data-icon="playWith3Bots" aria-hidden="true"></span>
+                            <span data-i18n="gameModesPlayVsBot">Play vs Bot</span>
+                        </button>
+                    </div>
+
+                    <div id="homeTabPanelRank" class="home-tab-panel hidden" role="tabpanel"
+                         aria-labelledby="homeTabRank" tabindex="0">
+                        <p class="home-tab-comingsoon" data-i18n="homeRankComingSoon">Rank play is coming soon.</p>
+                    </div>
+
+                    <div id="homeTabPanelFriendly" class="home-tab-panel hidden" role="tabpanel"
+                         aria-labelledby="homeTabFriendly" tabindex="0">
+                        <p class="home-tab-comingsoon" data-i18n="homeFriendlyComingSoon">Friendly play is coming soon.</p>
+                    </div>
                 </div>
 
-                <div id="chatPanel">
-                    <h3><span data-icon="chat"></span> <span data-i18n="chat">Chat</span></h3>
-                    <div class="comingSoon" data-i18n="comingSoon">Coming Soon</div>
+                <div class="home-bottom-nav" role="navigation" aria-label="Coming soon">
+                    <button id="homeStoreBtn" class="home-bottom-btn" type="button">
+                        <span class="home-bottom-icon" data-icon="store" aria-hidden="true"></span>
+                        <span data-i18n="homeStore">Store</span>
+                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
+                    </button>
+                    <button id="homeTournamentBtn" class="home-bottom-btn" type="button">
+                        <span class="home-bottom-icon" data-icon="tournament" aria-hidden="true"></span>
+                        <span data-i18n="homeTournament">Tournament</span>
+                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
+                    </button>
+                    <button id="homeLeaderboardBtn" class="home-bottom-btn" type="button">
+                        <span class="home-bottom-icon" data-icon="leaderboard" aria-hidden="true"></span>
+                        <span data-i18n="homeLeaderboard">Leaderboard</span>
+                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
+                    </button>
+                    <button id="homeLuckyWheelBtn" class="home-bottom-btn" type="button">
+                        <span class="home-bottom-icon" data-icon="luckyWheel" aria-hidden="true"></span>
+                        <span data-i18n="homeLuckyWheel">Lucky Wheel</span>
+                        <span class="home-coming-soon-tag" data-i18n="comingSoon">Coming Soon</span>
+                    </button>
                 </div>
 
             </div>
+        </div>
 
-            <!-- GAME COLUMN -->
-            <div id="gameColumn">
+        <!-- Profile — genuine modal, popup over Home (see js/ui/profile-ui.js).
+             Home's #homeProfileChip opens it; #profileModal is the only
+             place display name + avatar are edited, reading/writing
+             exclusively through js/services/profile.js so every other
+             consumer (this chip, Choose Bot Difficulty's read-only
+             display) reflects a save here immediately. -->
+        <div id="profileModal" class="modal hidden">
+            <div class="modal-content small-popup profile-panel profile-panel--wide">
+                <div class="help-header">
+                    <h3 data-i18n="profileModalTitle">Profile</h3>
+                    <button id="closeProfile" class="icon-btn close"><span data-icon="close"></span></button>
+                </div>
+                <div class="profile-content">
+                    <div class="profile-avatar-grid" id="profileAvatarGrid"></div>
+                    <div class="profile-name-row">
+                        <label class="settings-label" for="profileNameInput" data-i18n="profileNameLabel">Display Name</label>
 
-                <!-- TOP BAR -->
-                <div id="topBar">
-                    <div id="topBarContent">
+                        <!-- Default (read) view: the current name as
+                             plain text + an Edit button. Shown whenever
+                             the name isn't actively being edited. -->
+                        <div class="profile-name-display" id="profileNameDisplay">
+                            <span class="profile-name-text" id="profileNameText"></span>
+                            <button id="profileEditNameBtn" type="button" class="icon-btn profile-name-edit-btn"
+                                    data-i18n-aria-label="profileEditName" aria-label="Edit name">
+                                <span data-icon="edit" aria-hidden="true"></span>
+                            </button>
+                        </div>
 
-                        <div id="topLeft">
-                            <div class="turn-label" id="turnPlayer">Turn: You</div>
-                            <div class="turn-divider"></div>
-                            <div class="round-label">
-                                <span id="roundInfo">Round: 1</span>
-                                <span class="round-timer-sep" aria-hidden="true">|</span>
-                                <span class="turn-timer-icon" data-icon="timer" aria-hidden="true"></span>
-                                <span class="turn-timer-label" id="turnTimer">10</span>
+                        <!-- Edit view: only shown after tapping the Edit
+                             button above. The inline Save here commits
+                             just the name and returns to the read view
+                             without closing the popup. Avatar changes
+                             (below) save immediately on click too — see
+                             js/ui/profile-ui.js renderAvatarGrid — so
+                             there's no separate Save step for either. -->
+                        <div class="profile-name-edit-wrap hidden" id="profileNameEditWrap">
+                            <input id="profileNameInput" class="player-name-input" type="text" maxlength="20"
+                                   data-i18n-placeholder="playerNamePlaceholder" placeholder="Enter your name...">
+                            <button id="profileNameSaveBtn" type="button" class="icon-btn profile-name-save-btn"
+                                    data-i18n-aria-label="profileSaveBtn" aria-label="Save">
+                                <span data-icon="confirm" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="settings-divider"></div>
+
+                    <!-- Achievements — reads from js/services/achievements.js,
+                         the real achievement system (see
+                         docs/ARCHITECTURE_PLAN.md "Achievements"). Rendered
+                         by js/ui/profile-ui.js renderAchievements(), called
+                         on modal open and on every achievement change (see
+                         subscribeAchievements()), so progress made during
+                         the current game is reflected the moment Profile is
+                         reopened. Redesigned into a game-quality Achievement
+                         Collection: summary + overall progress bar, an
+                         optional "Recently Unlocked" featured card (only
+                         shown when real unlock data exists), category
+                         filter tabs, and a responsive card grid — all still
+                         inside this same Profile popup (see AGENTS.md rule 4
+                         — menu features stay popups, never a separate page). -->
+                    <div class="profile-achievements" id="profileAchievements">
+                        <div class="ach-header">
+                            <h4 class="profile-achievements-title">
+                                <span class="ach-header-icon" data-icon="trophy" aria-hidden="true"></span>
+                                <span data-i18n="profileAchievementsTitle">Achievements</span>
+                            </h4>
+                            <p class="profile-achievements-summary" id="profileAchievementsSummary"></p>
+                        </div>
+
+                        <!-- Overall progress bar — driven entirely by real
+                             achievement data (unlockedCount/total) computed
+                             in renderAchievements(), never hardcoded. -->
+                        <div class="ach-progress" id="achProgress" role="progressbar"
+                             aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+                             data-i18n-aria-label="achievementsOverallProgress" aria-label="Overall Progress">
+                            <div class="ach-progress-label-row">
+                                <span class="ach-progress-label" data-i18n="achievementsOverallProgress">Overall Progress</span>
+                                <span class="ach-progress-pct" id="achProgressPct">0%</span>
+                            </div>
+                            <div class="ach-progress-track">
+                                <div class="ach-progress-fill" id="achProgressFill"></div>
                             </div>
                         </div>
 
-                        <div id="topCenter">
-                            <picture>
-                                <source media="(max-width: 900px)" srcset="assets/img/branding/banner.png">
-                                <img src="assets/img/branding/banner.png" alt="Wild Guest List">
-                            </picture>
+                        <!-- Featured / "Recently Unlocked" — only shown when
+                             the player has at least one real unlock (see
+                             renderAchievements()); never a fabricated entry. -->
+                        <div class="ach-featured hidden" id="achFeatured">
+                            <span class="ach-featured-label" data-i18n="achievementsFeaturedTitle">Recently Unlocked</span>
+                            <div class="ach-featured-card" id="achFeaturedCard"></div>
                         </div>
 
-                        <div id="topRight">
-                            <button id="logBtn"  class="top-btn mobile-only-btn" data-title="Game Log" data-title-key="btnLog">
-                                <span data-icon="gameLog"></span>
-                            </button>
-                            <button id="pauseBtn" class="top-btn" data-title="Pause" data-title-key="btnPause">
-                                <span data-icon="pause"></span>
-                            </button>
-                            <button id="helpBtn" class="top-btn" data-title="Help" data-title-key="btnHelp">
-                                <span data-icon="help"></span>
-                            </button>
-                            <button id="tutorialBtn" class="top-btn" data-title="Tutorial" data-title-key="btnTutorial">
-                                <span data-icon="tutorial"></span>
-                            </button>
-                            <button id="aboutBtn" class="top-btn" data-title="About Developer" data-title-key="btnAbout">
-                                <span data-icon="About Developer"></span>
-                            </button>
+                        <!-- Category filter tabs — only useful because there
+                             are already 3 real categories across 10
+                             achievements; architecture (data-category on
+                             each card) supports more without changes. -->
+                        <div class="ach-filters" id="achFilters" role="tablist" data-i18n-aria-label="achievementsFilterGroupLabel" aria-label="Filter achievements by category">
+                            <button type="button" class="ach-filter active" data-category="all" role="tab" aria-selected="true" data-i18n="achievementsCategoryAll">All</button>
+                            <button type="button" class="ach-filter" data-category="progression" role="tab" aria-selected="false" data-i18n="achievementsCategoryProgression">Progression</button>
+                            <button type="button" class="ach-filter" data-category="gameplay" role="tab" aria-selected="false" data-i18n="achievementsCategoryGameplay">Gameplay</button>
+                            <button type="button" class="ach-filter" data-category="modesParty" role="tab" aria-selected="false" data-i18n="achievementsCategoryModesParty">Modes</button>
                         </div>
 
+                        <div class="profile-achievements-list ach-grid" id="profileAchievementsList"></div>
                     </div>
-                </div>
-
-                <!-- GAME BOARD -->
-                <div id="gameLayout">
-
-                    <!-- Mobile leaderboard -->
-                    <div id="mobileLeaderboard">
-                        <h4>🏆 Leaderboard</h4>
-                        <div id="mobileLeaderboardInline"></div>
-                    </div>
-
-                    <!-- Mobile tabs -->
-                    <div id="mobileTabs">
-                        <button id="partyTab"><span data-icon="party"></span> <span data-i18n="partyPanel">Party</span></button>
-                        <button id="trashTab"><span data-icon="trash"></span> <span data-i18n="trashPanel">Trash</span></button>
-                    </div>
-
-                    <!-- Party area -->
-                    <div id="partyArea">
-                        <div class="panel-header">
-                            <h3>
-                                <span data-icon="party"></span> <span data-i18n="partyPanel">Party</span>
-                                <span class="panel-info-btn" data-tooltip-key="partyTooltip" data-tooltip="The first 2 cards from each resolved queue join the owner's party. More power = higher score!">ℹ</span>
-                            </h3>
-                            <button class="panel-close mobile-only-btn icon-btn close"><span data-icon="close"></span></button>
-                        </div>
-                        <div id="partyCards"></div>
-                    </div>
-
-                    <!-- Center -->
-                    <div id="centerArea">
-
-                        <div id="otherPlayers">
-                            <div id="topPlayer"></div>
-                            <div id="leftPlayer"></div>
-                            <div id="rightPlayer"></div>
-                        </div>
-
-                        <div id="queueArea">
-                            <div id="queue"></div>
-                        </div>
-
-                        <div id="handArea">
-                            <div id="playerHand"></div>
-                            <div id="deckStack">
-                                <div class="player-deck-info" id="playerDeckInfo">
-                                    <div class="player-deck-avatar-wrap">
-                                        <img id="playerDeckAvatarImg" class="player-deck-avatar-img" alt="">
-                                    </div>
-                                    <div class="player-deck-name" id="playerDeckName"></div>
-                                </div>
-                                <div class="deck-back" data-player="p1">
-                                    <span id="deckCount">0</span>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <!-- Trash area -->
-                    <div id="trashArea">
-                        <div class="panel-header">
-                            <h3>
-                                <span data-icon="trash"></span> <span data-i18n="trashPanel">Trash</span>
-                                <span class="panel-info-btn" data-tooltip-key="trashTooltip" data-tooltip="When the queue hits 5, the last card is eliminated and sent to trash. These cards are out of the game!">ℹ</span>
-                            </h3>
-                            <button class="panel-close mobile-only-btn icon-btn close"><span data-icon="close"></span></button>
-                        </div>
-                        <div id="trashCards"></div>
-                    </div>
-
                 </div>
             </div>
         </div>
 
-        <!-- ── MODALS ─────────────────────────────────────── -->
-
-        <!-- Help -->
-        <div id="helpModal" class="modal hidden">
-            <div class="modal-content help-layout">
-                <div class="help-header">
-                    <h1 data-i18n="helpModalTitle">Help</h1>
-                    <button id="closeHelp" class="icon-btn close"><span data-icon="close"></span></button>
-                </div>
-                <div class="help-text">
-                    <span data-i18n="helpIntro">Invite wild animals to the party queue!</span>
-                    <p data-i18n="helpWhenQueue">When the queue reaches 5 animals:</p>
-                    <ul>
-                        <li data-i18n="helpRule1">The first 2 guests make it into the party.</li>
-                        <li data-i18n="helpRule2">The last guest gets turned away and sent to the trash.</li>
-                        <li data-i18n="helpRule3">The remaining guests stay in line.</li>
-                    </ul>
-                    <span data-i18n="helpGoal">Gather the biggest party and become the ultimate host!</span>
-                </div>
-                <div class="help-divider"></div>
-                <h2 class="animal-guide-title" data-i18n="animalAbilities">Animal Abilities</h2>
-                <div id="animalGrid"></div>
-            </div>
-        </div>
-        <!-- Card detail -->
-        <div id="cardModal" class="modal hidden">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button id="cardBackBtn" class="icon-btn"><span data-icon="back"></span></button>
-                </div>
-                <div id="cardModalContent"></div>
-            </div>
-        </div>
-
-        <!-- Kangaroo -->
-        <div id="kangarooModal" class="modal hidden">
-            <div class="modal-content kangaroo-choice">
-                <div class="help-header">
-                    <h2><span data-icon="kangaroo"></span> <span data-i18n="kangarooTitle">Kangaroo Jump</span></h2>
-                </div>
-                <div class="help-text" data-i18n="kangarooChoose">Choose how many spaces to jump:</div>
-                <div class="kangaroo-buttons">
-                    <button id="jumpOneBtn" data-i18n="jumpOne">Jump 1</button>
-                    <button id="jumpTwoBtn" data-i18n="jumpTwo">Jump 2</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Log (mobile) -->
-        <div id="logModal" class="modal hidden">
-            <div class="modal-content mobile-panel-content">
-                <div class="panel-header">
-                    <h2><span data-icon="gameLog"></span> <span data-i18n="logModalTitle">Game Log</span></h2>
-                    <button class="closeModal icon-btn"><span data-icon="close"></span></button>
-                </div>
-                <div id="mobileLogContent"></div>
-            </div>
-        </div>
-
-        <!-- Settings -->
+        <!-- Settings — genuine modal, popup over Home. Shares the exact
+             same settings widgets/persistence as game.html's in-game
+             Pause → Settings modal (js/ui/cardColor-ui.js,
+             js/ui/cardGuidance-ui.js, js/services/soundManager.js,
+             js/i18n.js) — only the surrounding modal shell/trigger
+             differs, which is why this markup mirrors game.html's
+             #settingsModal exactly. -->
         <div id="settingsModal" class="modal hidden">
             <div class="modal-content small-popup">
                 <div class="help-header">
@@ -257,52 +382,67 @@
                         <div><strong data-i18n="settingsVersion">Version</strong>: <span data-app-version>1.9.0</span></div>
                     </div>
 
+                    <div class="settings-divider"></div>
+
+                    <!-- About Developer — moved here from Home's top-level
+                         Menu (see js/ui/home-ui.js history / README.md).
+                         Opens the existing #aboutModal (unchanged, see
+                         below) as a nested popup on top of this one —
+                         same pattern already used by #cardModal opening
+                         on top of #helpModal, handled by the same
+                         openModal()/closeModal() lifecycle in
+                         js/ui/modal-ui.js (topmost-modal Escape/backdrop
+                         close, focus trap). No duplicate About Developer
+                         implementation — this is the only one. -->
+                    <button id="settingsAboutBtn" type="button" class="settings-row settings-row-link">
+                        <span class="settings-label">
+                            <span data-icon="About Developer"></span>
+                            <span data-i18n="aboutTitle">About Developer</span>
+                        </span>
+                        <span class="settings-row-chevron" data-icon="next" aria-hidden="true"></span>
+                    </button>
+
                 </div>
             </div>
         </div>
 
-        <!-- Pause -->
-        <div id="pauseModal" class="modal hidden">
-            <div class="modal-content small-popup pause-panel">
+        <!-- Card Guide (Help) — genuine modal, popup over Home. Shares
+             the exact same content loader as game.html's in-game Help
+             modal (js/game/help.js's initHelp/openHelp) — this markup
+             mirrors game.html's #helpModal exactly, including
+             #closeHelp, so initHelp()'s existing modal-mode wiring
+             (close button + backdrop click) applies here unchanged. -->
+        <div id="helpModal" class="modal hidden">
+            <div class="modal-content help-layout">
                 <div class="help-header">
-                    <h3 data-i18n="pauseTitle">Paused</h3>
+                    <h1 data-i18n="helpModalTitle">Help</h1>
+                    <button id="closeHelp" class="icon-btn close"><span data-icon="close"></span></button>
                 </div>
-                <div class="pause-actions">
-                    <button id="pauseResumeBtn" class="pause-action">
-                        <span class="pause-action-icon top-btn" data-icon="pauseResume"></span>
-                        <span class="pause-action-label" data-i18n="pauseResume">Resume</span>
-                    </button>
-                    <button id="pauseSettingsBtn" class="pause-action">
-                        <span class="pause-action-icon top-btn" data-icon="settings"></span>
-                        <span class="pause-action-label" data-i18n="pauseSettings">Settings</span>
-                    </button>
-                    <button id="pauseRestartBtn" class="pause-action">
-                        <span class="pause-action-icon top-btn" data-icon="pauseRestart"></span>
-                        <span class="pause-action-label" data-i18n="pauseRestart">Restart</span>
-                    </button>
+                <div class="help-text">
+                    <span data-i18n="helpIntro">Invite wild animals to the party queue!</span>
+                    <p data-i18n="helpWhenQueue">When the queue reaches 5 animals:</p>
+                    <ul>
+                        <li data-i18n="helpRule1">The first 2 guests make it into the party.</li>
+                        <li data-i18n="helpRule2">The last guest gets turned away and sent to the trash.</li>
+                        <li data-i18n="helpRule3">The remaining guests stay in line.</li>
+                    </ul>
+                    <span data-i18n="helpGoal">Gather the biggest party and become the ultimate host!</span>
                 </div>
+                <div class="help-divider"></div>
+                <h2 class="animal-guide-title" data-i18n="animalAbilities">Animal Abilities</h2>
+                <div id="animalGrid"></div>
             </div>
         </div>
 
-        <!-- Contextual card guidance (shown after a card's ability resolves,
-             for first-time players or when Step-by-step Guidance is on) -->
-        <div id="cardGuidanceModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="guideCardName">
-            <div class="modal-content small-popup guide-modal-content">
-                <div class="guide-header">
-                    <div class="guide-visual" id="guideVisual"></div>
-                    <div class="guide-title-block">
-                        <h3 id="guideCardName"></h3>
-                        <div class="guide-ability-title" id="guideAbilityTitle"></div>
-                    </div>
+        <!-- Card detail — a genuine nested modal (opens on top of the
+             grid above when an animal is clicked). Same markup/id as
+             game.html's, handled by the same js/game/help.js. -->
+        <div id="cardModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button id="cardBackBtn" class="icon-btn"><span data-icon="back"></span></button>
                 </div>
-
-                <p class="guide-desc" id="guideDesc"></p>
-
-                <div class="guide-diagram" id="guideDiagram"></div>
-
-                <button id="guideContinueBtn" class="screen-btn guide-continue-btn" type="button">
-                    <span data-i18n="guideContinue">Continue</span>
-                </button>
+                <div id="cardModalContent"></div>
             </div>
         </div>
 
@@ -342,6 +482,36 @@
                             <span data-i18n="aboutFeedbackBtn">Give Feedback</span>
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lucky Wheel — a menu-type feature, so per AGENTS.md rule 4
+             ("Menu pages default to popups") this is a genuine popup,
+             not a coming-soon.html page navigation like Store/
+             Tournament/Leaderboard above. Coming Soon only — see
+             js/ui/home-ui.js and README.md § Home Screen for why.
+             #luckyWheelBody is the one thing a future real
+             implementation would swap out; the modal id and its
+             open/close wiring (js/ui/modal-ui.js) stay exactly as-is. -->
+        <div id="luckyWheelModal" class="modal hidden">
+            <div class="modal-content small-popup lucky-wheel-panel">
+                <button id="closeLuckyWheel" class="icon-btn close lucky-wheel-close">
+                    <span data-icon="close"></span>
+                </button>
+
+                <h3 class="lucky-wheel-title" data-i18n="luckyWheelTitle">Lucky Wheel</h3>
+
+                <div id="luckyWheelBody" class="lucky-wheel-body">
+                    <div class="lucky-wheel-illustration">
+                        <span data-icon="luckyWheel" aria-hidden="true"></span>
+                    </div>
+
+                    <span class="home-coming-soon-tag lucky-wheel-badge" data-i18n="comingSoon">Coming Soon</span>
+
+                    <p class="lucky-wheel-desc" data-i18n="luckyWheelComingSoonDesc">
+                        More exciting rewards are coming soon.
+                    </p>
                 </div>
             </div>
         </div>
@@ -400,105 +570,6 @@
                 </form>
             </div>
         </div>
-
-        <!-- Random in-game feedback nudge (non-blocking toast) -->
-        <div id="feedbackToast" class="feedback-toast hidden" role="status" aria-live="polite">
-            <div class="feedback-toast-bubble">
-                <span class="feedback-toast-icon" data-icon="feedback"></span>
-                <p class="feedback-toast-text" data-i18n="feedbackToastText">Enjoying the game? We'd love your feedback!</p>
-                <div class="feedback-toast-actions">
-                    <button id="feedbackToastYesBtn" type="button" class="feedback-toast-yes" data-i18n="feedbackToastYes">Give feedback</button>
-                    <button id="feedbackToastLaterBtn" type="button" class="feedback-toast-later" data-i18n="feedbackToastLater">Later</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- In-game Walkthrough Overlay -->
-        <div id="walkthroughOverlay" class="wt-overlay hidden">
-            <div id="walkthroughSpotlight" class="wt-spotlight"></div>
-            <div id="walkthroughBox" class="wt-box">
-                <div class="wt-step-label" id="wtStepLabel"></div>
-                <div class="wt-arrow" id="wtArrow"></div>
-                <h3 class="wt-title" id="wtTitle"></h3>
-                <p class="wt-text" id="wtText"></p>
-                <div class="wt-footer">
-                    <button class="wt-skip-btn" id="wtSkipBtn"></button>
-                    <button class="wt-next-btn" id="wtNextBtn"></button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Splash -->
-        <div id="splashScreen" class="screen-overlay">
-            <div class="screen-content">
-                <img src="assets/img/branding/logo-splash.png" alt="Wild Guest List" class="screen-logo">
-                <div class="player-name-row">
-                    <label class="player-name-label" data-i18n="playerNameLabel">Your Name</label>
-                    <input id="playerNameInput" class="player-name-input" type="text" maxlength="20"
-                           data-i18n-placeholder="playerNamePlaceholder" placeholder="Enter your name...">
-                </div>
-                <button id="startGameBtn" class="screen-btn" data-i18n="splashStart">Start Game</button>
-                <button id="splashSettingsBtn" class="splash-settings-btn" data-i18n="splashSettings">Settings</button>
-            </div>
-            <div class="creator">
-                Created by <a href="https://www.useffarahmand.com/" target="_blank">Usef Farahmand</a>
-            </div>
-        </div>
-
-        <!-- Difficulty Modal -->
-        <div id="difficultyModal" class="screen-overlay hidden">
-            <div class="screen-content difficulty-content">
-                <h2 data-i18n="diffTitle">🎮 Choose Bot Difficulty</h2>
-                <p class="diff-subtitle" data-i18n="diffSubtitle">Set how smart each opponent is</p>
-                <div id="difficultyPanel"></div>
-                <button id="confirmDiffBtn" class="screen-btn" data-i18n="diffConfirm">Let's Play!</button>
-            </div>
-        </div>
-
-        <!-- Guidance prompt — asked once per new game, before it starts -->
-        <div id="guidancePromptModal" class="screen-overlay hidden">
-            <div class="screen-content guide-prompt-content">
-                <h2 data-i18n="guidePromptTitle">Show step-by-step help?</h2>
-                <p class="diff-subtitle" data-i18n="guidePromptText">We can explain each animal's ability the first time you play it this game.</p>
-                <div class="guide-prompt-actions">
-                    <button id="guidancePromptYesBtn" class="screen-btn" type="button" data-i18n="guidePromptYes">Yes, guide me</button>
-                    <button id="guidancePromptNoBtn" class="screen-btn guide-prompt-no" type="button" data-i18n="guidePromptNo">No thanks</button>
-                </div>
-                <label class="guide-prompt-dontshow">
-                    <input type="checkbox" id="guidancePromptDontShowAgain">
-                    <span data-i18n="guidePromptDontShowAgain">Don't show this again</span>
-                </label>
-            </div>
-        </div>
-
-        <!-- Restart-from-beginning prompt — asked only when the player
-             chooses step-by-step guidance and some abilities have already
-             been explained in an earlier game -->
-        <div id="guidanceRestartModal" class="screen-overlay hidden">
-            <div class="screen-content guide-prompt-content">
-                <h2 data-i18n="guideRestartTitle">Start the guide over?</h2>
-                <p class="diff-subtitle" data-i18n="guideRestartText">You've already seen some animals explained. Show them all again from the beginning, or only the ones you haven't seen yet?</p>
-                <div class="guide-prompt-actions">
-                    <button id="guidanceRestartYesBtn" class="screen-btn" type="button" data-i18n="guideRestartYes">Start over</button>
-                    <button id="guidanceRestartNoBtn" class="screen-btn guide-prompt-no" type="button" data-i18n="guideRestartNo">Just new ones</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- End Game -->
-        <div id="endGameScreen" class="screen-overlay hidden">
-            <div class="screen-content">
-                <h1 id="endGameTitle"></h1>
-                <p id="endGameText"></p>
-                <div id="finalScores"></div>
-                <button id="playAgainBtn" class="screen-btn" data-i18n="playAgain">Play Again</button>
-                <button id="endgameFeedbackBtn" type="button" class="feedback-link-btn endgame-feedback-btn">
-                    <span data-icon="feedback"></span>
-                    <span data-i18n="endgameFeedbackBtn">Give Feedback</span>
-                </button>
-            </div>
-        </div>
-
         <div id="tutorialModal" class="modal hidden" role="dialog" aria-labelledby="tutorialTitle" aria-modal="true">
 
             <div class="modal-content tut-panel">
@@ -555,12 +626,7 @@
 
         </div>
 
-        <!-- Full-screen red flash when the turn timer drops under 3s
-             (see .screen-damage-flash in css/style.css, triggered from
-             renderTurnTimer in js/ui/game-ui.js) -->
-        <div id="screenDamage" aria-hidden="true"></div>
-
-        <script type="module" src="js/main.js"></script>
+        <script type="module" src="js/home-main.js"></script>
 
     </body>
 </html>

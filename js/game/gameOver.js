@@ -1,5 +1,6 @@
 import { addLog } from "../services/logger.js";
 import { showEndGame } from "../ui/endgame-ui.js";
+import { notifyGameFinished } from "../services/achievements.js";
 
 export function isGameOver(gameState){
 
@@ -73,6 +74,13 @@ export function finishGame(gameState){
         winner,
         "logWon", {}
     );
+
+    // Achievement evaluation happens only here, off the authoritative,
+    // once-only game result — never from UI state. Deliberately not
+    // awaited: finishGame() itself stays synchronous (as it always was)
+    // and the achievement/unlock-notification UI updates independently
+    // a moment later.
+    notifyGameFinished(gameState);
 
     showEndGame(gameState);
 }

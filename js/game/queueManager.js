@@ -73,10 +73,14 @@ export async function resolveQueue(gameState){
 export function resolveRemainingQueue(gameState){
     while(gameState.queue.length > 0){
         if(gameState.queue.length <= 2){
+            // Achievement metadata only (Last One Standing) — purely
+            // descriptive, same as the existing `order` field, and does
+            // not change the shift/push mutation logic below at all.
+            const soleSurvivor = gameState.queue.length === 1;
             while(gameState.queue.length > 0){
                 const card = gameState.queue.shift();
                 card.owner.party.push(card);
-                emit({ type: EVENTS.CARD_ENTERED_PARTY, card, order: "final" });
+                emit({ type: EVENTS.CARD_ENTERED_PARTY, card, order: "final", soleSurvivor });
             }
         } else {
             const first  = gameState.queue.shift();
