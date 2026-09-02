@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
         <title>Wild Guest List — Choose Bot Difficulty</title>
         <link rel="icon" type="image/x-icon" href="assets/img/branding/favicon.ico" />
         <link rel="stylesheet" href="assets/fonts/fonts.css">
@@ -47,17 +47,28 @@
              sessionStorage handoff — nothing about how a match
              starts changed, only where the picking-a-setup UI
              lives. -->
+        <!-- Header → Scrollable Content → Fixed Action Footer (see
+             css/style.css .screen-content--panel). The Play button
+             lives in the footer so it can never scroll out of reach,
+             regardless of how many bot rows / how tall the content
+             gets on a small screen — this is the fix for the
+             previously-invisible Play button on short viewports. -->
         <div class="screen-overlay">
-            <div class="screen-content">
+            <div class="screen-content screen-content--panel">
 
-                <a href="index.html" class="page-back-link">
-                    <span aria-hidden="true">←</span> <span data-i18n="backToHome">Home</span>
-                </a>
-
-                <div class="difficulty-content">
+                <div class="screen-panel-header">
+                    <a href="index.html" class="page-back-link">
+                        <span aria-hidden="true">←</span> <span data-i18n="backToHome">Home</span>
+                    </a>
                     <h2 data-i18n="diffTitle">🎮 Choose Bot Difficulty</h2>
                     <p class="diff-subtitle" data-i18n="diffSubtitle">Set how smart each opponent is</p>
+                </div>
+
+                <div class="screen-panel-scroll">
                     <div id="difficultyPanel"></div>
+                </div>
+
+                <div class="screen-panel-footer">
                     <button id="confirmDiffBtn" class="screen-btn" data-i18n="diffConfirm">Let's Play!</button>
                 </div>
 

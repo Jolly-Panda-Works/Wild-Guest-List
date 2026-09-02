@@ -16,6 +16,11 @@ import { loadIcons } from "./ui/icon-ui.js";
 import { initCardColorPicker } from "./ui/cardColor-ui.js";
 import { initStepGuidanceToggle } from "./ui/cardGuidance-ui.js";
 import { initSoundToggle } from "./services/soundManager.js";
+import { initOrientationGate } from "./ui/orientation-ui.js";
+
+// Wired synchronously, before any awaited boot step, same as every
+// other top-level page — see js/ui/orientation-ui.js.
+initOrientationGate();
 
 await loadI18n();
 buildLangSelector(document.getElementById("langSelector"));

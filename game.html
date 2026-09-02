@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
         <title>Wild Guest List — Game</title>
         <link rel="icon" type="image/x-icon" href="assets/img/branding/favicon.ico" />
         <link rel="stylesheet" href="assets/fonts/fonts.css">
@@ -473,26 +473,37 @@
             </div>
         </div>
 
-        <!-- End Game -->
+        <!-- End Game — same Header / Scrollable Content / Fixed Footer
+             architecture as Choose Bot Difficulty (see
+             css/style.css .screen-content--panel): Return to Home and
+             Play Again live in the footer so a long final-scores list
+             (more players, longer names/translations) can never push
+             them below the viewport with no way to reach them. -->
         <div id="endGameScreen" class="screen-overlay hidden">
-            <div class="screen-content">
-                <h1 id="endGameTitle"></h1>
-                <p id="endGameText"></p>
-                <div id="finalScores"></div>
-                <div class="endgame-actions">
-                    <button id="returnHomeBtn" type="button" class="screen-btn endgame-btn-secondary">
-                        <span class="endgame-btn-icon" data-icon="home"></span>
-                        <span data-i18n="endReturnHome">Return to Home</span>
-                    </button>
-                    <button id="playAgainBtn" type="button" class="screen-btn endgame-btn-primary">
-                        <span class="endgame-btn-icon" data-icon="pauseRestart"></span>
-                        <span data-i18n="playAgain">Play Again</span>
+            <div class="screen-content screen-content--panel">
+                <div class="screen-panel-header">
+                    <h1 id="endGameTitle"></h1>
+                    <p id="endGameText"></p>
+                </div>
+                <div class="screen-panel-scroll">
+                    <div id="finalScores"></div>
+                </div>
+                <div class="screen-panel-footer">
+                    <div class="endgame-actions">
+                        <button id="returnHomeBtn" type="button" class="screen-btn endgame-btn-secondary">
+                            <span class="endgame-btn-icon" data-icon="home"></span>
+                            <span data-i18n="endReturnHome">Return to Home</span>
+                        </button>
+                        <button id="playAgainBtn" type="button" class="screen-btn endgame-btn-primary">
+                            <span class="endgame-btn-icon" data-icon="pauseRestart"></span>
+                            <span data-i18n="playAgain">Play Again</span>
+                        </button>
+                    </div>
+                    <button id="endgameFeedbackBtn" type="button" class="feedback-link-btn endgame-feedback-btn">
+                        <span data-icon="feedback"></span>
+                        <span data-i18n="endgameFeedbackBtn">Give Feedback</span>
                     </button>
                 </div>
-                <button id="endgameFeedbackBtn" type="button" class="feedback-link-btn endgame-feedback-btn">
-                    <span data-icon="feedback"></span>
-                    <span data-i18n="endgameFeedbackBtn">Give Feedback</span>
-                </button>
             </div>
         </div>
 

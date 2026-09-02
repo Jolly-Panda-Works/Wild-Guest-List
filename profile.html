@@ -2,13 +2,25 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
         <title>Wild Guest List — Profile</title>
         <link rel="icon" type="image/x-icon" href="assets/img/branding/favicon.ico" />
         <link rel="stylesheet" href="assets/fonts/fonts.css">
         <link rel="stylesheet" href="css/style.css">
     </head>
     <body>
+
+        <!-- ── ORIENTATION GATE ──────────────────────────────────────
+             Reusable, page-agnostic gate — see
+             js/ui/orientation-ui.js (initOrientationGate()). Same
+             markup/module as every other real top-level page. -->
+        <div id="orientationGate" class="orientation-gate hidden" role="status" aria-live="polite" tabindex="-1">
+            <div class="orientation-gate-content">
+                <span class="orientation-gate-icon" data-icon="orientationRotate" aria-hidden="true"></span>
+                <h2 class="orientation-gate-title" data-i18n="orientationTitle">Please rotate your device</h2>
+                <p class="orientation-gate-body" data-i18n="orientationBody">Wild Guest List is designed for landscape orientation.</p>
+            </div>
+        </div>
 
         <!-- ── PROFILE ────────────────────────────────────────
              A top-level destination, sibling of Home — not

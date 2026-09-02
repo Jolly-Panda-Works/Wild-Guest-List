@@ -1,46 +1,29 @@
 // ══════════════════════════════════════════════════════════
 // Orientation Gate — js/ui/orientation-ui.js
 //
-// Wild Guest List is landscape-only, especially on touch devices.
+// POLICY: Wild Guest List is landscape-only on touch devices. On a
+// coarse-pointer (touch) device held in portrait, this gate blocks
+// the normal app UI and shows "Please rotate your device" instead —
+// the mobile experience must never present a mixed
+// portrait-home/landscape-game system. Desktop (fine pointer) is
+// never gated, even if the window happens to be taller than it is
+// wide, since desktop uses its own layout regardless of window shape.
+// Rotating back to landscape (or attaching a mouse/trackpad) clears
+// the gate automatically via the reactive matchMedia listeners below —
+// nothing underneath is destroyed or reset while blocked.
+//
+// A prior iteration of this project briefly supported both
+// orientations on mobile (portrait layouts adapting instead of
+// gating) — that approach has been superseded by this landscape-only
+// policy; see README.md § Responsive Design. Do not reintroduce a
+// portrait-supported mode without updating this comment,
+// tests/orientation.test.mjs, and the README section together.
+//
 // This module is a single, reusable gate — call initOrientationGate()
 // once on any page that includes the #orientationGate markup (every
 // real top-level page: index.html, game.html, bot-difficulty.html,
 // cards.html, game-modes.html, coming-soon.html) and it wires itself
 // up, self-contained, with no page-specific knowledge.
-//
-//   Application
-//     ↓
-//   Orientation Check  (matchMedia, reactive — see below)
-//     ↓
-//   Landscape?
-//   ├── Yes → Application (gate hidden)
-//   └── No  → Rotate Device Screen (gate shown, blocks interaction)
-//
-// DETECTION — deliberately NOT user-agent sniffing. "Is this a device
-// where orientation is meaningful" is answered with the standard
-// responsive-design signal for a touch-primary device:
-// `(pointer: coarse)` — true for phones/tablets, false for desktop
-// (even a touch-capable laptop with a mouse attached still reports
-// `pointer: fine` as its primary pointer). Combined with
-// `(orientation: portrait)`, this means: never blocks desktop
-// (regardless of window aspect ratio), and blocks both phones AND
-// tablets in portrait — landscape is the supported orientation for
-// both, matching the feature spec.
-//
-// REACTING TO ROTATION — MediaQueryList's own `change` event (fired by
-// the browser the instant orientation actually changes) is the
-// primary mechanism, with `orientationchange`/`resize` listeners as a
-// defensive fallback for older/inconsistent implementations. This is
-// what makes the gate show/hide "immediately" on rotation — no
-// polling, no CSS `transform: rotate(...)` hack.
-//
-// TRUE ORIENTATION LOCK — attempted as a progressive enhancement via
-// the Screen Orientation API (`screen.orientation.lock("landscape")`),
-// which browsers that support it will honor once combined with e.g.
-// fullscreen; browsers that don't (notably iOS Safari, and any
-// non-fullscreen context) simply reject/throw, silently, and the
-// blocking overlay below remains the reliable, universal fallback —
-// exactly as called for in this feature's spec.
 // ══════════════════════════════════════════════════════════
 
 import { loadIcons } from "./icon-ui.js";
@@ -86,14 +69,15 @@ function isPortraitNow() {
 }
 
 function computeShouldBlock() {
-    // Re-evaluated on every check (not cached at init) so this stays
-    // correct even for the rare device that can change pointer type at
-    // runtime (e.g. a 2-in-1 convertible switching between laptop and
-    // tablet mode), not just orientation.
-    const isTouchPrimary = typeof window.matchMedia === "function"
-        && window.matchMedia("(pointer: coarse)").matches;
-
-    return isTouchPrimary && isPortraitNow();
+    // Landscape-only on touch devices: block when the device is both
+    // coarse-pointer (touch — phones/tablets) AND currently portrait.
+    // Fine-pointer devices (desktop/laptop, even a mouse-driven
+    // tablet) are never blocked, regardless of window shape, since
+    // desktop keeps its own existing layout.
+    const isCoarsePointer = typeof window.matchMedia === "function"
+        ? window.matchMedia("(pointer: coarse)").matches
+        : false;
+    return isCoarsePointer && isPortraitNow();
 }
 
 function applyState() {

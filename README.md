@@ -886,56 +886,133 @@ js/ui/orientation-ui.js  (landscape-only enforcement — see below)
 
 The interface adapts game controls and panels for smaller screens while maintaining the core gameplay experience.
 
-### Orientation Gate — landscape only
+### Orientation — landscape-only on touch devices
 
-Wild Guest List is designed for landscape orientation, especially on
-touch devices. A single, reusable gate (`js/ui/orientation-ui.js`) is
-wired into every real top-level page (`index.html`, `game.html`,
-`bot-difficulty.html`, `cards.html`, `game-modes.html`,
-`coming-soon.html` — each includes the same `#orientationGate` markup
-and calls `initOrientationGate()`, synchronously, before that page's
-own boot sequence):
+Wild Guest List is **landscape-only on touch devices**. A phone or
+tablet (coarse pointer) held in portrait is blocked by
+`js/ui/orientation-ui.js`'s gate: the normal app UI is hidden and a
+"Please rotate your device" overlay (`#orientationGate`, present on
+every top-level page) is shown instead. Rotating to landscape clears
+the gate automatically and reactively (via `matchMedia`, not a CSS
+`transform: rotate()` hack) — nothing underneath is destroyed or
+reset while blocked. Desktop/laptop (fine pointer) is never gated,
+regardless of window shape.
+
+This project briefly supported both orientations on mobile (portrait
+layouts adapting instead of gating) — that approach has been
+superseded by the landscape-only policy above; every mobile screen
+(Home, Game Mode Selection, Choose Bot Difficulty, Settings, Profile,
+Card Guide, Achievements, Game, Game Result, and every popup) is
+designed for landscape only, and there is deliberately no
+mixed-orientation system (e.g. portrait Home + landscape Game). See
+`tests/orientation.test.mjs` for the current gating behavior across
+every pointer/orientation combination.
+
+Do not re-enable a both-orientations mode without updating the gate,
+`tests/orientation.test.mjs`, and this section together.
+
+### Panel Architecture — Header / Scrollable Body / Fixed Footer
+
+Every full-screen panel (`.screen-content`) and popup
+(`.modal-content`) follows the same structure, so a primary action
+button can never scroll out of reach on a short or narrow screen:
 
 ```text
-Application
-  ↓
-Orientation Check   (matchMedia — reactive, not polled)
-  ↓
-Landscape?
-├── Yes → Application
-└── No  → Rotate Device Screen
+┌─────────────────────────────┐
+│ Header                Close │   ← flex: 0 0 auto, never scrolls
+├─────────────────────────────┤
+│                             │
+│  Scrollable Content/Body    │   ← flex: 1 1 auto, overflow-y: auto
+│                             │
+├─────────────────────────────┤
+│ Fixed Action Footer         │   ← flex: 0 0 auto, always visible
+└─────────────────────────────┘
 ```
 
-* **Detection** is `(pointer: coarse)` (touch-primary — phones and
-  tablets) combined with `(orientation: portrait)` — not user-agent
-  sniffing, and not a raw screen-size threshold, so it never blocks
-  desktop (even a narrow/tall browser window) while still correctly
-  covering tablets in portrait.
-* **Reacts immediately** via `MediaQueryList`'s own `change` event
-  (with `orientationchange`/`resize` as a defensive fallback) — rotate
-  the device either direction and the gate shows/hides itself with no
-  polling and no `transform: rotate(...)` trick.
-* **True orientation lock** (`screen.orientation.lock("landscape")`) is
-  attempted as a progressive enhancement where supported; the reactive
-  overlay above is the universal, reliable mechanism everywhere else
-  (notably iOS Safari, which doesn't implement that API at all).
-* **Never destroys game state.** The gate is a full-screen overlay
-  (its own top-most layer, above every `.modal` and `#startupScreen`)
-  that simply blocks pointer events from reaching whatever's
-  underneath — nothing underneath is torn down, reset, or reinitialized.
-  On `game.html` specifically, it also pauses the turn timer while
-  blocking (reusing the existing `js/game/turnTimer.js`
-  pause/resume — the same mechanism the Pause panel uses — via
-  `onOrientationBlocked()`/`onOrientationUnblocked()`) and auto-resumes
-  only if the gate itself was what paused it, never a game the player
-  paused manually.
-* **Accessible**: `role="status"`/`aria-live="polite"` (same pattern as
-  `#startupScreen`), with focus moved into the gate's own message while
-  shown and restored to whatever was focused once it hides.
+- **Full-screen panels** (Choose Bot Difficulty, End Game): opt into
+  `.screen-content--panel` + `.screen-panel-header` /
+  `.screen-panel-scroll` / `.screen-panel-footer`.
+- **Popups**: opt into `.modal-content > .modal-header` /
+  `.modal-body` / `.modal-footer`. A form-based popup (Feedback) wraps
+  `.modal-body`/`.modal-footer` in an intermediate `.modal-form`
+  wrapper instead, since a `<button type="submit">` must be a
+  descendant of its `<form>`.
+- Popups that don't opt in (Settings, Profile, Card Guide, About,
+  Lucky Wheel, Kangaroo, Card detail, Game Log, Pause, Card Guidance)
+  are unaffected — `.modal-content` scrolls as a single box, exactly
+  as before, since a plain flex column with block children lays out
+  identically to the old block flow.
+- All sizing uses `dvh` (with a `vh` fallback for older browsers) and
+  `env(safe-area-inset-*)` padding (requires `viewport-fit=cover` in
+  the viewport meta tag, present on every page) so mobile
+  browser-chrome resizing and device notches/home-indicators never
+  cover a button.
+- `.screen-content` itself uses `justify-content: safe center` (with
+  a `flex-start` fallback via `@supports`) so short content still
+  centers, but content taller than the viewport scrolls into view
+  from the top instead of being clipped/centered off both edges.
 
-See `tests/orientation.test.mjs` (`tests/README.md`) for the covered
-scenarios (desktop/mobile/tablet × portrait/landscape, live rotation in
-both directions, no duplicate initialization).
+### Mobile landscape — no-scroll layout layer
+
+On top of the general Panel Architecture above, `css/style.css`'s
+**"LANDSCAPE-ONLY MOBILE — NO-SCROLL LAYOUT LAYER"** section (keyed on
+`(pointer: coarse) and (orientation: landscape)`, with additional
+`max-height` tiers for standard and small landscape phones) actively
+compacts and re-composes each mobile screen to fit its viewport
+without scrolling, rather than relying on `overflow-y: auto` as the
+fix:
+
+- **Why a separate layer, keyed on height, not the existing
+  `max-width: 600px` mobile rules**: those rules correctly target a
+  narrow *portrait* phone, but never fire for a *landscape* phone
+  (same device, same short dimension — except now it's the height
+  that's small, not the width). Left alone, a landscape phone at
+  700–930px wide fell through to the tablet/desktop layout, which
+  assumes far more vertical room than a phone in landscape actually
+  has. The new layer targets the actual constraint (short viewport +
+  touch input) instead of width.
+- **Home** is re-composed from a stacked column into a 3-row grid
+  (top bar full-width; secondary nav / game-mode tabs / banner side
+  by side; bottom row) so it uses the landscape width instead of
+  stacking everything down the height.
+- **Choose Bot Difficulty** compacts row height (avatar, difficulty
+  buttons, color picker) so the player row + all 3 bot rows + the
+  Play footer are always visible together.
+- **Game Board** forces the existing compact mobile shell (Party/
+  Trash as buttons opening overlays, Game Log as a button opening
+  `#logModal`, other players in one row) regardless of viewport
+  width, and splits Queue/Hand by flex-basis instead of pinning Hand
+  over the content.
+- **Popups** get a taller `max-height` and tighter chrome padding in
+  landscape.
+- Two screens (Achievements' `.ach-grid`, Card Guide's `#animalGrid`)
+  keep `overflow-y: auto` as a deliberate, non-load-bearing safety
+  net rather than a primary fix — their content length depends on
+  how much a player has unlocked / the current card set, so an
+  unusually long list scrolls instead of being silently clipped.
+
+Real-device/browser QA against this layer hasn't been done as part
+of this change (this environment can't render a browser) — see
+Known Issues below.
+
+### Mobile popups — bottom sheet, not a shrunken dialog
+
+Below the `600px` **width** breakpoint, every `.modal` (Settings,
+Profile, Card Guide, About, Lucky Wheel, Feedback, Tutorial, Game
+Log, Card detail, etc.) renders as a bottom sheet instead of a
+centered dialog: anchored to the bottom edge, full width, rounded top
+corners only, a small drag handle for affordance, and a short
+slide-up entrance (`prefers-reduced-motion` disables the animation).
+This is one shared override on the base `.modal`/`.modal-content`
+rules — no per-screen markup changes — so every popup gets it
+automatically, and the existing Header/Scrollable Body/Fixed Footer
+structure described above is unaffected. `#logModal` keeps its own
+shorter height since log entries rarely need a near-full-screen
+sheet. Since landscape phones are rarely under 600px **wide**, this
+bottom-sheet treatment mostly applies to small windows/narrow tablets
+rather than typical mobile landscape widths (667–932px), which get
+the centered-dialog treatment with the landscape-specific sizing
+described above instead.
 
 ---
 
@@ -1018,7 +1095,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.26.0
+**Current version:** 1.29.0
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Home's Settings popup (`index.html` `#settingsModal`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

@@ -523,7 +523,11 @@ body {
 
 .small-popup {
 
-    width: 350px;
+    /* Was a fixed 350px — overflowed horizontally on the narrowest
+       real phones (320px-wide viewports leave under 350px of usable
+       width once the browser/OS chrome and .modal-content's own
+       margins are accounted for). */
+    width: min(350px, 92vw);
 
     text-align: center;
 }
@@ -727,6 +731,13 @@ body {
 
     width:100vw;
     height:100vh;
+    /* Dynamic viewport unit: shrinks to the *visible* area on mobile
+       browsers whose address/tab bar can show/hide, instead of the
+       old 100vh which is measured against the largest possible
+       viewport and can leave content (and buttons) hidden behind the
+       browser chrome. Ignored by browsers that don't support dvh,
+       which keep the 100vh value above. */
+    height:100dvh;
 
     background:rgba(0,0,0,.8);
 
@@ -753,7 +764,17 @@ body {
 
     flex-direction:column;
 
+    /* `safe center`: centers short content exactly like plain `center`
+       used to, but falls back to start-aligned once content is taller
+       than the viewport instead of clipping/centering it off both
+       edges — the exact bug that hid the Choose-Bot-Difficulty and
+       End-Game action buttons on short screens. Browsers without
+       `safe`/`unsafe` support (very old Safari) just read this as
+       `center` and keep the previous behavior; see the `@supports`
+       fallback further down that trades centering for correctness on
+       those browsers instead. */
     justify-content:center;
+    justify-content:safe center;
 
     align-items:center;
 
@@ -765,6 +786,25 @@ body {
 
     box-sizing:border-box;
 
+    /* Any .screen-content whose content grows taller than the
+       viewport now scrolls instead of silently overflowing — this
+       alone fixes every "button not visible on smaller screens" case
+       across every .screen-overlay page (Choose Bot Difficulty, End
+       Game, Coming Soon, guidance prompts, splash) without needing a
+       markup change on each one. Panels with real footer buttons
+       (Choose Bot Difficulty, End Game) additionally use the
+       .screen-content--panel modifier below so those buttons are
+       pinned rather than merely scrollable. */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+@supports not (justify-content: safe center) {
+    .screen-content {
+        /* No `safe` keyword support: prioritize "never hide content"
+           over perfect vertical centering for short content. */
+        justify-content: flex-start;
+    }
 }
 
 
@@ -2038,6 +2078,7 @@ body {
 
 
     max-height: 88vh;
+    max-height: 88dvh; /* mobile-browser-chrome-safe, see .screen-overlay */
 
 
     overflow-y: auto;
@@ -2060,6 +2101,80 @@ body {
 
     box-shadow:
         0 20px 60px rgba(0,0,0,.6);
+
+    /* Popup Panel Architecture: Header → Scrollable Body → Fixed
+       Footer. Existing modals (no .modal-body/.modal-footer children)
+       are unaffected — display:flex + flex-direction:column lays out
+       a set of plain block children identically to the old block
+       flow, so they keep scrolling as one box exactly as before. Any
+       modal that opts in with an explicit .modal-body wrapper (and
+       optionally .modal-footer) instead gets a header/footer that
+       stay put while only the body scrolls — see the :has() rule
+       below and Settings/Profile/Card Guide/Feedback for real
+       examples. */
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content:has(.modal-body) {
+    padding: 0;
+    overflow: hidden; /* .modal-body scrolls instead of the shell */
+}
+
+/* .modal-form: an intermediate wrapper (typically a <form>, e.g. the
+   Feedback popup) between .modal-content and .modal-header/body/
+   footer — needed because a <form> must directly contain its Submit
+   button to work natively, so it can't sit *inside* .modal-body. It
+   just continues the same flex column so .modal-body still gets a
+   bounded, scrollable height. */
+.modal-content > .modal-form {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-content > .modal-header,
+.modal-content > .modal-form > .modal-header {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 24px 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-content > .modal-body,
+.modal-content > .modal-form > .modal-body {
+    flex: 1 1 auto;
+    min-height: 0; /* required for a flex child to actually scroll instead of overflowing */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 16px 24px 20px;
+}
+
+.modal-content > .modal-footer,
+.modal-content > .modal-form > .modal-footer {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 24px calc(14px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--border);
+}
+
+.modal-content .modal-footer .screen-btn,
+.modal-content .modal-footer .feedback-submit-btn {
+    flex: 1;
+    margin-top: 0;
+}
+
+@media (max-height: 480px) and (orientation: landscape) {
+    .modal-content > .modal-header { padding: 12px 20px 10px; }
+    .modal-content > .modal-body { padding: 10px 20px 14px; }
+    .modal-content > .modal-footer { padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* ── About Developer panel redesign ──
@@ -2754,7 +2869,7 @@ body {
 
 .kangaroo-choice {
 
-    width: 350px;
+    width: min(350px, 100%);
 
     text-align:center;
 
@@ -2767,6 +2882,8 @@ body {
 
     justify-content:center;
 
+    flex-wrap: wrap;
+
     gap:20px;
 
     margin-top:20px;
@@ -2778,7 +2895,8 @@ body {
 .kangaroo-buttons button {
 
 
-    width:120px;
+    width: 120px;
+    max-width: 40%;
 
     height:60px;
 
@@ -3553,18 +3671,23 @@ body.gameplay-locked #playerHand .card {
 #queueInner #queue { display: flex; gap: clamp(6px, 2vw, 30px); }
 .queue-icon { font-size: clamp(24px, 4vw, 52px); line-height: 1; flex-shrink: 0; opacity: 0.85; }
 
-/* End game */
+/* End game — sizing/scroll/footer-pinning comes from the shared
+   .screen-content--panel rules; this just supplies the visual "card"
+   chrome (background/blur/border/shadow) on top of that. */
 #endGameScreen .screen-content {
-    max-width: 480px; width: 90vw;
+    max-width: 480px; width: min(480px, 90vw);
+    max-height: 85vh;
+    max-height: 85dvh;
     background: rgba(10,31,15,0.92);
     backdrop-filter: blur(18px);
     border: 1px solid rgba(255,255,255,0.12);
     border-radius: var(--radius-lg);
-    padding: 36px 28px;
     box-shadow: 0 20px 60px rgba(0,0,0,.6);
 }
+#endGameScreen .screen-panel-header { padding-top: 28px; }
+#endGameScreen .screen-panel-footer { border-top: none; background: transparent; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
 #endGameTitle { font-size: clamp(28px, 7vw, 48px); margin: 0 0 8px; }
-#endGameText  { font-size: clamp(14px, 3vw, 18px); opacity: 0.8; margin: 0 0 24px; }
+#endGameText  { font-size: clamp(14px, 3vw, 18px); opacity: 0.8; margin: 0 0 4px; }
 
 .final-score-header, .final-score-row {
     display: grid;
@@ -3596,7 +3719,7 @@ body.gameplay-locked #playerHand .card {
     display: flex;
     width: 100%;
     gap: 12px;
-    margin-top: 28px;
+    margin-top: 0;
     flex-wrap: wrap;
     justify-content: center;
 }
@@ -3930,11 +4053,75 @@ body.gameplay-locked #playerHand .card {
         height: 86px !important;
     }
 
-    /* ── All modals: consistent margin ── */
+    /* ── Mobile popups: bottom-sheet, not a shrunken centered card ──
+       Every .modal (Settings, Profile, Card Guide, About, Lucky Wheel,
+       Feedback, Tutorial, Log, card detail, etc.) shares one popup
+       shell (see the base .modal-content rules above), so this single
+       override upgrades all of them at once instead of each screen
+       inventing its own mobile treatment — see docs "MOBILE POPUPS" /
+       "VISUAL DESIGN SYSTEM". Anchored to the bottom edge, full width,
+       rounded only on top, sized to content up to ~92dvh so a short
+       popup (e.g. the Lucky Wheel placeholder) doesn't stretch to fill
+       the screen. Internal header/scroll-body/footer structure
+       (.modal-content:has(.modal-body) etc., set above) is unchanged —
+       only the outer shell's position/shape changes here. */
+    .modal {
+        align-items: flex-end !important;
+    }
+
     .modal-content {
-        width: calc(100vw - 24px) !important;
-        max-width: calc(100vw - 24px) !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: 92dvh !important;
+        margin: 0 !important;
+        border-radius: 20px 20px 0 0 !important;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
         box-sizing: border-box;
+        animation: modalSheetUp .28s cubic-bezier(.4,0,.2,1);
+        /* Small top handle affordance, like a native bottom sheet —
+           purely decorative, no layout impact on the header below it. */
+        position: relative;
+    }
+
+    /* Safe-area bottom padding only for modals using the plain
+       (no .modal-body/.tut-footer) scaffold — the header/body/footer
+       and tutorial layouts already add their own safe-area-aware
+       bottom padding on their footer, so adding it here too would
+       double up empty space below their buttons. */
+    .modal-content:not(:has(.modal-body)):not(.tut-panel) {
+        padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
+    }
+
+    .modal-content::before {
+        content: "";
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 36px;
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.25);
+        pointer-events: none;
+    }
+
+    /* Give the handle breathing room without shifting every modal's
+       existing header/body padding values individually. */
+    .modal-content > .modal-header,
+    .modal-content > .modal-form > .modal-header,
+    .modal-content .tut-header {
+        padding-top: 22px !important;
+    }
+
+    @keyframes modalSheetUp {
+        from { transform: translateY(24px); opacity: 0; }
+        to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .modal-content { animation: none; }
     }
 
     /* ── Help grid ── */
@@ -3963,8 +4150,12 @@ body.gameplay-locked #playerHand .card {
 
 @media (max-width: 380px) {
 
-    .top-btn { width: 26px !important; height: 26px !important; font-size: 11px; }
-    #topRight { gap: 3px !important; }
+    /* Was 26px — under any reasonable touch-target minimum. Shrinking
+       the icon's own font-size (not just relying on the button box)
+       keeps 5+ icons fitting in a tight top bar while still giving
+       each a real ~32px tappable box instead of a 26px one. */
+    .top-btn { width: 32px !important; height: 32px !important; font-size: 12px; }
+    #topRight { gap: 2px !important; }
 
     #gameLayout { padding-bottom: 100px; }
 
@@ -3983,24 +4174,97 @@ body.gameplay-locked #playerHand .card {
    DIFFICULTY MODAL
 ============================================================ */
 
+/* ── Reusable Header / Scroll / Fixed-Footer panel ───────────
+   Opt-in modifier for any .screen-content whose primary action must
+   never be allowed to scroll out of reach (Choose Bot Difficulty,
+   End Game today). Structure:
+     .screen-content.screen-content--panel
+       .screen-panel-header   (title/back — flex-shrink:0)
+       .screen-panel-scroll   (everything else — flex:1, scrolls)
+       .screen-panel-footer   (primary action(s) — flex-shrink:0,
+                                always visible, safe-area aware)
+   Overrides the plain .screen-content center/scroll-the-whole-thing
+   behavior above: here the *panel* scrolls internally instead. */
+.screen-content--panel {
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: 0;
+    overflow: hidden;
+    max-width: 480px;
+    width: min(480px, 94vw);
+    margin: 0 auto;
+}
+
+.screen-panel-header {
+    flex: 0 0 auto;
+    padding: max(18px, env(safe-area-inset-top)) 24px 4px;
+    text-align: center;
+}
+
+.screen-panel-header .page-back-link {
+    /* .screen-panel-header is text-align:center (for the title below
+       it); keep the back link itself left-aligned by making it a
+       block-level flex row instead of relying on align-self, which
+       only works inside a flex/grid parent. */
+    display: flex;
+    text-align: left;
+    margin-bottom: 6px;
+}
+
+.screen-panel-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px 24px 20px;
+}
+
+.screen-panel-footer {
+    flex: 0 0 auto;
+    padding: 14px 24px calc(14px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.18);
+}
+
+.screen-panel-footer .screen-btn {
+    width: 100%;
+    margin-top: 0;
+}
+
+/* Landscape phones (short viewport height): tighten vertical spacing
+   so the header/footer leave the scroll area real room instead of
+   eating most of a ~360-430px-tall viewport. */
+@media (max-height: 480px) and (orientation: landscape) {
+    .screen-panel-header { padding-top: max(10px, env(safe-area-inset-top)); padding-bottom: 2px; }
+    .screen-panel-scroll { padding-top: 8px; padding-bottom: 10px; }
+    .screen-panel-footer { padding-top: 8px; padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+}
+
+.screen-panel-header h2 {
+    font-size: clamp(20px, 5vw, 32px);
+    margin: 0 0 6px;
+}
+
+/* .difficulty-content: still used by game-modes.html's inline
+   difficulty section (#difficultyPanelSection) — currently an
+   orphaned/unreachable page per index.html's own architecture notes
+   (Home goes straight to bot-difficulty.html), kept working rather
+   than redesigned since nothing links to it today. bot-difficulty.html
+   itself now uses .screen-content--panel + .screen-panel-* instead
+   (see above) for the pinned-footer Play button fix. */
 .difficulty-content {
     max-width: 480px;
     width: 90vw;
-    padding: 36px 28px;
-}
-
-.difficulty-content h2 {
-    font-size: clamp(20px, 5vw, 32px);
-    margin: 0 0 6px;
+    padding: 20px 28px 28px;
 }
 
 .diff-subtitle {
     color: var(--text-muted);
     font-size: 14px;
-    margin: 0 0 28px;
+    margin: 0 0 20px;
 }
 
-#difficultyPanel { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+#difficultyPanel { display: flex; flex-direction: column; gap: 14px; }
 
 .bot-row {
     display: flex;
@@ -4581,19 +4845,14 @@ body.gameplay-locked #playerHand .card {
     /* hide button tooltip on mobile (no hover) */
     .top-btn[data-title]::after { display: none; }
 
-    /* Log modal same size as party panel */
+    /* Log modal — same bottom-sheet shell as every other modal (see
+       the shared .modal/.modal-content mobile rules above); only
+       needs its own height since log entries are usually short and
+       shouldn't force a near-full-screen sheet like Settings/Profile
+       do. */
     #logModal .modal-content {
-        width: calc(100vw - 24px) !important;
-        max-width: calc(100vw - 24px) !important;
         height: 70vh !important;
-        box-sizing: border-box;
-    }
-
-    /* all modals consistent margin */
-    .modal-content {
-        width: calc(100vw - 24px) !important;
-        max-width: calc(100vw - 24px) !important;
-        box-sizing: border-box;
+        max-height: 70dvh !important;
     }
 
     /* remove stray modal-content that causes scroll */
@@ -4766,6 +5025,15 @@ body.gameplay-locked #playerHand .card {
 
 .tut-panel {
     width: min(640px, 92vw);
+    /* Was unbounded height with overflow:hidden — a wider viewport
+       could always fit header+image+text+footer, but on a short
+       viewport (mobile landscape, ~375-430px tall) the panel simply
+       grew taller than the screen with no way to scroll, silently
+       cutting off the Next/Prev buttons. Bounding the panel and
+       letting only .tut-body scroll (below) fixes that while keeping
+       the header/progress bar/footer always visible. */
+    max-height: 88vh;
+    max-height: 88dvh;
     padding: 0;
     display: flex;
     flex-direction: column;
@@ -4781,6 +5049,7 @@ body.gameplay-locked #playerHand .card {
 
 /* Header */
 .tut-header {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -4810,6 +5079,7 @@ body.gameplay-locked #playerHand .card {
 
 /* Progress bar */
 .tut-progress-track {
+    flex: 0 0 auto;
     width: 100%;
     height: 3px;
     background: rgba(255,255,255,0.08);
@@ -4822,14 +5092,19 @@ body.gameplay-locked #playerHand .card {
     width: 0%;
 }
 
-/* Body */
+/* Body — the one part of the panel that scrolls; min-height:0 is
+   required for a flex child to actually shrink below its content
+   size instead of forcing the whole panel to overflow the screen. */
 .tut-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 32px 28px 20px;
     gap: 24px;
-    min-height: 220px;
 }
 
 .tut-image {
@@ -4869,10 +5144,11 @@ body.gameplay-locked #playerHand .card {
 
 /* Footer */
 .tut-footer {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 22px 22px;
+    padding: 14px 22px calc(22px + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid rgba(255,255,255,0.07);
     gap: 12px;
 }
@@ -4958,12 +5234,36 @@ body.gameplay-locked #playerHand .card {
     }
 
     .tut-footer {
-        padding: 12px 16px 16px;
+        padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px));
     }
 
     .tut-nav-btn {
         width: 40px;
         height: 40px;
+    }
+}
+
+/* Mobile landscape (short viewport height): the tutorial image alone
+   can be up to 180px tall, which combined with header+progress+
+   footer easily exceeds a ~375-430px-tall rotated phone screen.
+   .tut-body already scrolls (see base rule), but shrinking the image
+   and gaps here means most tutorial slides fit without scrolling. */
+@media (max-height: 480px) and (orientation: landscape) {
+    .tut-body {
+        padding: 14px 20px 10px;
+        gap: 12px;
+    }
+
+    .tut-image {
+        max-height: 96px;
+    }
+
+    .tut-header {
+        padding: 10px 20px 8px;
+    }
+
+    .tut-footer {
+        padding: 8px 20px calc(8px + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -6709,8 +7009,8 @@ body.gameplay-locked #playerHand .card {
    js/ui/orientation-ui.js) — keep the grid to two columns and trim
    vertical paddings so the whole Achievements section stays reachable
    within a short viewport without introducing horizontal overflow;
-   .modal-content's own mobile rule already caps width at
-   calc(100vw - 24px). ── */
+   .modal-content's own mobile rule already goes full-width as a
+   bottom sheet below 600px. ── */
 @media (max-width: 700px) {
     .ach-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -7028,6 +7328,14 @@ body.gameplay-locked #playerHand .card {
 .home-nav-icon {
     font-size: 22px;
     line-height: 1;
+    min-height: 2em; /* reserve the icon's box even if the image
+                         404s and js/ui/icon-ui.js clears it, so a
+                         missing icon doesn't collapse the button and
+                         throw the row out of alignment (see the
+                         "How to Play" button). */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .home-nav-label {
@@ -7133,11 +7441,13 @@ body.gameplay-locked #playerHand .card {
         padding: 18px 18px;
     }
 
-    .home-secondary-row {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .home-coin-pill,
+    /* .home-secondary-row keeps its base auto-fit grid — a forced
+       2-column override here used to orphan the 3rd button (Card
+       Guide / Settings / How to Play) onto its own half-empty row on
+       every portrait phone, since 84px×3 + gaps already fits well
+       under 320px of content width. auto-fit already reflows
+       correctly for any future button count without a fixed
+       breakpoint. */    .home-coin-pill,
     .home-gem-pill {
         padding: 5px 10px;
         font-size: 12.5px;
@@ -7153,6 +7463,38 @@ body.gameplay-locked #playerHand .card {
         max-width: 420px;
         margin-left: auto;
         margin-right: auto;
+    }
+}
+
+/* Mobile landscape (phones rotated — short viewport height): the
+   stacked banner + 3-up row + play section + bottom nav can add up
+   to more than ~375-430px of height. .home-content already scrolls
+   (overflow-y:auto, set unconditionally — see base rule), so nothing
+   is ever unreachable, but shrinking the banner and gaps here means
+   most phones fit without needing to scroll at all. */
+@media (max-height: 480px) and (orientation: landscape) {
+    .home-content {
+        padding: 10px 16px 8px;
+        gap: 10px;
+    }
+
+    .home-banner {
+        max-height: 13vh;
+        width: min(360px, 55vw);
+    }
+
+    .home-nav-btn {
+        min-height: 56px;
+        padding: 8px 8px 7px;
+    }
+
+    .home-gamestart {
+        gap: 8px;
+    }
+
+    .home-bottom-nav {
+        margin-top: 10px;
+        padding-top: 8px;
     }
 }
 
@@ -7176,4 +7518,432 @@ body.gameplay-locked #playerHand .card {
     .home-nav-btn:hover {
         transform: none;
     }
+}
+
+
+/* ==========================================================
+   LANDSCAPE-ONLY MOBILE — NO-SCROLL LAYOUT LAYER
+   ----------------------------------------------------------
+   Wild Guest List is landscape-only on touch devices (see
+   js/ui/orientation-ui.js — portrait is gated with a "please
+   rotate" overlay before any of this is ever seen). Everything
+   below only ever applies once the device is confirmed
+   landscape + touch, so it never touches desktop/laptop layouts
+   (fine pointer) regardless of window shape.
+
+   Why this is a SEPARATE layer from the existing
+   `@media (max-width: 600px)` mobile rules above, instead of
+   editing them in place: those rules key on narrow WIDTH, which
+   correctly targets a portrait phone (e.g. 390×844) but never
+   fires for a landscape phone (e.g. 844×390) — same device,
+   same short dimension, but it's now the HEIGHT that's small,
+   not the width. Left as-is, a landscape phone at 700-930px
+   wide falls through to the tablet/desktop sidebar layout
+   below, which assumes far more vertical room than a phone in
+   landscape actually has — that mismatch is the root cause of
+   the "desktop UI squeezed into a small viewport, needs
+   scrolling" problem this section fixes. Keying on
+   `(pointer: coarse) and (orientation: landscape)` instead
+   targets the actual constraint (short viewport, touch input)
+   regardless of width, and stacks under three height tiers
+   mirroring the sizes called out for testing:
+     - base tier:            up to ~500px tall (932×430 and down)
+     - standard tier (≤440): 667×375 / 844×390
+     - small tier   (≤340):  568×320
+   Scrolling is not used as the fix for oversized content here —
+   each panel is resized/restructured to fit; `overflow-y: auto`
+   is kept only as a non-load-bearing safety net on a couple of
+   genuinely open-ended lists (Achievements/Card Guide grids)
+   where real content length can vary, exactly the "compact
+   first, scroll only as a last-resort net" approach described
+   in README.md § Responsive Design.
+========================================================== */
+
+@media (pointer: coarse) and (orientation: landscape) {
+
+    html, body {
+        overflow: hidden;
+        height: 100%;
+    }
+
+    /* ── Shared shells (Home, Choose Bot Difficulty, End Game,
+       Coming Soon, guidance prompts, every top-level .screen-overlay
+       page) — stop relying on page-level scroll as the fit strategy;
+       each concrete screen below is resized to actually fit. ── */
+    .screen-content {
+        overflow-y: hidden;
+        padding: 10px 16px;
+    }
+
+    .screen-content--panel .screen-panel-scroll {
+        overflow-y: hidden;
+    }
+
+    .modal-content {
+        max-height: 94dvh;
+    }
+
+    .modal-content > .modal-body,
+    .modal-content > .modal-form > .modal-body {
+        overflow-y: hidden;
+    }
+
+    /* Achievements and Card Guide are the two screens whose content
+       length genuinely depends on how much the player has unlocked /
+       how many cards the game has — real, growing lists rather than a
+       fixed composition. They keep a scroll safety net rather than
+       silently clipping content a player has earned, but the grid
+       sizing right below aims to fit the common case (a season's
+       worth of achievements, the current card set) without ever
+       needing it. */
+    #animalGrid,
+    .ach-grid {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── HOME ──────────────────────────────────────────────────
+       Re-composed from a 5-row vertical stack (topbar / banner /
+       secondary-nav / gamestart / bottom-nav) into a 3-row grid:
+       top bar spanning full width, a middle row that puts secondary
+       nav + game-mode tabs + banner side by side, and the bottom
+       row. This is the same content, just arranged to use the
+       landscape width instead of stacking everything down the
+       height — see prompt's Home Button Positioning zones (TOP /
+       CENTER / LEFT-RIGHT / BOTTOM). No markup changes needed:
+       grid-area placement below works regardless of DOM order. */
+    .home-content {
+        display: grid;
+        grid-template-columns: minmax(120px, 190px) 1fr minmax(90px, 150px);
+        grid-template-rows: auto 1fr auto;
+        grid-template-areas:
+            "topbar  topbar    topbar"
+            "secondary gamestart banner"
+            "bottom  bottom    bottom";
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        overflow: hidden;
+        height: 100dvh;
+        box-sizing: border-box;
+    }
+
+    .home-topbar   { grid-area: topbar; }
+    .home-secondary-row { grid-area: secondary; }
+    .home-gamestart { grid-area: gamestart; margin: 0; }
+    .home-banner   { grid-area: banner; justify-self: center; }
+    .home-bottom-nav { grid-area: bottom; margin-top: 0; }
+
+    .home-banner {
+        width: min(140px, 90%);
+        max-height: 15dvh;
+    }
+
+    .home-secondary-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+        align-content: center;
+    }
+
+    .home-nav-btn {
+        flex-direction: row;
+        justify-content: flex-start;
+        min-height: 0;
+        padding: 6px 10px;
+        gap: 8px;
+    }
+
+    .home-nav-icon { font-size: 16px; min-height: 0; }
+    .home-nav-label { font-size: 11px; }
+
+    .home-gamestart-title { font-size: 11px; margin-bottom: 2px; }
+    .home-tabs { padding: 3px; }
+    .home-tab { padding: 6px 6px; font-size: 13px; }
+
+    .home-primary-btn { padding: 10px 16px; }
+    .home-play-btn { font-size: 16px; padding: 12px 16px; }
+
+    .home-tab-comingsoon { padding: 10px 10px; font-size: 12px; }
+
+    .home-bottom-nav {
+        padding-top: 4px;
+        gap: 4px;
+    }
+
+    .home-bottom-btn { padding: 4px 4px; font-size: 10px; gap: 2px; }
+    .home-bottom-icon { font-size: 15px; }
+    .home-bottom-btn .home-coming-soon-tag { font-size: 7px; padding: 1px 4px; }
+
+    .home-profile-chip { padding: 3px 8px 3px 3px; }
+    .home-profile-chip-avatar { width: 22px; height: 22px; }
+    .home-profile-chip-name { font-size: 12px; }
+    .home-coin-pill, .home-gem-pill { padding: 3px 8px; font-size: 11px; }
+
+    /* ── CHOOSE BOT DIFFICULTY ─────────────────────────────────
+       All three bot rows + the read-only player row + the Play
+       footer must be visible with no scrolling — compact every row
+       so 4 rows total fit inside the remaining height once the
+       header/footer are shrunk. */
+    .screen-panel-header { padding: 6px 4px 4px; }
+    .screen-panel-header h2 { font-size: clamp(16px, 3.4vh, 22px); margin: 0 0 2px; }
+    .diff-subtitle { font-size: 11px; margin: 0; }
+
+    .screen-panel-scroll { padding-top: 4px; padding-bottom: 4px; }
+
+    #difficultyPanel { gap: 6px; }
+
+    .bot-row {
+        padding: 5px 12px;
+        gap: 10px;
+        border-radius: var(--radius-sm);
+    }
+
+    .bot-avatar, .player-avatar-mount, .avatar-trigger-mount {
+        width: 34px;
+        font-size: 22px;
+    }
+
+    .player-avatar-display, .avatar-trigger-btn {
+        width: 34px;
+        height: 34px;
+    }
+
+    .bot-name { font-size: 12px; margin-bottom: 3px; }
+    .diff-btn { padding: 4px 6px; font-size: 10px; }
+
+    .avatar-choice { width: 34px; height: 34px; }
+
+    .screen-panel-footer { padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px)); }
+    .screen-panel-footer .screen-btn { margin-top: 0; padding: 8px 24px; font-size: 15px; }
+
+    /* ── GAME BOARD ────────────────────────────────────────────
+       Force the compact mobile shell (leaderboard/log/party/trash
+       as buttons and overlays, not permanent sidebars) regardless
+       of width — see the section comment above for why width alone
+       can't be trusted here. Re-proportioned for a wide-short
+       viewport: other players in one horizontal row, Queue and
+       Hand sharing the remaining vertical space by flex-basis
+       instead of Hand being pinned over the content. */
+    .mobile-only-btn { display: flex; }
+    #leaderboardBtn { display: none !important; }
+
+    #pageLayout {
+        display: block;
+        padding: 0;
+        height: 100dvh;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    #leftSidebar { display: none; }
+
+    #gameColumn {
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+    #topBar {
+        position: relative;
+        margin-bottom: 0;
+        flex: 0 0 auto;
+    }
+
+    #topBarContent {
+        display: grid !important;
+        grid-template-areas: "left logo right" !important;
+        grid-template-columns: auto 1fr auto !important;
+        grid-template-rows: auto !important;
+        height: auto !important;
+        padding: 3px 10px !important;
+        gap: 0 8px;
+        align-items: center;
+    }
+
+    #topCenter { grid-area: logo !important; }
+    #topCenter picture img { height: clamp(18px, 5dvh, 30px) !important; width: auto; }
+
+    #topLeft {
+        grid-area: left !important;
+        flex-direction: row !important;
+        gap: 6px !important;
+        align-items: center !important;
+    }
+
+    .turn-label, .round-label, .turn-timer-label { font-size: clamp(9px, 2dvh, 12px) !important; }
+
+    #topRight { grid-area: right !important; gap: 4px !important; }
+
+    .top-btn {
+        width: clamp(22px, 5.5dvh, 28px) !important;
+        height: clamp(22px, 5.5dvh, 28px) !important;
+        font-size: 11px;
+    }
+
+    #gameLayout {
+        display: flex !important;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+        gap: 2px;
+        padding: 2px 10px 4px;
+    }
+
+    #mobileLeaderboard {
+        order: 0;
+        flex: 0 0 auto;
+        display: block !important;
+        margin: 0;
+        padding: 2px 8px;
+    }
+
+    #mobileLeaderboard h4 { font-size: 9px; margin: 0 0 1px; }
+    #mobileLeaderboard .leaderboard-row { font-size: 10px; padding: 1px 0; }
+
+    #otherPlayers {
+        order: 1;
+        flex: 0 0 auto;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        padding: 0;
+        margin: 0;
+    }
+
+    #topPlayer, #leftPlayer, #rightPlayer {
+        flex-direction: row;
+        gap: 4px;
+        width: auto;
+    }
+
+    .player-label { font-size: 9px; }
+
+    .other-hand .card-back { width: 14px !important; height: 20px !important; }
+    .other-deck-back { width: clamp(28px, 6dvh, 40px) !important; height: clamp(38px, 8dvh, 54px) !important; }
+    .other-deck-count { font-size: 10px; }
+
+    #mobileTabs {
+        order: 2;
+        flex: 0 0 auto;
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        padding: 2px 8px;
+    }
+
+    #partyTab, #trashTab { padding: 3px 8px; font-size: 10px; }
+
+    /* Party / Trash popups: fit the landscape viewport, no
+       page-level scroll fallback — a compact card grid instead. */
+    #partyArea, #trashArea {
+        top: 4dvh; left: 6dvw; right: 6dvw; bottom: 4dvh;
+        padding: 8px 10px;
+        overflow: hidden;
+    }
+
+    #partyArea h3, #trashArea h3 { margin-bottom: 4px; font-size: 13px; }
+    #partyCards, #trashCards { overflow: hidden; gap: 4px; }
+
+    /* ── centerArea / Queue / Hand ──
+       Queue and Hand now split the remaining height by flex-basis
+       instead of Hand being position:fixed over the content — in a
+       short-but-wide viewport there's no room to spare underneath a
+       pinned strip the way there is in a tall portrait layout. */
+    #centerArea {
+        order: 3;
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0;
+        gap: 2px;
+        overflow: hidden;
+    }
+
+    #queueArea {
+        flex: 1 1 58%;
+        min-height: 0;
+        width: 100%;
+        padding: 0 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #queue {
+        height: 100%;
+        align-items: center;
+    }
+
+    #queue .card, .queue-slot {
+        width: clamp(32px, 9dvh, 58px);
+        height: clamp(46px, 13dvh, 82px);
+    }
+
+    #handArea {
+        position: static !important;
+        flex: 1 1 42%;
+        min-height: 0;
+        width: 100%;
+        border-top: 1px solid var(--border);
+        background: transparent;
+        padding: 4px 8px !important;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: clamp(4px, 1.2vw, 10px);
+        box-sizing: border-box;
+    }
+
+    #playerHand .card-back, .card-back {
+        width: clamp(34px, 10dvh, 60px) !important;
+        height: clamp(48px, 14dvh, 84px) !important;
+    }
+
+    #deckStack { transform: scale(0.8); transform-origin: center; }
+
+    /* ── PROFILE / SETTINGS / CARD GUIDE (small-popup panels) ── */
+    .small-popup { padding: 14px 18px; }
+    .profile-panel .profile-avatar-grid { gap: 6px; }
+}
+
+/* Standard mobile landscape (667×375, 844×390): a touch more room
+   than the small tier below, but still tight — one more notch of
+   compaction on top of the base tier above. */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 440px) {
+    .home-content { padding: 6px 12px; gap: 6px; }
+    .home-banner { max-height: 12dvh; }
+
+    .bot-row { padding: 4px 10px; }
+    .bot-avatar, .player-avatar-display, .avatar-trigger-btn, .avatar-choice {
+        width: 28px; height: 28px; font-size: 18px;
+    }
+
+    #topBarContent { padding: 2px 8px !important; }
+    #topCenter picture img { height: clamp(16px, 4.2dvh, 24px) !important; }
+}
+
+/* Small mobile landscape (e.g. 568×320) — the tightest tier called
+   out for validation. Every element above shrinks further via its
+   own clamp()/dvh sizing already; this tier only trims what those
+   formulas can't reach (fixed paddings, decorative gaps). */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 340px) {
+    .home-content { padding: 4px 10px; gap: 4px; }
+    .home-banner { max-height: 9dvh; width: min(100px, 85%); }
+    .home-nav-btn { padding: 4px 8px; }
+    .home-gamestart-title { display: none; } /* redundant once tabs are the only content in that column at this size */
+
+    .screen-panel-header { padding: 3px 4px 2px; }
+    .bot-row { padding: 3px 8px; gap: 6px; }
+    #difficultyPanel { gap: 4px; }
+
+    #topBarContent { padding: 2px 6px !important; }
+    #gameLayout { padding: 1px 6px 2px; }
+    #mobileLeaderboard, #otherPlayers { padding: 0; }
 }
