@@ -2947,6 +2947,18 @@ body {
     display: none;
 }
 
+/* New elements (see the Landscape layout layer near the end of this
+   file) — hidden by default same as #mobileTabs/#mobileLeaderboard
+   above, and only shown inside the
+   `(pointer: coarse) and (orientation: landscape)` layer. Without
+   this base rule they'd render with default button/div display on
+   Desktop and any other non-mobile context, since neither element
+   existed before this file's other mobile-only rules were written. */
+#leaderboardBtn, #mobileSideRail {
+
+    display: none;
+}
+
 /* ==========================================================
    RESPONSIVE SYSTEM
    Single mobile breakpoint.
@@ -7605,21 +7617,26 @@ body.gameplay-locked #playerHand .card {
     /* ── HOME ──────────────────────────────────────────────────
        Re-composed from a 5-row vertical stack (topbar / banner /
        secondary-nav / gamestart / bottom-nav) into a 3-row grid:
-       top bar spanning full width, a middle row that puts secondary
-       nav + game-mode tabs + banner side by side, and the bottom
-       row. This is the same content, just arranged to use the
-       landscape width instead of stacking everything down the
-       height — see prompt's Home Button Positioning zones (TOP /
-       CENTER / LEFT-RIGHT / BOTTOM). No markup changes needed:
-       grid-area placement below works regardless of DOM order. */
+       top bar spanning full width (with the logo centered inside
+       that same row, overlapping via a shared grid-area — see
+       below), a middle row with secondary nav + game-mode tabs,
+       and the bottom row. No markup changes needed: grid-area
+       placement below works regardless of DOM order.
+
+       `.home-content`'s own base rule caps `max-width: 640px` for
+       portrait phones, which would otherwise leave this whole grid
+       stranded in a narrow column with the dark `.screen-content`
+       background showing as empty space on both sides — override it
+       here so the grid genuinely fills the landscape viewport. */
     .home-content {
+        max-width: none;
         display: grid;
-        grid-template-columns: minmax(120px, 190px) 1fr minmax(90px, 150px);
+        grid-template-columns: minmax(120px, 190px) 1fr;
         grid-template-rows: auto 1fr auto;
         grid-template-areas:
-            "topbar  topbar    topbar"
-            "secondary gamestart banner"
-            "bottom  bottom    bottom";
+            "topbar  topbar"
+            "secondary gamestart"
+            "bottom  bottom";
         align-items: center;
         gap: 8px;
         padding: 8px 14px;
@@ -7631,12 +7648,24 @@ body.gameplay-locked #playerHand .card {
     .home-topbar   { grid-area: topbar; }
     .home-secondary-row { grid-area: secondary; }
     .home-gamestart { grid-area: gamestart; margin: 0; }
-    .home-banner   { grid-area: banner; justify-self: center; }
     .home-bottom-nav { grid-area: bottom; margin-top: 0; }
 
+    /* The logo shares the SAME grid cell as the top bar (both
+       assigned `grid-area: topbar`) rather than getting its own
+       column — grid allows multiple items in one area, so they
+       stack in that cell instead of each claiming separate space.
+       `.home-topbar`'s own children (profile chip, currency pills)
+       keep `justify-content: space-between`, pushing them to the
+       left/right edges of the cell; the logo is centered within the
+       same cell on top, giving a true top-center logo without
+       needing a wrapping element around all three. */
     .home-banner {
-        width: min(140px, 90%);
-        max-height: 15dvh;
+        grid-area: topbar;
+        justify-self: center;
+        align-self: center;
+        width: min(150px, 32vw);
+        max-height: 9dvh;
+        pointer-events: none;
     }
 
     .home-secondary-row {
@@ -7717,15 +7746,27 @@ body.gameplay-locked #playerHand .card {
     .screen-panel-footer .screen-btn { margin-top: 0; padding: 8px 24px; font-size: 15px; }
 
     /* ── GAME BOARD ────────────────────────────────────────────
-       Force the compact mobile shell (leaderboard/log/party/trash
-       as buttons and overlays, not permanent sidebars) regardless
-       of width — see the section comment above for why width alone
-       can't be trusted here. Re-proportioned for a wide-short
-       viewport: other players in one horizontal row, Queue and
-       Hand sharing the remaining vertical space by flex-basis
-       instead of Hand being pinned over the content. */
+       Left-side rail (Leaderboard / Party / Trash as compact
+       buttons, each opening its own popup — none permanently
+       visible) beside the main gameplay column (Other Players row,
+       Queue, Player Hand stacked in that order). `#gameLayout` is a
+       2-column grid: the rail and `#centerArea` are its only two
+       grid items — `#mobileLeaderboard`/`#partyArea`/`#trashArea`
+       are `position: fixed` overlays, which CSS Grid excludes from
+       layout entirely, so they don't consume a grid cell regardless
+       of where they sit in the DOM. */
     .mobile-only-btn { display: flex; }
-    #leaderboardBtn { display: none !important; }
+
+    /* Two older `@media (max-width: 600px)` rules force-hide
+       #leaderboardBtn with !important — leftover from when this id
+       had no matching element and the leaderboard was inline-only
+       (see the Home/Panel Architecture sections above). At the
+       smallest tested landscape width (568×320), that old rule's
+       width condition and this Landscape layer's condition are both
+       true at once, so it would otherwise win and hide the button
+       here too; !important + later source order is what overrides
+       it back to visible. */
+    #leaderboardBtn { display: flex !important; }
 
     #pageLayout {
         display: block;
@@ -7782,28 +7823,137 @@ body.gameplay-locked #playerHand .card {
     }
 
     #gameLayout {
-        display: flex !important;
-        flex-direction: column;
+        display: grid !important;
+        grid-template-columns: minmax(58px, 84px) 1fr;
+        align-items: stretch;
         flex: 1 1 auto;
         min-height: 0;
         overflow: hidden;
+        gap: 6px;
+        padding: 4px 8px 6px;
+    }
+
+    /* ── Left rail: Leaderboard / Party / Trash buttons ──
+       Three compact vertical buttons, none permanently occupying
+       gameplay space — each just toggles its own popup (see
+       js/ui/mobile-ui.js). #mobileTabs (Party/Trash) keeps its own
+       id/markup since it's also targeted by js/ui/walkthrough.js and
+       the width-based mobile CSS; here it's just switched from a
+       horizontal tab row to a vertical stack so all three buttons
+       read as one rail. */
+    #mobileSideRail {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    #mobileTabs {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    #leaderboardBtn, #partyTab, #trashTab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         gap: 2px;
-        padding: 2px 10px 4px;
+        padding: 6px 2px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: #0d1a0d;
+        color: white;
+        cursor: pointer;
+        font-size: 9px;
+        line-height: 1.15;
+        text-align: center;
+        box-sizing: border-box;
+        width: 100%;
     }
 
-    #mobileLeaderboard {
-        order: 0;
-        flex: 0 0 auto;
-        display: block !important;
-        margin: 0;
-        padding: 2px 8px;
+    #leaderboardBtn [data-icon], #partyTab [data-icon], #trashTab [data-icon] {
+        font-size: 15px;
     }
 
-    #mobileLeaderboard h4 { font-size: 9px; margin: 0 0 1px; }
-    #mobileLeaderboard .leaderboard-row { font-size: 10px; padding: 1px 0; }
+    #leaderboardBtn.active, #partyTab.active, #trashTab.active {
+        border-color: var(--accent);
+        background: rgba(189,93,56,.2);
+    }
+
+    /* ── Leaderboard / Party / Trash popups ──
+       Hidden by default — the base (desktop) rule for
+       #partyArea/#trashArea is an always-visible sidebar panel
+       (display: flex), and #mobileLeaderboard's base rule is a
+       permanently-visible inline block; both are explicitly
+       overridden to `none` here, or they render as permanent bars
+       instead of tap-to-open overlays. JS toggles the shared
+       `.mobile-open` class (see js/ui/mobile-ui.js's initMobileTabs,
+       which now groups all three as one open-one-at-a-time set) —
+       this layer only handles sizing once open, fitting the
+       landscape viewport without page-level scroll via a compact
+       layout rather than `overflow-y: auto`. */
+    #mobileLeaderboard, #partyArea, #trashArea {
+        display: none;
+        position: fixed;
+        top: 4dvh; left: 6dvw; right: 6dvw; bottom: 4dvh;
+        z-index: 3000;
+        padding: 8px 10px;
+        overflow: hidden;
+    }
+
+    #mobileLeaderboard.mobile-open,
+    #partyArea.mobile-open,
+    #trashArea.mobile-open {
+        display: flex;
+        flex-direction: column;
+    }
+
+    body.popup-open { overflow: hidden; }
+
+    #mobileLeaderboard .panel-header h3,
+    #partyArea h3, #trashArea h3 { margin-bottom: 4px; font-size: 13px; }
+
+    #mobileLeaderboardInline { overflow: hidden; }
+    #partyCards, #trashCards { overflow: hidden; gap: 4px; }
+
+    /* The base .leaderboard-header/.leaderboard-row rule (shared with
+       the always-visible desktop sidebar leaderboard) sets
+       font-size: 13px and padding: 6px 0 — !important here because
+       icons inside each row (.icon-image) are sized in `em`, so
+       shrinking the font is what actually shrinks the medal/party/
+       power icons too, not just the text. */
+    #mobileLeaderboard .leaderboard-header,
+    #mobileLeaderboard .leaderboard-row {
+        font-size: 11px !important;
+        padding: 3px 0 !important;
+        gap: 6px !important;
+        grid-template-columns: 1fr 44px 44px !important;
+    }
+
+    #mobileLeaderboard .leaderboard-header {
+        margin-bottom: 4px !important;
+    }
+
+    /* ── centerArea / Other Players / Queue / Hand ──
+       Source order already IS the required hierarchy (Other
+       Players → Queue → Hand are siblings in that DOM order in
+       game.html), so no `order` overrides are needed here — each
+       just gets a flex-basis share of the remaining height. */
+    #centerArea {
+        flex: 1 1 auto;
+        min-height: 0;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0;
+        gap: 4px;
+        overflow: hidden;
+    }
 
     #otherPlayers {
-        order: 1;
         flex: 0 0 auto;
         display: flex !important;
         flex-direction: row !important;
@@ -7826,47 +7976,11 @@ body.gameplay-locked #playerHand .card {
     .other-deck-back { width: clamp(28px, 6dvh, 40px) !important; height: clamp(38px, 8dvh, 54px) !important; }
     .other-deck-count { font-size: 10px; }
 
-    #mobileTabs {
-        order: 2;
-        flex: 0 0 auto;
-        display: flex;
-        gap: 6px;
-        justify-content: center;
-        padding: 2px 8px;
-    }
-
-    #partyTab, #trashTab { padding: 3px 8px; font-size: 10px; }
-
-    /* Party / Trash popups: fit the landscape viewport, no
-       page-level scroll fallback — a compact card grid instead. */
-    #partyArea, #trashArea {
-        top: 4dvh; left: 6dvw; right: 6dvw; bottom: 4dvh;
-        padding: 8px 10px;
-        overflow: hidden;
-    }
-
-    #partyArea h3, #trashArea h3 { margin-bottom: 4px; font-size: 13px; }
-    #partyCards, #trashCards { overflow: hidden; gap: 4px; }
-
-    /* ── centerArea / Queue / Hand ──
-       Queue and Hand now split the remaining height by flex-basis
-       instead of Hand being position:fixed over the content — in a
-       short-but-wide viewport there's no room to spare underneath a
-       pinned strip the way there is in a tall portrait layout. */
-    #centerArea {
-        order: 3;
-        flex: 1 1 auto;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 0;
-        gap: 2px;
-        overflow: hidden;
-    }
-
+    /* Queue keeps a smaller share and smaller cards than the Hand
+       below it — Player Hand is the higher-priority element per the
+       gameplay hierarchy, so it gets more of both. */
     #queueArea {
-        flex: 1 1 58%;
+        flex: 1 1 44%;
         min-height: 0;
         width: 100%;
         padding: 0 8px;
@@ -7882,13 +7996,13 @@ body.gameplay-locked #playerHand .card {
     }
 
     #queue .card, .queue-slot {
-        width: clamp(32px, 9dvh, 58px);
-        height: clamp(46px, 13dvh, 82px);
+        width: clamp(30px, 8dvh, 50px);
+        height: clamp(42px, 11.5dvh, 72px);
     }
 
     #handArea {
         position: static !important;
-        flex: 1 1 42%;
+        flex: 1 1 56%;
         min-height: 0;
         width: 100%;
         border-top: 1px solid var(--border);
@@ -7901,12 +8015,16 @@ body.gameplay-locked #playerHand .card {
         box-sizing: border-box;
     }
 
+    /* Player Hand cards significantly larger than Queue cards —
+       Player Hand is the top-priority gameplay element once
+       Leaderboard/Party/Trash stop permanently eating vertical
+       space, there's real room to grow it. */
     #playerHand .card-back, .card-back {
-        width: clamp(34px, 10dvh, 60px) !important;
-        height: clamp(48px, 14dvh, 84px) !important;
+        width: clamp(48px, 15dvh, 90px) !important;
+        height: clamp(68px, 21dvh, 126px) !important;
     }
 
-    #deckStack { transform: scale(0.8); transform-origin: center; }
+    #deckStack { transform: scale(0.85); transform-origin: center; }
 
     /* ── PROFILE / SETTINGS / CARD GUIDE (small-popup panels) ── */
     .small-popup { padding: 14px 18px; }
@@ -7945,5 +8063,5 @@ body.gameplay-locked #playerHand .card {
 
     #topBarContent { padding: 2px 6px !important; }
     #gameLayout { padding: 1px 6px 2px; }
-    #mobileLeaderboard, #otherPlayers { padding: 0; }
+    #otherPlayers { padding: 0; }
 }

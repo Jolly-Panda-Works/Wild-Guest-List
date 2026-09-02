@@ -101,16 +101,40 @@
                 <!-- GAME BOARD -->
                 <div id="gameLayout">
 
-                    <!-- Mobile leaderboard -->
-                    <div id="mobileLeaderboard">
-                        <h4>🏆 <span data-i18n="matchStandings">Match Standings</span></h4>
-                        <div id="mobileLeaderboardInline"></div>
+                    <!-- Mobile side rail — compact buttons for the three
+                         secondary panels (Leaderboard/Party/Trash), kept
+                         out of the main gameplay flow. Stacked on
+                         Landscape (see css/style.css's landscape layer).
+                         #mobileTabs (Party/Trash) is unchanged/reused as-is
+                         — it's also targeted by name in
+                         js/ui/walkthrough.js's tutorial steps and by the
+                         existing width-based mobile CSS, so it keeps its
+                         own id/markup rather than being flattened into
+                         this wrapper; the wrapper only adds the shared
+                         Landscape column grouping. -->
+                    <div id="mobileSideRail">
+                        <button id="leaderboardBtn"><span data-icon="leaderboard"></span> <span data-i18n="matchStandings">Leaderboard</span></button>
+                        <div id="mobileTabs">
+                            <button id="partyTab"><span data-icon="party"></span> <span data-i18n="partyPanel">Party</span></button>
+                            <button id="trashTab"><span data-icon="trash"></span> <span data-i18n="trashPanel">Trash</span></button>
+                        </div>
                     </div>
 
-                    <!-- Mobile tabs -->
-                    <div id="mobileTabs">
-                        <button id="partyTab"><span data-icon="party"></span> <span data-i18n="partyPanel">Party</span></button>
-                        <button id="trashTab"><span data-icon="trash"></span> <span data-i18n="trashPanel">Trash</span></button>
+                    <!-- Mobile leaderboard — hidden until #leaderboardBtn
+                         is tapped (see .mobile-open in css/style.css and
+                         the toggle wiring in js/ui/mobile-ui.js).
+                         #mobileLeaderboardInline is filled by the same
+                         renderLeaderboard() call that fills the desktop
+                         sidebar's #leaderboardRows — see
+                         js/ui/leaderboard-ui.js. -->
+                    <div id="mobileLeaderboard">
+                        <div class="panel-header">
+                            <h3>
+                                <span data-icon="leaderboard"></span> <span data-i18n="matchStandings">Match Standings</span>
+                            </h3>
+                            <button class="panel-close mobile-only-btn icon-btn close"><span data-icon="close"></span></button>
+                        </div>
+                        <div id="mobileLeaderboardInline"></div>
                     </div>
 
                     <!-- Party area -->

@@ -978,11 +978,25 @@ fix:
 - **Choose Bot Difficulty** compacts row height (avatar, difficulty
   buttons, color picker) so the player row + all 3 bot rows + the
   Play footer are always visible together.
-- **Game Board** forces the existing compact mobile shell (Party/
-  Trash as buttons opening overlays, Game Log as a button opening
-  `#logModal`, other players in one row) regardless of viewport
-  width, and splits Queue/Hand by flex-basis instead of pinning Hand
-  over the content.
+- **Game Board** forces the compact mobile shell regardless of
+  viewport width. Leaderboard, Party, and Trash are three compact
+  buttons stacked in a left-side rail (`#mobileSideRail`) — none of
+  them permanently visible — each opening its own popup
+  (`#mobileLeaderboard` / `#partyArea` / `#trashArea`, one open at a
+  time via the shared toggle group in `js/ui/mobile-ui.js`). The main
+  gameplay column (`#centerArea`, beside the rail) stacks Other
+  Players / Queue / Player Hand in that order, with Player Hand
+  getting the larger flex-basis and larger card size of the two,
+  since it's the higher-priority element once the secondary panels
+  stop eating vertical space. An earlier version of this layer had a
+  latent bug here: `#otherPlayers` isn't a direct sibling of
+  `#mobileLeaderboard`/`#mobileTabs` (it's nested inside
+  `#centerArea`), so an `order` value written as if it were faded out
+  to have no effect where intended and an unintended one where it
+  actually applied — sorting Other Players *after* Queue and Hand
+  instead of before them. Fixed by relying on source order (Other
+  Players → Queue → Hand are already siblings in that DOM order in
+  `game.html`) instead of `order` for those three.
 - **Popups** get a taller `max-height` and tighter chrome padding in
   landscape.
 - Two screens (Achievements' `.ach-grid`, Card Guide's `#animalGrid`)
@@ -1095,7 +1109,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.29.0
+**Current version:** 1.30.0
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Home's Settings popup (`index.html` `#settingsModal`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

@@ -122,7 +122,13 @@ function getSteps() {
             boxPos:   mobile ? "above" : "right",
         },
         {   // 6
-            targetId:   mobile ? "mobileLeaderboard" : "leaderboardRows",
+            // mobileLeaderboard is now a tap-to-open popup (hidden by
+            // default — see css/style.css's Landscape layer and
+            // js/ui/mobile-ui.js), so it can't be highlighted directly
+            // while closed. Target the always-visible button instead,
+            // same reasoning as step 5 targeting mobileTabs rather than
+            // the also-hidden partyCards/trashCards.
+            targetId:   mobile ? "leaderboardBtn" : "leaderboardRows",
             fallbackId: mobile ? null : "logEntries",
             titleKey: "wt6Title", textKey: "wt6Text",
             arrowDir: mobile ? "up" : "left",
