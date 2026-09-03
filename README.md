@@ -971,26 +971,51 @@ fix:
   assumes far more vertical room than a phone in landscape actually
   has. The new layer targets the actual constraint (short viewport +
   touch input) instead of width.
-- **Home** is re-composed from a stacked column into a 3-row grid
-  (top bar full-width; secondary nav / game-mode tabs / banner side
-  by side; bottom row) so it uses the landscape width instead of
-  stacking everything down the height.
+- **Home** is re-composed from a stacked column into a grid with the
+  top bar full-width across the top, and a 3-column row below it:
+  a left secondary-nav column, a centered Start Game / game-mode-tabs
+  column, and a right column holding Store / Tournament / Leaderboard
+  / Lucky Wheel (`.home-bottom-nav`, restyled to a compact vertical
+  icon+label list here — the `bottom` grid-area name is kept as-is
+  purely so `js/ui/home-ui.js`'s existing wiring needs no changes).
+  The left and right columns share the exact same `minmax(...)`
+  column track width, which is what keeps the center Start Game
+  column mathematically centered on the *viewport*, not just on the
+  leftover space between two differently-sized side groups (a plain
+  `justify-content: space-between` flex row can't guarantee that).
 - **Choose Bot Difficulty** compacts row height (avatar, difficulty
   buttons, color picker) so the player row + all 3 bot rows + the
   Play footer are always visible together.
 - **Game Board** forces the compact mobile shell regardless of
-  viewport width. Leaderboard, Party, and Trash are three compact
-  buttons stacked in a left-side rail (`#mobileSideRail`) — none of
-  them permanently visible — each opening its own popup
-  (`#mobileLeaderboard` / `#partyArea` / `#trashArea`, one open at a
-  time via the shared toggle group in `js/ui/mobile-ui.js`). The main
-  gameplay column (`#centerArea`, beside the rail) stacks Other
-  Players / Queue / Player Hand in that order, with Player Hand
-  getting the larger flex-basis and larger card size of the two,
-  since it's the higher-priority element once the secondary panels
-  stop eating vertical space. An earlier version of this layer had a
-  latent bug here: `#otherPlayers` isn't a direct sibling of
-  `#mobileLeaderboard`/`#mobileTabs` (it's nested inside
+  viewport width, and its header is scaled up to roughly match Home's
+  logo/height/top-padding instead of looking like a shrunken-down
+  version of it. Leaderboard, Log, and Chat are three compact buttons
+  stacked in a left-side rail (`#mobileSideRail`); Leaderboard opens
+  `#mobileLeaderboard`, Log opens the shared `#logModal`, and Chat (a
+  future feature) just shows "Coming Soon". Party and Trash are no
+  longer separate rail buttons — they open from the door (🚪) and
+  trash (🗑️) icons that already flank the Queue
+  (`#queueWithIcons`/`.queue-icon-entry`/`.queue-icon-exit`, built in
+  `renderQueue()` — `js/ui/game-ui.js`), reusing the same
+  `#partyArea`/`#trashArea` popups and one-open-at-a-time toggle group
+  in `js/ui/mobile-ui.js`'s `initMobileTabs()`. Because those icons
+  are created the first time the Queue renders, `initMobileTabs()` is
+  called after the first `updateUI()` in `js/game-main.js` rather than
+  before it. The old `#mobileTabs`/`#partyTab`/`#trashTab` markup is
+  still present in `game.html` (it's also targeted by
+  `js/ui/walkthrough.js`'s width-based `<=600px` portrait tier), but
+  it plays no part in the Landscape rail and falls back to its base
+  `display: none` there.
+
+  The main gameplay column (`#centerArea`, beside the rail) stacks
+  Other Players / Queue / Player Hand in that order, with a
+  responsive gap added below the header so Other Players isn't
+  crowding it, and Queue cards sized to ~90% of Player Hand's card
+  size (previously much smaller) so the Queue reads as the important
+  gameplay element it is, while Player Hand still gets the larger
+  flex-basis and card size of the two. An earlier version of this
+  layer had a latent bug here: `#otherPlayers` isn't a direct sibling
+  of `#mobileLeaderboard`/`#mobileTabs` (it's nested inside
   `#centerArea`), so an `order` value written as if it were faded out
   to have no effect where intended and an unintended one where it
   actually applied — sorting Other Players *after* Queue and Hand
@@ -998,7 +1023,12 @@ fix:
   Players → Queue → Hand are already siblings in that DOM order in
   `game.html`) instead of `order` for those three.
 - **Popups** get a taller `max-height` and tighter chrome padding in
-  landscape.
+  landscape, plus an explicit symmetric `width`/`margin: 0 auto` so
+  left/right breathing room stays equal at every landscape size
+  instead of relying only on the flex-centering of `.modal`. The
+  Pause popup's icons are also grown independently of the top bar's
+  small `.top-btn` size, so icon and label read as one balanced
+  button instead of a small icon next to full-size text.
 - Two screens (Achievements' `.ach-grid`, Card Guide's `#animalGrid`)
   keep `overflow-y: auto` as a deliberate, non-load-bearing safety
   net rather than a primary fix — their content length depends on
@@ -1109,7 +1139,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.30.0
+**Current version:** 1.30.1
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Home's Settings popup (`index.html` `#settingsModal`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

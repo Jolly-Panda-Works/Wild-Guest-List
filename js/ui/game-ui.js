@@ -71,9 +71,11 @@ async function renderQueue(gameState) {
         wrapper = document.createElement("div");
         wrapper.id = "queueWithIcons";
         wrapper.innerHTML = `
-            <div class="queue-icon queue-icon-entry" data-icon="queueEntry"></div>
+            <div id="queueDoorIcon" class="queue-icon queue-icon-entry" data-icon="queueEntry"
+                 role="button" tabindex="0" aria-label="${t("partyPanel")}"></div>
             <div id="queueInner"></div>
-            <div class="queue-icon queue-icon-exit" data-icon="queueExit"></div>
+            <div id="queueTrashIcon" class="queue-icon queue-icon-exit" data-icon="queueExit"
+                 role="button" tabindex="0" aria-label="${t("trashPanel")}"></div>
         `;
         queue.parentNode.insertBefore(wrapper, queue);
         wrapper.querySelector("#queueInner").appendChild(queue);

@@ -138,8 +138,12 @@ async function startGame() {
     await initializeUI();
     initHelp();
     initMobileUI();
-    initMobileTabs();
+    // initMobileTabs() now wires the Queue's door/trash icons
+    // (#queueWithIcons, built by the first renderQueue() inside
+    // updateUI()) instead of standalone Party/Trash buttons, so it
+    // must run after that first render — moved below updateUI().
     await updateUI(gameState);
+    initMobileTabs();
     startTurn(gameState);
 
     // In-game walkthrough (first time only)

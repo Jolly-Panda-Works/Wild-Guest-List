@@ -2954,7 +2954,7 @@ body {
    this base rule they'd render with default button/div display on
    Desktop and any other non-mobile context, since neither element
    existed before this file's other mobile-only rules were written. */
-#leaderboardBtn, #mobileSideRail {
+#leaderboardBtn, #railLogBtn, #railChatBtn, #mobileSideRail {
 
     display: none;
 }
@@ -3681,7 +3681,7 @@ body.gameplay-locked #playerHand .card {
 }
 #queueInner { flex: 1; display: flex; justify-content: center; }
 #queueInner #queue { display: flex; gap: clamp(6px, 2vw, 30px); }
-.queue-icon { font-size: clamp(24px, 4vw, 52px); line-height: 1; flex-shrink: 0; opacity: 0.85; }
+.queue-icon { font-size: clamp(24px, 4vw, 52px); line-height: 1; flex-shrink: 0; opacity: 0.85; cursor: pointer; }
 
 /* End game — sizing/scroll/footer-pinning comes from the shared
    .screen-content--panel rules; this just supplies the visual "card"
@@ -7591,8 +7591,32 @@ body.gameplay-locked #playerHand .card {
         overflow-y: hidden;
     }
 
+    /* Equal left/right breathing room, responsive rather than a fixed
+       px margin that breaks at different widths — .modal already
+       flex-centers this, so this just guarantees the width itself
+       stays symmetric and never gets edge-to-edge on short screens. */
     .modal-content {
         max-height: 94dvh;
+        width: calc(100% - 12dvw);
+        max-width: 640px;
+        margin: 0 auto;
+    }
+
+    /* Pause popup: icons were reusing the cramped top-bar .top-btn
+       size while the label stayed full-size, so the icon read as too
+       small next to its text. Grown independently here to a balanced
+       icon:label ratio (roughly the same ratio the desktop pause
+       panel already uses). */
+    .pause-actions { gap: clamp(10px, 3dvh, 20px); }
+
+    .pause-action-icon.top-btn {
+        width: clamp(34px, 9dvh, 46px) !important;
+        height: clamp(34px, 9dvh, 46px) !important;
+        font-size: 20px;
+    }
+
+    .pause-action-label {
+        font-size: clamp(11px, 2.6dvh, 14px);
     }
 
     .modal-content > .modal-body,
@@ -7628,15 +7652,24 @@ body.gameplay-locked #playerHand .card {
        stranded in a narrow column with the dark `.screen-content`
        background showing as empty space on both sides — override it
        here so the grid genuinely fills the landscape viewport. */
+    /* 3-column grid with the SAME minmax() track on both side columns
+       — that symmetry is what keeps "gamestart" mathematically
+       centered on the true viewport center, regardless of what the
+       left/right nav groups contain. A flex `justify-content:
+       space-between` layout can't guarantee this: it centers relative
+       to the leftover space, which shifts as soon as the two side
+       groups differ in width. Store/Tournament/Leaderboard/Lucky
+       Wheel move from a full-width bottom row into this new right
+       ("bottom" grid-area, kept as the id/class name so JS wiring in
+       js/ui/home-ui.js needs no changes) column. */
     .home-content {
         max-width: none;
         display: grid;
-        grid-template-columns: minmax(120px, 190px) 1fr;
-        grid-template-rows: auto 1fr auto;
+        grid-template-columns: minmax(96px, 152px) 1fr minmax(96px, 152px);
+        grid-template-rows: auto 1fr;
         grid-template-areas:
-            "topbar  topbar"
-            "secondary gamestart"
-            "bottom  bottom";
+            "topbar    topbar    topbar"
+            "secondary gamestart bottom";
         align-items: center;
         gap: 8px;
         padding: 8px 14px;
@@ -7646,9 +7679,23 @@ body.gameplay-locked #playerHand .card {
     }
 
     .home-topbar   { grid-area: topbar; }
-    .home-secondary-row { grid-area: secondary; }
-    .home-gamestart { grid-area: gamestart; margin: 0; }
-    .home-bottom-nav { grid-area: bottom; margin-top: 0; }
+    .home-secondary-row { grid-area: secondary; align-self: center; }
+    .home-gamestart {
+        grid-area: gamestart;
+        margin: 0;
+        justify-self: center;
+        width: 100%;
+        max-width: 360px;
+    }
+    .home-bottom-nav {
+        grid-area: bottom;
+        margin-top: 0;
+        align-self: center;
+        grid-template-columns: 1fr;
+        border-top: none;
+        padding-top: 0;
+        gap: 6px;
+    }
 
     /* The logo shares the SAME grid cell as the top bar (both
        assigned `grid-area: topbar`) rather than getting its own
@@ -7694,14 +7741,23 @@ body.gameplay-locked #playerHand .card {
 
     .home-tab-comingsoon { padding: 10px 10px; font-size: 12px; }
 
-    .home-bottom-nav {
-        padding-top: 4px;
-        gap: 4px;
+    /* Same compact icon-left/label-right row shape as .home-nav-btn
+       just above, so the new right-side column reads as one
+       consistent secondary-nav language rather than two different
+       button styles. */
+    .home-bottom-btn {
+        flex-direction: row;
+        justify-content: flex-start;
+        padding: 6px 8px;
+        font-size: 10px;
+        gap: 6px;
     }
-
-    .home-bottom-btn { padding: 4px 4px; font-size: 10px; gap: 2px; }
     .home-bottom-icon { font-size: 15px; }
-    .home-bottom-btn .home-coming-soon-tag { font-size: 7px; padding: 1px 4px; }
+    .home-bottom-btn .home-coming-soon-tag {
+        font-size: 7px;
+        padding: 1px 4px;
+        margin-left: auto;
+    }
 
     .home-profile-chip { padding: 3px 8px 3px 3px; }
     .home-profile-chip-avatar { width: 22px; height: 22px; }
@@ -7797,19 +7853,40 @@ body.gameplay-locked #playerHand .card {
         grid-template-columns: auto 1fr auto !important;
         grid-template-rows: auto !important;
         height: auto !important;
-        padding: 3px 10px !important;
+        /* Real top safe-space (env() for notches/status bars, with a
+           sane minimum on devices that report 0) instead of the old
+           3px sliver — the header no longer touches the top edge. */
+        padding: max(8px, env(safe-area-inset-top, 0px)) 12px 6px !important;
         gap: 0 8px;
         align-items: center;
     }
 
+    /* Logo brought up to roughly Home's own scale (.home-banner uses
+       max-height: 9dvh at this same tier) so it doesn't suddenly look
+       tiny compared to Home when entering the game. */
     #topCenter { grid-area: logo !important; }
-    #topCenter picture img { height: clamp(18px, 5dvh, 30px) !important; width: auto; }
+    #topCenter picture img { height: clamp(26px, 9dvh, 46px) !important; width: auto; }
 
     #topLeft {
         grid-area: left !important;
         flex-direction: row !important;
-        gap: 6px !important;
+        gap: 10px !important;
         align-items: center !important;
+    }
+
+    /* TURN | ROUND | TIMER — both dividers now read as the same
+       vertical-bar language. .round-timer-sep is already a plain "|"
+       character between Round and Timer; .turn-divider (a desktop
+       horizontal rule, `display: none` on the older mobile-portrait
+       tier) is restyled into a matching vertical bar here instead of
+       being left to render as a stray horizontal line in a row
+       layout. */
+    .turn-divider {
+        display: block !important;
+        width: 1px !important;
+        height: 1.5em;
+        background: rgba(255,255,255,.3);
+        margin: 0 !important;
     }
 
     .turn-label, .round-label, .turn-timer-label { font-size: clamp(9px, 2dvh, 12px) !important; }
@@ -7833,14 +7910,13 @@ body.gameplay-locked #playerHand .card {
         padding: 4px 8px 6px;
     }
 
-    /* ── Left rail: Leaderboard / Party / Trash buttons ──
+    /* ── Left rail: Leaderboard / Log / Chat ──
        Three compact vertical buttons, none permanently occupying
-       gameplay space — each just toggles its own popup (see
-       js/ui/mobile-ui.js). #mobileTabs (Party/Trash) keeps its own
-       id/markup since it's also targeted by js/ui/walkthrough.js and
-       the width-based mobile CSS; here it's just switched from a
-       horizontal tab row to a vertical stack so all three buttons
-       read as one rail. */
+       gameplay space. Leaderboard toggles its own popup; Log opens
+       the shared #logModal; Chat just surfaces "Coming Soon" (all
+       wired in js/ui/mobile-ui.js). Party/Trash are intentionally not
+       here — they open from the door/trash icons flanking the Queue
+       instead (see .queue-icon below). */
     #mobileSideRail {
         display: flex;
         flex-direction: column;
@@ -7848,13 +7924,13 @@ body.gameplay-locked #playerHand .card {
         min-width: 0;
     }
 
-    #mobileTabs {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
+    /* #mobileTabs (Party/Trash) is deliberately left at its base
+       `display: none` here — Party/Trash access moved to the
+       queue-adjacent door/trash icons (see .queue-icon above), so
+       this rail no longer carries separate Party/Trash buttons. The
+       rail is now Leaderboard → Log → Chat, in that order. */
 
-    #leaderboardBtn, #partyTab, #trashTab {
+    #leaderboardBtn, #railLogBtn, #railChatBtn {
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -7873,13 +7949,17 @@ body.gameplay-locked #playerHand .card {
         width: 100%;
     }
 
-    #leaderboardBtn [data-icon], #partyTab [data-icon], #trashTab [data-icon] {
+    #leaderboardBtn [data-icon], #railLogBtn [data-icon], #railChatBtn [data-icon] {
         font-size: 15px;
     }
 
-    #leaderboardBtn.active, #partyTab.active, #trashTab.active {
+    #leaderboardBtn.active {
         border-color: var(--accent);
         background: rgba(189,93,56,.2);
+    }
+
+    #railLogBtn:hover, #railChatBtn:hover {
+        background: #132213;
     }
 
     /* ── Leaderboard / Party / Trash popups ──
@@ -7962,6 +8042,10 @@ body.gameplay-locked #playerHand .card {
         gap: 10px;
         padding: 0;
         margin: 0;
+        /* Clear separation from the (now taller) header, without
+           eating into Queue/Hand's share below — responsive so it
+           doesn't turn into empty space on the shortest tiers. */
+        margin-top: clamp(4px, 2.2dvh, 16px);
     }
 
     #topPlayer, #leftPlayer, #rightPlayer {
@@ -7995,9 +8079,37 @@ body.gameplay-locked #playerHand .card {
         align-items: center;
     }
 
+    /* Queue cards ~90% of Player Hand's size (clamp(48/15dvh/90,
+       68/21dvh/126) below) — clearly recognizable, still visibly
+       secondary to the Hand. */
     #queue .card, .queue-slot {
-        width: clamp(30px, 8dvh, 50px);
-        height: clamp(42px, 11.5dvh, 72px);
+        width: clamp(44px, 13.5dvh, 82px);
+        height: clamp(60px, 19dvh, 114px);
+    }
+
+    /* Door (queue entry / Party) and Trash (queue exit) icons sit
+       tight against the Queue instead of floating with a large gap,
+       and now double as the click targets that open the Party/Trash
+       popups (see .queue-icon.active and js/ui/mobile-ui.js) — no
+       separate Party/Trash buttons elsewhere. */
+    #queueWithIcons { gap: clamp(4px, 1.5dvh, 10px); }
+
+    .queue-icon {
+        font-size: clamp(20px, 6.5dvh, 34px);
+        padding: 6px;
+        border-radius: var(--radius-sm);
+        transition: background .15s ease, transform .15s ease;
+    }
+
+    .queue-icon:hover,
+    .queue-icon:focus-visible {
+        background: rgba(255,255,255,.08);
+        transform: scale(1.08);
+    }
+
+    .queue-icon.active {
+        background: rgba(189,93,56,.22);
+        box-shadow: inset 0 0 0 1px var(--accent);
     }
 
     #handArea {
@@ -8043,8 +8155,8 @@ body.gameplay-locked #playerHand .card {
         width: 28px; height: 28px; font-size: 18px;
     }
 
-    #topBarContent { padding: 2px 8px !important; }
-    #topCenter picture img { height: clamp(16px, 4.2dvh, 24px) !important; }
+    #topBarContent { padding: max(4px, env(safe-area-inset-top, 0px)) 8px 4px !important; }
+    #topCenter picture img { height: clamp(24px, 11dvh, 40px) !important; }
 }
 
 /* Small mobile landscape (e.g. 568×320) — the tightest tier called
@@ -8061,7 +8173,7 @@ body.gameplay-locked #playerHand .card {
     .bot-row { padding: 3px 8px; gap: 6px; }
     #difficultyPanel { gap: 4px; }
 
-    #topBarContent { padding: 2px 6px !important; }
+    #topBarContent { padding: max(3px, env(safe-area-inset-top, 0px)) 6px 2px !important; }
     #gameLayout { padding: 1px 6px 2px; }
     #otherPlayers { padding: 0; }
 }

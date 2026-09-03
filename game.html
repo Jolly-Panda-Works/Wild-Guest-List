@@ -101,19 +101,27 @@
                 <!-- GAME BOARD -->
                 <div id="gameLayout">
 
-                    <!-- Mobile side rail — compact buttons for the three
-                         secondary panels (Leaderboard/Party/Trash), kept
-                         out of the main gameplay flow. Stacked on
-                         Landscape (see css/style.css's landscape layer).
-                         #mobileTabs (Party/Trash) is unchanged/reused as-is
-                         — it's also targeted by name in
-                         js/ui/walkthrough.js's tutorial steps and by the
-                         existing width-based mobile CSS, so it keeps its
-                         own id/markup rather than being flattened into
-                         this wrapper; the wrapper only adds the shared
-                         Landscape column grouping. -->
+                    <!-- Mobile side rail — compact buttons kept out of
+                         the main gameplay flow, stacked on Landscape
+                         (see css/style.css's landscape layer). Order:
+                         Leaderboard → Log → Chat.
+
+                         Party/Trash are deliberately NOT rail buttons —
+                         they open from the door/trash icons flanking
+                         the Queue itself (#queueWithIcons, built in
+                         renderQueue() — js/ui/game-ui.js; wired in
+                         js/ui/mobile-ui.js's initMobileTabs()). The old
+                         #mobileTabs/#partyTab/#trashTab markup below is
+                         kept only because js/ui/walkthrough.js's
+                         width-based (<=600px) mobile-portrait tier and
+                         the older width-based mobile CSS still use it;
+                         it plays no part in the Landscape rail and is
+                         hidden there (falls back to its base
+                         `display: none`). -->
                     <div id="mobileSideRail">
                         <button id="leaderboardBtn"><span data-icon="leaderboard"></span> <span data-i18n="matchStandings">Leaderboard</span></button>
+                        <button id="railLogBtn"><span data-icon="gameLog"></span> <span data-i18n="btnLog">Log</span></button>
+                        <button id="railChatBtn"><span data-icon="chat"></span> <span data-i18n="chat">Chat</span></button>
                         <div id="mobileTabs">
                             <button id="partyTab"><span data-icon="party"></span> <span data-i18n="partyPanel">Party</span></button>
                             <button id="trashTab"><span data-icon="trash"></span> <span data-i18n="trashPanel">Trash</span></button>

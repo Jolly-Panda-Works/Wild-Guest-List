@@ -1,4 +1,6 @@
 import { openModal } from "./modal-ui.js";
+import { showWarning } from "./game-ui.js";
+import { t } from "../i18n.js";
 
 export function initMobileUI() {
 
@@ -6,6 +8,20 @@ export function initMobileUI() {
 
     document.getElementById("logBtn")?.addEventListener("click", () => {
         openModal("logModal");
+    });
+
+    // Landscape left-rail Log entry — same logModal as the top-bar Log
+    // button above, just a second trigger point for the rail layout
+    // (see css/style.css's `#mobileSideRail`).
+    document.getElementById("railLogBtn")?.addEventListener("click", () => {
+        openModal("logModal");
+    });
+
+    // Chat is a future feature — the rail button just surfaces the
+    // same "Coming Soon" messaging already used elsewhere (e.g. Online
+    // Play in js/game-modes-main.js), no real chat is implemented.
+    document.getElementById("railChatBtn")?.addEventListener("click", () => {
+        showWarning(t("comingSoonTitle"));
     });
 
     document.querySelectorAll(".closeModal").forEach(btn => {
@@ -18,8 +34,14 @@ export function initMobileUI() {
 export function initMobileTabs() {
 
     const leaderboardBtn = document.getElementById("leaderboardBtn");
-    const partyBtn = document.getElementById("partyTab");
-    const trashBtn = document.getElementById("trashTab");
+    // Party/Trash now open from the door/trash icons that flank the
+    // Queue itself (#queueWithIcons, built in renderQueue() —
+    // js/ui/game-ui.js) rather than dedicated rail buttons — see the
+    // mobile Landscape refinement notes in css/style.css. This call
+    // must run after the Queue has rendered at least once (game-main.js
+    // calls it after the first updateUI()) so these elements exist.
+    const doorIcon  = document.getElementById("queueDoorIcon");
+    const trashIcon = document.getElementById("queueTrashIcon");
     const leaderboard = document.getElementById("mobileLeaderboard");
     const party    = document.getElementById("partyArea");
     const trash    = document.getElementById("trashArea");
@@ -30,20 +52,18 @@ export function initMobileTabs() {
         trash?.classList.remove("mobile-open");
         document.body.classList.remove("popup-open");
         leaderboardBtn?.classList.remove("active");
-        partyBtn?.classList.remove("active");
-        trashBtn?.classList.remove("active");
+        doorIcon?.classList.remove("active");
+        trashIcon?.classList.remove("active");
     }
 
-    // All three (Leaderboard/Party/Trash) share one open-panel-at-a-time
-    // group: opening one always closes the others, same behavior Party/
-    // Trash already had — a single small helper instead of three near-
-    // identical listeners.
+    // Leaderboard / Party / Trash share one open-panel-at-a-time group:
+    // opening one always closes the others.
     [
         { btn: leaderboardBtn, panel: leaderboard },
-        { btn: partyBtn, panel: party },
-        { btn: trashBtn, panel: trash },
+        { btn: doorIcon, panel: party },
+        { btn: trashIcon, panel: trash },
     ].forEach(({ btn, panel }) => {
-        btn?.addEventListener("click", () => {
+        const toggle = () => {
             const isOpen = panel?.classList.contains("mobile-open");
             closePanels();
             if (!isOpen) {
@@ -51,7 +71,19 @@ export function initMobileTabs() {
                 btn.classList.add("active");
                 document.body.classList.add("popup-open");
             }
-        });
+        };
+        btn?.addEventListener("click", toggle);
+        // .queue-icon-entry/.queue-icon-exit are divs (role="button"),
+        // not real <button> elements, so Enter/Space activation isn't
+        // free the way it is for leaderboardBtn — wire it explicitly.
+        if (btn?.getAttribute("role") === "button") {
+            btn.addEventListener("keydown", e => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    toggle();
+                }
+            });
+        }
     });
 
     [leaderboard, party, trash].forEach(panel => {

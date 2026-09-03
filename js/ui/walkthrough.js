@@ -115,8 +115,11 @@ function getSteps() {
             arrowDir: "down", boxPos: "above",
         },
         {   // 5
-            targetId:   mobile ? "mobileTabs" : "partyCards",
-            fallbackId: mobile ? null : "trashCards",
+            // Party/Trash no longer have dedicated mobile buttons —
+            // they open from the door/trash icons flanking the Queue
+            // (see #queueWithIcons in renderQueue(), js/ui/game-ui.js).
+            targetId:   mobile ? "queueDoorIcon" : "partyCards",
+            fallbackId: mobile ? "queueTrashIcon" : "trashCards",
             titleKey: "wt5Title", textKey: "wt5Text",
             arrowDir: mobile ? "down" : "left",
             boxPos:   mobile ? "above" : "right",
@@ -146,7 +149,7 @@ function getSteps() {
             pauseGame: true,
         },
         {   // 9 — queue will resolve; game paused, dynamic text, shown BEFORE resolve
-            targetId:   mobile ? "mobileTabs" : "queue",
+            targetId:   mobile ? "queueDoorIcon" : "queue",
             fallbackId: mobile ? null : null,
             titleKey: "wt9Title", textKey: "wt9TextDynamic",
             arrowDir: mobile ? "down" : "down",
