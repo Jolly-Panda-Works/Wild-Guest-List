@@ -22,6 +22,11 @@ export function initializeModals(){
             ()=> closeModal("settingsModal")
         );
 
+    // game.html's Game Header no longer has its own #aboutBtn (removed
+    // from the header — About Developer is still reachable from Home's
+    // Settings via #settingsAboutBtn, see js/ui/home-ui.js). Left as a
+    // harmless no-op lookup per this file's stated convention, in case
+    // a future header layout reintroduces an in-game entry point.
     document
         .getElementById("aboutBtn")
         ?.addEventListener(

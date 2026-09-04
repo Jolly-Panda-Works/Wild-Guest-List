@@ -6,13 +6,17 @@ export function initMobileUI() {
 
     initInfoPopups();
 
+    // Historical top-bar Log button (#logBtn) was removed from the
+    // Game Header — this lookup is kept as a harmless no-op in case a
+    // future header layout reintroduces it (see js/ui/modal-ui.js's
+    // "no-op on a page missing a given element" convention).
     document.getElementById("logBtn")?.addEventListener("click", () => {
         openModal("logModal");
     });
 
-    // Landscape left-rail Log entry — same logModal as the top-bar Log
-    // button above, just a second trigger point for the rail layout
-    // (see css/style.css's `#mobileSideRail`).
+    // Landscape left-rail Log entry — same logModal the top-bar Log
+    // button used to open. Now the entry point for Log on Mobile
+    // Landscape (see css/style.css's `#mobileSideRail`).
     document.getElementById("railLogBtn")?.addEventListener("click", () => {
         openModal("logModal");
     });

@@ -1189,7 +1189,25 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.30.6
+**Current version:** 1.30.7
+
+**Style — Game Header: removed Log and About Developer buttons (1.30.7):**
+`game.html`'s in-game top bar (`#topRight`) no longer has its own
+`#logBtn`/`#aboutBtn` icon buttons — the header now shows only
+Pause / Help / Tutorial. Neither feature was deleted: Game Log
+(`#logModal`) is still reachable on Mobile Landscape via the
+`#mobileSideRail`'s `#railLogBtn` (see § Mobile landscape — no-scroll
+layout layer), and About Developer (`#aboutModal`) is still reachable
+from Home's Settings popup (`#settingsAboutBtn`, see § Navigation
+Architecture). `#topRight` is a plain flex row with `gap`/
+`justify-content: flex-end` and `.top-btn` sizes itself with `clamp()`
+rather than a fixed per-button width, so removing two buttons
+reflows the remaining three without leaving an empty gap or requiring
+new CSS, on both desktop and Mobile Landscape. Known gap: unlike Home,
+`game.html`'s own in-game Settings modal (`#settingsModal`) has no
+`#settingsAboutBtn`-style link to About Developer, so mid-match there
+is currently no in-game entry point to it (only from Home) — see
+Known Issues.
 
 **Fix — Card Guide Animal Ability grid: two separate scrollbars on
 Mobile (1.30.6):** 1.30.5 fixed the grid collapsing to 0px tall, but
