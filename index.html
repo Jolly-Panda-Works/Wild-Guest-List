@@ -71,9 +71,12 @@
              Choose Bot Difficulty (bot-difficulty.html): a step in
              starting a match, not a menu lookup, so it's a real
              top-level document reached via real navigation. The
-             bottom-nav entries route to coming-soon.html for the
-             same reason (independently linkable placeholders). See
-             docs/ARCHITECTURE_PLAN.md.
+             bottom-nav entries (Store, Tournament, Leaderboard) are
+             menu-type lookups too, so — per the same rule 4 — they
+             now open the shared #comingSoonModal popup below rather
+             than navigating to coming-soon.html (that page still
+             exists and works via direct URL, it's just no longer
+             linked from here). See docs/ARCHITECTURE_PLAN.md.
 
              There is no separate Game Modes screen. Home's Start
              Game section is a tab bar — Play vs Bot, Rank, Friendly
@@ -505,6 +508,46 @@
                                 <span data-i18n="aboutFeedbackBtn">Give Feedback</span>
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coming Soon — generic, reusable popup for Home's
+             not-yet-built bottom-nav features (Store, Tournament,
+             Leaderboard today). These previously navigated to a
+             dedicated coming-soon.html page; per AGENTS.md rule 4
+             ("Menu pages default to popups") they now open this
+             shared modal instead, matching the popup Lucky Wheel
+             already uses (#luckyWheelModal below) rather than
+             duplicating a near-identical modal per feature.
+             #comingSoonModalTitle / #comingSoonModalIcon are set
+             dynamically per feature (see js/ui/home-ui.js's
+             openComingSoon()); the message reuses the same
+             comingSoonText copy coming-soon.html already used.
+             coming-soon.html itself is untouched and still works via
+             direct URL/refresh — only these three Home entry points
+             no longer navigate to it. -->
+        <div id="comingSoonModal" class="modal hidden">
+            <div class="modal-content small-popup lucky-wheel-panel menu-popup">
+                <div class="modal-header help-header">
+                    <h3 id="comingSoonModalTitle" class="lucky-wheel-title">Coming Soon</h3>
+                    <button id="closeComingSoon" class="icon-btn close">
+                        <span data-icon="close"></span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="lucky-wheel-body">
+                        <div class="lucky-wheel-illustration">
+                            <span id="comingSoonModalIcon" data-icon="store" aria-hidden="true"></span>
+                        </div>
+
+                        <span class="home-coming-soon-tag lucky-wheel-badge" data-i18n="comingSoon">Coming Soon</span>
+
+                        <p class="lucky-wheel-desc" data-i18n="comingSoonText">
+                            This feature isn't available yet — check back soon!
+                        </p>
                     </div>
                 </div>
             </div>

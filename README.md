@@ -91,10 +91,10 @@ support and gets its own document.
 
 | Page                  | Destination                | Reached from                              |
 |------------------------|-----------------------------|---------------------------------------------|
-| `index.html`           | Home (+ its popups: Profile, Settings, Card Guide, About, How-to-Play) | — |
+| `index.html`           | Home (+ its popups: Profile, Settings, Card Guide, About, How-to-Play, Store/Tournament/Leaderboard/Lucky Wheel Coming Soon) | — |
 | `bot-difficulty.html`  | Choose Bot Difficulty      | Home → Play vs Bot                           |
 | `game.html`            | Gameplay                    | `bot-difficulty.html` → Let's Play!         |
-| `coming-soon.html`     | Shop / Tournament / Leaderboard (`?feature=`) | Home's bottom nav |
+| `coming-soon.html`     | Shop / Tournament / Leaderboard (`?feature=`) | Unlinked from Home; still reachable by direct URL |
 
 **There is no separate Game Modes page.** Home's Start Game section
 (`index.html`) is a **tab bar** — Play vs Bot / Rank / Friendly — not
@@ -209,17 +209,26 @@ point, and a navigation destination like any other (see
   Home); tapping it opens the Profile popup (`#profileModal`) to
   change either. This is the one place identity is edited — the chip
   itself just displays it.
-* **Bottom navigation** — Store, Tournament, and Leaderboard each
-  navigate to `coming-soon.html?feature=...`, a real, reachable,
-  clearly-labeled future-state page rather than a Home-local toast.
-  No purchasing, ranking, or matchmaking is implemented yet.
-  **Lucky Wheel** is also a Coming Soon placeholder here, but —
-  because it's a new Menu-type feature, not a conversion of an
-  existing page — it follows AGENTS.md rule 4's stated default
-  instead: a genuine popup (`#luckyWheelModal`), not a
-  `coming-soon.html` navigation. No wheel-spinning, reward
-  calculation, or currency logic exists yet; opening it only shows a
-  Coming Soon illustration/badge/copy. See
+* **Bottom navigation** — Store, Tournament, and Leaderboard are all
+  Menu-type lookups (per AGENTS.md rule 4), so tapping one opens the
+  shared `#comingSoonModal` popup instead of navigating anywhere —
+  a real, reachable, clearly-labeled Coming Soon message (feature
+  name + icon + short copy) rather than a Home-local toast, but
+  without a full-page unload/reload for a placeholder. Title and icon
+  are set per feature at click time (`openComingSoon()` in
+  `js/ui/home-ui.js`); the message itself reuses the same
+  `comingSoonText` copy the standalone `coming-soon.html` page already
+  used. `coming-soon.html?feature=...` is unchanged and still works by
+  direct URL/refresh — it's just no longer linked from here. No
+  purchasing, ranking, or matchmaking is implemented yet.
+  **Lucky Wheel** is also a Coming Soon placeholder here, following
+  the same popup default, but keeps its own dedicated
+  `#luckyWheelModal` rather than the shared `#comingSoonModal` — its
+  body content is more custom (an illustration + Coming Soon badge
+  laid out specifically for a future wheel), and it was already built
+  before Store/Tournament/Leaderboard were converted to popups. No
+  wheel-spinning, reward calculation, or currency logic exists yet;
+  opening it only shows a Coming Soon illustration/badge/copy. See
   `js/ui/home-ui.js`/`index.html`'s `#luckyWheelModal` comment for
   exactly what a future real implementation would replace
   (`#luckyWheelBody`'s contents only — the popup shell/wiring stays).
@@ -504,7 +513,7 @@ WildGuestList/
 ├── index.html          (Home — landing page; also hosts its menu popups: Profile, Settings, Card Guide, About, How-to-Play)
 ├── bot-difficulty.html  (Choose Bot Difficulty — a real top-level page reached from Home's Play vs Bot)
 ├── game.html            (Gameplay — the board; all game init lives here)
-├── coming-soon.html      (shared "not built yet" page, ?feature=...)
+├── coming-soon.html      (shared "not built yet" page, ?feature=...; no longer linked from Home's bottom nav, still reachable by direct URL — see § Home Screen)
 │
 ├── css/
 │   └── style.css
@@ -1189,7 +1198,25 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.30.7
+**Current version:** 1.30.8
+
+**Style — Store/Tournament/Leaderboard Coming Soon: popup instead of
+a page navigation (1.30.8):** Home's bottom-nav Store, Tournament, and
+Leaderboard buttons no longer navigate to `coming-soon.html`; per
+AGENTS.md rule 4 ("Menu pages default to popups") they now open a
+shared `#comingSoonModal` popup instead — the same treatment Lucky
+Wheel already had, generalized instead of duplicated. The popup
+identifies the selected feature by name + icon (set per feature in
+`js/ui/home-ui.js`'s `openComingSoon()`) and reuses the existing
+`comingSoonText` copy. It's built from the same `menu-popup` +
+`lucky-wheel-panel` classes/markup shape as every other standardized
+Home popup, so it inherits the shared modal lifecycle (backdrop/
+Escape/focus-trap), Mobile Landscape sizing, and small-window
+bottom-sheet treatment for free — no new CSS was needed.
+`coming-soon.html`/`js/coming-soon-main.js` are unchanged and still
+work by direct URL; they're just no longer linked from Home. No
+Store/Tournament/Leaderboard functionality was implemented — still
+Coming Soon only.
 
 **Style — Game Header: removed Log and About Developer buttons (1.30.7):**
 `game.html`'s in-game top bar (`#topRight`) no longer has its own
