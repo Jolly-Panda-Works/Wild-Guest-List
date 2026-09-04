@@ -1189,7 +1189,45 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.30.4
+**Current version:** 1.30.6
+
+**Fix — Card Guide Animal Ability grid: two separate scrollbars on
+Mobile (1.30.6):** 1.30.5 fixed the grid collapsing to 0px tall, but
+did so by keeping `#animalGrid`'s own `overflow-y: auto` (plus a
+`min-height: min-content` patch) — leaving the popup with two nested,
+independent scroll containers: the popup's own `.modal-body` and the
+grid itself. Visually/behaviourally that reads as two different
+scrollbars for what the user experiences as one popup. Fixed by
+removing `#animalGrid`'s own scrolling entirely (`overflow: visible`,
+its default) so the grid simply sizes to its full content height, and
+the **only** scroll container is `.modal-body` — exactly matching
+Desktop and the documented Header/Scrollable-Body/Fixed-Footer
+architecture. This also happens to be what fixes the original 0-height
+collapse: an item with `overflow: visible` gets a normal content-based
+automatic minimum size in flexbox, so the min-height patch from 1.30.5
+is no longer needed either. Scoped to `#animalGrid` only — `.ach-grid`
+(Profile → Achievements) is unrelated UI and untouched; see Known
+Issues.
+
+**Fix — Card Guide Animal Ability grid empty on Mobile (1.30.5,
+superseded by 1.30.6 above):** `#animalGrid` (Card Guide's Animal
+Ability grid, shared by Home's `#helpModal` popup and `game.html`'s
+in-game Help modal) is a flex item of a column flex container
+(`.help-body` on `index.html`; `.modal-content.help-layout` directly
+on `game.html`). The Mobile Landscape no-scroll layer (see §
+Responsive Design above) previously gave it the same plain
+`overflow-y: auto` as `.ach-grid`, intended as a harmless fallback
+scroll container. It wasn't harmless there: a flex item with
+`overflow` other than `visible` loses its content-based "automatic
+minimum size" and gets an automatic min-height of `0` instead. On the
+short mobile-landscape heights this layer targets (568×320 up to
+932×430), the modal's combined content (intro text + divider + title +
+grid) is taller than the space available, so the flex-shrink algorithm
+was free to shrink `#animalGrid` all the way to `0px` tall — its cards
+still rendered at full size but were entirely clipped by their own
+zero-height, `overflow:auto` box, i.e. invisible. This never showed on
+Desktop (the layer is scoped to `pointer: coarse` + `orientation:
+landscape`).
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Home's Settings popup (`index.html` `#settingsModal`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

@@ -7849,17 +7849,42 @@ body.gameplay-locked #playerHand .card {
        fixed composition. The grid sizing right below aims to fit the
        common case (a season's worth of achievements, the current
        card set) so scrolling is rarely needed in practice. The actual
-       scrolling, when it is needed, now happens on the shared
-       .modal-body ancestor above (both grids sit inside one); this
-       rule is a harmless, non-load-bearing second overflow:auto on
-       the grid itself, kept in case a grid is ever placed somewhere
-       without a scrolling ancestor (e.g. game.html's in-game Help
-       modal, which never opted into .modal-body and still relies on
-       its whole .modal-content scrolling as one box). */
-    #animalGrid,
+       scrolling, when it is needed, happens on the shared .modal-body
+       ancestor above (both grids sit inside one) — or, for game.html's
+       in-game Help modal, which never opted into .modal-body, on
+       .modal-content itself (base rule: `overflow-y: auto`), which
+       scrolls as one box exactly as before. */
     .ach-grid {
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+    }
+
+    /* Fix — Card Guide Animal Ability grid empty on Mobile (1.30.5),
+       revised (1.30.6): #animalGrid is a flex item of a column flex
+       container (.help-body on index.html; .modal-content.help-layout
+       directly on game.html). Giving it its OWN overflow-y:auto (as it
+       had until 1.30.4) made it a second, independent scroll container
+       nested inside .modal-body's scroll container — two separate
+       scrollbars/scroll positions for what the user experiences as one
+       popup. Combined with flexbox's rule that a flex item with
+       non-`visible` overflow gets an automatic min-height of 0 instead
+       of a content-based one, the mobile-landscape layer's compacted
+       height let flex-shrink collapse #animalGrid to 0px tall, clipping
+       every card out of view even though they rendered at full size.
+       1.30.5 patched the collapse with `min-height: min-content` but
+       kept the second scroll container. The correct fix is to remove
+       #animalGrid's own scrolling entirely and let it size to its full
+       content height, so the ONLY scroll container is the popup's own
+       .modal-body — exactly like Desktop already does, and exactly the
+       "Header / Scrollable Body / Fixed Footer" architecture documented
+       in README.md. No overflow property here now means #animalGrid
+       uses default `overflow: visible`, which also restores its normal
+       content-based automatic minimum size — the flex-shrink collapse
+       fix and the "one scrollbar" fix are the same change. Scoped to
+       #animalGrid only — .ach-grid (Profile → Achievements) is
+       unrelated UI and left as-is. */
+    #animalGrid {
+        overflow: visible;
     }
 
     /* ── HOME ──────────────────────────────────────────────────
