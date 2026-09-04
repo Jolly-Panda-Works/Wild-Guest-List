@@ -43,6 +43,13 @@
 
     --blur:
         blur(16px);
+
+    /* Shared horizontal padding for standard popups (.modal-content's
+       header/body/footer, and the mobile Leaderboard/Party/Trash
+       panels) — one responsive value so every popup keeps equal
+       left/right breathing room instead of each screen inventing its
+       own margin. See css note near .modal-content below. */
+    --popup-pad-x: clamp(16px, 4vw, 24px);
 }
 
 
@@ -2142,7 +2149,7 @@ body {
     justify-content: space-between;
     align-items: center;
     gap: 10px;
-    padding: 18px 24px 14px;
+    padding: 18px var(--popup-pad-x) 14px;
     border-bottom: 1px solid var(--border);
 }
 
@@ -2152,7 +2159,7 @@ body {
     min-height: 0; /* required for a flex child to actually scroll instead of overflowing */
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 16px 24px 20px;
+    padding: 16px var(--popup-pad-x) 20px;
 }
 
 .modal-content > .modal-footer,
@@ -2161,7 +2168,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 14px 24px calc(14px + env(safe-area-inset-bottom, 0px));
+    padding: 14px var(--popup-pad-x) calc(14px + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid var(--border);
 }
 
@@ -2172,9 +2179,9 @@ body {
 }
 
 @media (max-height: 480px) and (orientation: landscape) {
-    .modal-content > .modal-header { padding: 12px 20px 10px; }
-    .modal-content > .modal-body { padding: 10px 20px 14px; }
-    .modal-content > .modal-footer { padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0px)); }
+    .modal-content > .modal-header { padding: 12px var(--popup-pad-x) 10px; }
+    .modal-content > .modal-body { padding: 10px var(--popup-pad-x) 14px; }
+    .modal-content > .modal-footer { padding: 10px var(--popup-pad-x) calc(10px + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* ── About Developer panel redesign ──
@@ -2551,6 +2558,30 @@ body {
     font-size: 72px;
 
     margin-bottom: 10px;
+}
+
+/* .detail-image (the animal artwork shown above the ability
+   description in the Card Guide's card-detail popup, #cardModal) had
+   no size rule at all — it rendered at the source PNG's natural
+   pixel size. On Desktop's much larger .modal-content that went
+   mostly unnoticed, but combined with this project's landscape-
+   mobile "no scroll" layout (short dvh-based max-heights on
+   .modal-content, see the Landscape layer further down), an
+   unconstrained image could consume the entire available height by
+   itself, pushing the "How it Works" ability title/description
+   (rendered right after it in the same flex column) out of the
+   laid-out content — the root cause of the Card Guide "Animal
+   Ability" section appearing empty on Mobile. Matching .detail-emoji
+   above with an explicit bounded size fixes this without touching
+   the shared .modal-content scroll/overflow architecture. */
+.detail-image {
+    display: block;
+    margin: 0 auto 10px;
+    max-width: 100%;
+    max-height: clamp(90px, 22dvh, 180px);
+    width: auto;
+    height: auto;
+    object-fit: contain;
 }
 
 
@@ -5046,6 +5077,16 @@ body.gameplay-locked #playerHand .card {
        the header/progress bar/footer always visible. */
     max-height: 88vh;
     max-height: 88dvh;
+    /* Explicit height (not just max-height) — every How To Play step
+       reuses this one panel element, only swapping .tut-body's
+       content (image/title/text/diagram/video). Without a fixed
+       height the panel shrank to fit whichever step's content was
+       shortest, so switching steps visibly resized the whole panel.
+       A fixed height keeps every step's outer panel identical; a
+       step with less content just leaves .tut-body with a little
+       breathing room instead of the panel shrinking to meet it. */
+    height: min(600px, 88vh);
+    height: min(600px, 88dvh);
     padding: 0;
     display: flex;
     flex-direction: column;
@@ -5115,8 +5156,22 @@ body.gameplay-locked #playerHand .card {
     display: flex;
     flex-direction: column;
     align-items: center;
+    /* Now that .tut-panel has a fixed height (see above), a step with
+       less content (no image, short text) would otherwise sit at the
+       top of .tut-body with empty space below it. `safe center`
+       vertically centers that shorter content within the fixed panel
+       instead, while still starting from the top and scrolling
+       normally if a step's content is tall enough to overflow (the
+       `flex-start` fallback via @supports below handles browsers
+       without `safe` keyword support, matching the existing
+       .screen-content pattern elsewhere in this file). */
+    justify-content: safe center;
     padding: 32px 28px 20px;
     gap: 24px;
+}
+
+@supports not (justify-content: safe center) {
+    .tut-body { justify-content: flex-start; }
 }
 
 .tut-image {
@@ -7293,15 +7348,44 @@ body.gameplay-locked #playerHand .card {
 }
 
 .home-coming-soon-tag {
-    font-size: 11px;
+    font-size: 9px;
     font-weight: 700;
     letter-spacing: .3px;
     text-transform: uppercase;
-    background: rgba(0, 0, 0, 0.35);
+    background: rgba(0, 0, 0, 0.55);
     border: 1px solid rgba(255, 255, 255, 0.18);
     color: var(--text-muted);
-    padding: 3px 8px;
+    padding: 2px 6px;
     border-radius: 999px;
+    white-space: nowrap;
+}
+
+/* Coming Soon badge: a small corner badge attached to the slot it
+   belongs to, not a primary text block inside the button — see
+   .home-bottom-btn below (the only place this tag currently
+   renders). Kept as its own selector (not folded into the base
+   rule above) so any future non-badge use of .home-coming-soon-tag
+   is unaffected. */
+.home-bottom-btn {
+    position: relative;
+}
+
+.home-bottom-btn .home-coming-soon-tag {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 7px;
+    padding: 1px 5px;
+    pointer-events: none;
+    max-width: calc(100% - 8px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+:lang(fa) .home-bottom-btn .home-coming-soon-tag,
+:lang(ar) .home-bottom-btn .home-coming-soon-tag {
+    right: auto;
+    left: 4px;
 }
 
 /* ── Secondary nav row ────────────────────────────────────
@@ -7375,42 +7459,53 @@ body.gameplay-locked #playerHand .card {
 .home-bottom-nav {
     margin-top: auto;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    /* Same auto-fit sizing strategy as .home-secondary-row (left side)
+       instead of a fixed 3-column grid, so a 4th entry (Lucky Wheel)
+       wraps into the same balanced row shape rather than orphaning
+       onto its own half-empty row. */
+    grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
     gap: 8px;
     padding-top: 10px;
     border-top: 1px solid var(--border);
 }
 
+/* Same visual language as .home-nav-btn (left-side secondary nav) —
+   background, border, radius, padding, min-height, typography — so
+   the right-side Store/Tournament/Leaderboard/Lucky Wheel buttons
+   read as the same navigation system rather than a separate,
+   flatter component. */
 .home-bottom-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
+    justify-content: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    color: var(--text-main);
     font-family: inherit;
     font-size: 12px;
     font-weight: 600;
-    padding: 8px 4px;
+    padding: 12px 8px 10px;
+    min-height: 76px;
     cursor: pointer;
-    border-radius: var(--radius-sm);
-    transition: background .18s ease, color .18s ease;
+    transition: background .18s ease, transform .18s ease;
 }
 
 .home-bottom-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
     color: var(--text-main);
 }
 
 .home-bottom-icon {
-    font-size: 20px;
+    font-size: 22px;
     line-height: 1;
-}
-
-.home-bottom-btn .home-coming-soon-tag {
-    font-size: 9px;
-    padding: 2px 6px;
+    min-height: 2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* ── Disabled-state primitive (reused wherever a Home feature
@@ -7495,7 +7590,8 @@ body.gameplay-locked #playerHand .card {
         width: min(360px, 55vw);
     }
 
-    .home-nav-btn {
+    .home-nav-btn,
+    .home-bottom-btn {
         min-height: 56px;
         padding: 8px 8px 7px;
     }
@@ -7748,15 +7844,25 @@ body.gameplay-locked #playerHand .card {
     .home-bottom-btn {
         flex-direction: row;
         justify-content: flex-start;
+        min-height: 0;
         padding: 6px 8px;
         font-size: 10px;
         gap: 6px;
     }
-    .home-bottom-icon { font-size: 15px; }
+    .home-bottom-icon { font-size: 15px; min-height: 0; }
+    /* Badge stays a corner badge (see base rule) instead of an
+       inline margin-left:auto tag, so it reads the same
+       icon+label+corner-badge shape at every breakpoint. */
     .home-bottom-btn .home-coming-soon-tag {
-        font-size: 7px;
+        font-size: 6px;
         padding: 1px 4px;
-        margin-left: auto;
+        top: 3px;
+        right: 3px;
+    }
+    :lang(fa) .home-bottom-btn .home-coming-soon-tag,
+    :lang(ar) .home-bottom-btn .home-coming-soon-tag {
+        right: auto;
+        left: 3px;
     }
 
     .home-profile-chip { padding: 3px 8px 3px 3px; }
@@ -7773,11 +7879,35 @@ body.gameplay-locked #playerHand .card {
     .screen-panel-header h2 { font-size: clamp(16px, 3.4vh, 22px); margin: 0 0 2px; }
     .diff-subtitle { font-size: 11px; margin: 0; }
 
-    .screen-panel-scroll { padding-top: 4px; padding-bottom: 4px; }
+    .screen-panel-scroll {
+        padding-top: 4px;
+        padding-bottom: 4px;
+        /* Stretch to fill the vertical space actually available
+           between the header and the Play footer, and lay its one
+           child (#difficultyPanel) out as a column that can be told
+           to fill that same height below. */
+        display: flex;
+        flex-direction: column;
+    }
 
-    #difficultyPanel { gap: 6px; }
+    /* Recalculated slot heights: the player row + 3 bot rows now
+       share the full height of .screen-panel-scroll equally (flex:1
+       each, below) instead of sizing to their own content — this is
+       what removes the large empty gap that used to sit between the
+       last bot slot and the Play button on short landscape screens,
+       and what lets the bot section genuinely fill the space the
+       header/footer leave available. */
+    #difficultyPanel {
+        gap: 6px;
+        flex: 1 1 auto;
+        min-height: 100%;
+    }
 
     .bot-row {
+        /* align-items: center (base .bot-row rule) already centers
+           each row's content vertically within its now-taller slot. */
+        flex: 1 1 0;
+        min-height: 0;
         padding: 5px 12px;
         gap: 10px;
         border-radius: var(--radius-sm);
@@ -7979,7 +8109,7 @@ body.gameplay-locked #playerHand .card {
         position: fixed;
         top: 4dvh; left: 6dvw; right: 6dvw; bottom: 4dvh;
         z-index: 3000;
-        padding: 8px 10px;
+        padding: 8px var(--popup-pad-x);
         overflow: hidden;
     }
 
@@ -7991,6 +8121,23 @@ body.gameplay-locked #playerHand .card {
     }
 
     body.popup-open { overflow: hidden; }
+
+    /* Full-screen dimmed backdrop behind the Leaderboard/Party/Trash
+       panel — same "popup overlay covers the viewport" presentation
+       as every Home .modal, applied here with a pure-CSS pseudo-
+       element (no JS/markup change) keyed off the body.popup-open
+       class already toggled by js/ui/mobile-ui.js's initMobileTabs().
+       Sits just below the panels' z-index so exactly one panel is
+       ever the topmost, dimmed layer. */
+    body.popup-open::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, .85);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        z-index: 2999;
+    }
 
     #mobileLeaderboard .panel-header h3,
     #partyArea h3, #trashArea h3 { margin-bottom: 4px; font-size: 13px; }

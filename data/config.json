@@ -1,6 +1,6 @@
 {
   "app": {
-    "version": "1.30.1"
+    "version": "1.30.2"
   },
   "icons": {
     "leaderboard": "assets/img/icons/leaderboard.png",
@@ -14,8 +14,6 @@
     "back": "assets/img/icons/back.png",
     "kangaroo": "🦘",
     "timer": "assets/img/icons/timer.png",
-    "queueEntry": "🚪",
-    "queueExit": "🗑️",
     "sound": "assets/img/icons/sound.png",
     "About Developer": "assets/img/icons/about-developer.png",
     "tutorial": "assets/img/icons/tutorial.png",

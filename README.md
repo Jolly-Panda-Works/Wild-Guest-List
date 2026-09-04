@@ -993,8 +993,10 @@ fix:
   stacked in a left-side rail (`#mobileSideRail`); Leaderboard opens
   `#mobileLeaderboard`, Log opens the shared `#logModal`, and Chat (a
   future feature) just shows "Coming Soon". Party and Trash are no
-  longer separate rail buttons — they open from the door (🚪) and
-  trash (🗑️) icons that already flank the Queue
+  longer separate rail buttons — they open from the Party and Trash
+  icons (the same `icons.party`/`icons.trash` image assets used by
+  the Party/Trash Area headers themselves, not emoji) that already
+  flank the Queue
   (`#queueWithIcons`/`.queue-icon-entry`/`.queue-icon-exit`, built in
   `renderQueue()` — `js/ui/game-ui.js`), reusing the same
   `#partyArea`/`#trashArea` popups and one-open-at-a-time toggle group
@@ -1139,7 +1141,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.30.1
+**Current version:** 1.30.2
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Home's Settings popup (`index.html` `#settingsModal`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 
