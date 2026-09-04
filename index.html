@@ -226,12 +226,12 @@
              consumer (this chip, Choose Bot Difficulty's read-only
              display) reflects a save here immediately. -->
         <div id="profileModal" class="modal hidden">
-            <div class="modal-content small-popup profile-panel profile-panel--wide">
-                <div class="help-header">
+            <div class="modal-content small-popup profile-panel profile-panel--wide menu-popup">
+                <div class="modal-header help-header">
                     <h3 data-i18n="profileModalTitle">Profile</h3>
                     <button id="closeProfile" class="icon-btn close"><span data-icon="close"></span></button>
                 </div>
-                <div class="profile-content">
+                <div class="profile-content modal-body">
                     <div class="profile-avatar-grid" id="profileAvatarGrid"></div>
                     <div class="profile-name-row">
                         <label class="settings-label" for="profileNameInput" data-i18n="profileNameLabel">Display Name</label>
@@ -334,15 +334,31 @@
              Pause → Settings modal (js/ui/cardColor-ui.js,
              js/ui/cardGuidance-ui.js, js/services/soundManager.js,
              js/i18n.js) — only the surrounding modal shell/trigger
-             differs, which is why this markup mirrors game.html's
-             #settingsModal exactly. -->
+             differs; the settings rows/logic below are unchanged from
+             game.html's #settingsModal.
+
+             Mobile popup standardization: this and every other
+             standard Home menu popup below (Profile, Card Guide,
+             About Developer, Lucky Wheel, Feedback) now carry a
+             `.menu-popup` modifier class on `.modal-content` and use
+             `.modal-header`/`.modal-body` (see css/style.css "MAIN
+             MENU POPUP STANDARDIZATION"), so they all share the
+             Tutorial Popup's (#tutorialModal) glass background/
+             border/radius/shadow, a left-aligned title + right close
+             button of consistent height, consistent horizontal
+             padding, and one scrollable body under a fixed header —
+             instead of each popup having its own slightly different
+             chrome. Scoped to `.menu-popup` only: game.html's own
+             Pause/Settings/Help/About/Feedback popups (out of scope —
+             this is a Home/Mobile-only change) and the Pause popup in
+             particular are untouched. -->
         <div id="settingsModal" class="modal hidden">
-            <div class="modal-content small-popup">
-                <div class="help-header">
+            <div class="modal-content small-popup menu-popup">
+                <div class="modal-header help-header">
                     <h3 data-i18n="settingsTitle">Settings</h3>
                     <button id="closeSettings" class="icon-btn close"><span data-icon="close"></span></button>
                 </div>
-                <div class="settings-content">
+                <div class="settings-content modal-body">
 
                     <div class="settings-row">
                         <label class="settings-label"><span data-icon="sound"></span> <span data-i18n="settingsSound">Sound</span></label>
@@ -408,29 +424,34 @@
 
         <!-- Card Guide (Help) — genuine modal, popup over Home. Shares
              the exact same content loader as game.html's in-game Help
-             modal (js/game/help.js's initHelp/openHelp) — this markup
-             mirrors game.html's #helpModal exactly, including
-             #closeHelp, so initHelp()'s existing modal-mode wiring
-             (close button + backdrop click) applies here unchanged. -->
+             modal (js/game/help.js's initHelp/openHelp) — #helpModal,
+             #closeHelp and #animalGrid keep the exact same ids as
+             game.html's version, so initHelp()'s existing modal-mode
+             wiring (close button + backdrop click) still applies here
+             unchanged; only the surrounding chrome differs (see the
+             .menu-popup / .modal-header / .modal-body Mobile popup
+             standardization note near #settingsModal below). -->
         <div id="helpModal" class="modal hidden">
-            <div class="modal-content help-layout">
-                <div class="help-header">
+            <div class="modal-content help-layout menu-popup">
+                <div class="modal-header help-header">
                     <h1 data-i18n="helpModalTitle">Help</h1>
                     <button id="closeHelp" class="icon-btn close"><span data-icon="close"></span></button>
                 </div>
-                <div class="help-text">
-                    <span data-i18n="helpIntro">Invite wild animals to the party queue!</span>
-                    <p data-i18n="helpWhenQueue">When the queue reaches 5 animals:</p>
-                    <ul>
-                        <li data-i18n="helpRule1">The first 2 guests make it into the party.</li>
-                        <li data-i18n="helpRule2">The last guest gets turned away and sent to the trash.</li>
-                        <li data-i18n="helpRule3">The remaining guests stay in line.</li>
-                    </ul>
-                    <span data-i18n="helpGoal">Gather the biggest party and become the ultimate host!</span>
+                <div class="modal-body help-body">
+                    <div class="help-text">
+                        <span data-i18n="helpIntro">Invite wild animals to the party queue!</span>
+                        <p data-i18n="helpWhenQueue">When the queue reaches 5 animals:</p>
+                        <ul>
+                            <li data-i18n="helpRule1">The first 2 guests make it into the party.</li>
+                            <li data-i18n="helpRule2">The last guest gets turned away and sent to the trash.</li>
+                            <li data-i18n="helpRule3">The remaining guests stay in line.</li>
+                        </ul>
+                        <span data-i18n="helpGoal">Gather the biggest party and become the ultimate host!</span>
+                    </div>
+                    <div class="help-divider"></div>
+                    <h2 class="animal-guide-title" data-i18n="animalAbilities">Animal Abilities</h2>
+                    <div id="animalGrid"></div>
                 </div>
-                <div class="help-divider"></div>
-                <h2 class="animal-guide-title" data-i18n="animalAbilities">Animal Abilities</h2>
-                <div id="animalGrid"></div>
             </div>
         </div>
 
@@ -448,39 +469,42 @@
 
         <!-- About Developer -->
         <div id="aboutModal" class="modal hidden">
-            <div class="modal-content small-popup about-panel">
-                <button id="closeAbout" class="icon-btn close about-close">
-                    <span data-icon="close"></span>
-                </button>
-
-                <div class="about-avatar">
-                    <span data-icon="About Developer"></span>
+            <div class="modal-content small-popup about-panel menu-popup">
+                <div class="modal-header help-header">
+                    <h3 class="about-title" data-i18n="aboutTitle">About Developer</h3>
+                    <button id="closeAbout" class="icon-btn close">
+                        <span data-icon="close"></span>
+                    </button>
                 </div>
 
-                <h3 class="about-title" data-i18n="aboutTitle">About Developer</h3>
+                <div class="modal-body about-body">
+                    <div class="about-avatar">
+                        <span data-icon="About Developer"></span>
+                    </div>
 
-                <div class="about-content">
-                    <p>
-                        <span data-i18n="aboutText">This game was designed and developed by</span>
-                        <strong>Usef Farahmand</strong>.
-                    </p>
+                    <div class="about-content">
+                        <p>
+                            <span data-i18n="aboutText">This game was designed and developed by</span>
+                            <strong>Usef Farahmand</strong>.
+                        </p>
 
-                    <p data-i18n="aboutThanks">
-                        Thank you for playing and supporting my work.
-                    </p>
+                        <p data-i18n="aboutThanks">
+                            Thank you for playing and supporting my work.
+                        </p>
 
-                    <div class="about-actions">
-                        <a href="https://www.useffarahmand.com/"
-                           target="_blank"
-                           class="website-link"
-                           data-i18n="aboutVisit">
-                            Visit Website
-                        </a>
+                        <div class="about-actions">
+                            <a href="https://www.useffarahmand.com/"
+                               target="_blank"
+                               class="website-link"
+                               data-i18n="aboutVisit">
+                                Visit Website
+                            </a>
 
-                        <button id="aboutFeedbackBtn" type="button" class="feedback-link-btn">
-                            <span data-icon="feedback"></span>
-                            <span data-i18n="aboutFeedbackBtn">Give Feedback</span>
-                        </button>
+                            <button id="aboutFeedbackBtn" type="button" class="feedback-link-btn">
+                                <span data-icon="feedback"></span>
+                                <span data-i18n="aboutFeedbackBtn">Give Feedback</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -495,23 +519,26 @@
              implementation would swap out; the modal id and its
              open/close wiring (js/ui/modal-ui.js) stay exactly as-is. -->
         <div id="luckyWheelModal" class="modal hidden">
-            <div class="modal-content small-popup lucky-wheel-panel">
-                <button id="closeLuckyWheel" class="icon-btn close lucky-wheel-close">
-                    <span data-icon="close"></span>
-                </button>
+            <div class="modal-content small-popup lucky-wheel-panel menu-popup">
+                <div class="modal-header help-header">
+                    <h3 class="lucky-wheel-title" data-i18n="luckyWheelTitle">Lucky Wheel</h3>
+                    <button id="closeLuckyWheel" class="icon-btn close">
+                        <span data-icon="close"></span>
+                    </button>
+                </div>
 
-                <h3 class="lucky-wheel-title" data-i18n="luckyWheelTitle">Lucky Wheel</h3>
+                <div class="modal-body">
+                    <div id="luckyWheelBody" class="lucky-wheel-body">
+                        <div class="lucky-wheel-illustration">
+                            <span data-icon="luckyWheel" aria-hidden="true"></span>
+                        </div>
 
-                <div id="luckyWheelBody" class="lucky-wheel-body">
-                    <div class="lucky-wheel-illustration">
-                        <span data-icon="luckyWheel" aria-hidden="true"></span>
+                        <span class="home-coming-soon-tag lucky-wheel-badge" data-i18n="comingSoon">Coming Soon</span>
+
+                        <p class="lucky-wheel-desc" data-i18n="luckyWheelComingSoonDesc">
+                            More exciting rewards are coming soon.
+                        </p>
                     </div>
-
-                    <span class="home-coming-soon-tag lucky-wheel-badge" data-i18n="comingSoon">Coming Soon</span>
-
-                    <p class="lucky-wheel-desc" data-i18n="luckyWheelComingSoonDesc">
-                        More exciting rewards are coming soon.
-                    </p>
                 </div>
             </div>
         </div>
@@ -525,7 +552,7 @@
              visible viewport on mobile, instead of requiring the user
              to hunt for a Submit button buried below several fields. -->
         <div id="feedbackModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle">
-            <div class="modal-content small-popup feedback-modal-content">
+            <div class="modal-content small-popup feedback-modal-content menu-popup">
                 <div class="modal-header help-header">
                     <h3 id="feedbackTitle" data-i18n="feedbackTitle">Give Feedback</h3>
                     <button id="closeFeedback" class="icon-btn close">

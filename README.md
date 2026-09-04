@@ -937,11 +937,59 @@ button can never scroll out of reach on a short or narrow screen:
   `.modal-body`/`.modal-footer` in an intermediate `.modal-form`
   wrapper instead, since a `<button type="submit">` must be a
   descendant of its `<form>`.
-- Popups that don't opt in (Settings, Profile, Card Guide, About,
-  Lucky Wheel, Kangaroo, Card detail, Game Log, Pause, Card Guidance)
-  are unaffected — `.modal-content` scrolls as a single box, exactly
-  as before, since a plain flex column with block children lays out
-  identically to the old block flow.
+- On Home (`index.html`), Settings, Profile, Card Guide, About
+  Developer, Lucky Wheel and Feedback now all opt into this
+  Header/Body architecture and share one visual template — see
+  "Home menu popups — standardized on the Tutorial Popup" below.
+  Popups that still don't opt in (game.html's own Pause, Kangaroo,
+  Card detail, Game Log, Card Guidance, and its own separate
+  Settings/Card Guide/About/Feedback instances) are unaffected —
+  `.modal-content` scrolls as a single box, exactly as before, since
+  a plain flex column with block children lays out identically to
+  the old block flow.
+
+### Home menu popups — standardized on the Tutorial Popup
+
+Home's standard menu-type popups — Settings, Profile, Card Guide,
+About Developer, Lucky Wheel, Feedback (`#settingsModal`,
+`#profileModal`, `#helpModal`, `#aboutModal`, `#luckyWheelModal`,
+`#feedbackModal` in `index.html`) — share one visual template
+instead of each having its own slightly different chrome: the
+Tutorial Popup's (`#tutorialModal`) glass background/border/radius/
+shadow, a header with the title on the left and the close (X) button
+on the right at a consistent height, consistent horizontal padding,
+and a single scrollable body under a fixed header. This is done by
+adding a `.menu-popup` modifier class to `.modal-content` and opting
+each popup into the `.modal-header`/`.modal-body` architecture above
+(see `css/style.css` "MAIN MENU POPUP STANDARDIZATION") — not a
+second design system. About Developer and Lucky Wheel, which
+previously used a corner-pinned close button with a centered title
+below an avatar, were restructured to the same header-row markup as
+every other popup.
+
+This is scoped to `.menu-popup` only and to `index.html`'s markup —
+`game.html`'s own Pause, Settings, Card Guide, About, and Feedback
+popups (separate elements from Home's, sharing only ids/classes
+across pages, never both loaded at once) are untouched, and the
+Pause popup in particular was deliberately left alone. How To Play
+(`#tutorialModal`) itself is the visual reference and was not
+changed. Real-device/browser QA against this hasn't been done as
+part of this change (this environment can't render a browser) — see
+Known Issues below.
+
+**Fix — internal scroll regression (1.30.4):** opting these popups
+into `.modal-body` initially clipped content on Mobile Landscape
+(Card Guide's Animal Ability grid, Profile's Achievements section)
+instead of making it scrollable, because the Mobile Landscape
+"no-scroll" layer (see § Mobile landscape — no-scroll layout layer
+below) had `.modal-content > .modal-body { overflow-y: hidden }`,
+written back when only Feedback's short, always-fits form used that
+architecture. That rule is now `overflow-y: auto` there too, so
+every popup's header stays fixed while its `.modal-body` scrolls
+internally exactly when its content doesn't fit — the page/body
+itself still never scrolls (`html, body { overflow: hidden }` in
+that same layer, unchanged). Desktop and mobile-portrait were never
+affected — this bug only existed in that one landscape+touch layer.
 - All sizing uses `dvh` (with a `vh` fallback for older browsers) and
   `env(safe-area-inset-*)` padding (requires `viewport-fit=cover` in
   the viewport meta tag, present on every page) so mobile
@@ -1141,7 +1189,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.30.2
+**Current version:** 1.30.4
 
 The version number is defined in a single place: `data/config.json` → `app.version`. It is rendered on-screen wherever `[data-app-version]` appears — Home's Settings popup (`index.html` `#settingsModal`) and the in-game Pause → Settings modal (`game.html`) both have one, populated at runtime by `js/ui/icon-ui.js`. Do not hardcode a version number anywhere else — update `data/config.json` and everything else stays in sync automatically.
 

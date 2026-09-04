@@ -5063,6 +5063,102 @@ body.gameplay-locked #playerHand .card {
 
 
 /* ==========================================================
+   MAIN MENU POPUP STANDARDIZATION (Mobile) — Settings, Profile,
+   Card Guide, About Developer, Lucky Wheel and Feedback
+   (index.html's Home menu popups) now share one visual template
+   instead of each having its own slightly-different chrome.
+
+   The template reuses two things that already exist rather than
+   inventing a third design system:
+     1. The Tutorial Popup's (.tut-panel below) glass background /
+        border / radius / shadow treatment.
+     2. The existing Header → Scrollable Body → Fixed Footer
+        architecture (.modal-header/.modal-body, see the base
+        .modal-content rules above and README.md "Panel
+        Architecture") that Feedback already used — Settings,
+        Profile, Card Guide, About and Lucky Wheel now opt into it
+        too via a plain `modal-body` class alongside their existing
+        content wrapper class, so all of the mobile-landscape
+        no-scroll/bottom-sheet handling already built for
+        .modal-header/.modal-body (see further down this file)
+        applies to them for free.
+
+   Everything here is scoped to the `.menu-popup` modifier class,
+   added only on index.html's Home popups — the base
+   .modal-content/.help-header rules, and every popup that keeps
+   using them unmodified (game.html's own Pause/Settings/Help/
+   About/Feedback modals, Kangaroo, Card detail, Game Log, Card
+   Guidance), are completely untouched. Pause in particular must
+   never be touched by this task. */
+
+.modal-content.menu-popup {
+    background: rgba(10, 28, 15, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+}
+
+/* Header: title left, close button right (already true of the flex
+   row + space-between .help-header markup below — this just fixes
+   the one real inconsistency between popups, which was typography:
+   Card Guide's title is an <h1>, Settings/Profile/About/Lucky
+   Wheel/Feedback's are <h3> — with no shared size/margin reset,
+   browser defaults gave every popup a visibly different header
+   height. Normalizing both tags here is what makes "consistent
+   header height" and "consistent spacing between header and
+   content" actually hold across every popup, matching the
+   Tutorial Popup's header. */
+.modal-content.menu-popup > .modal-header {
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.modal-content.menu-popup > .modal-header h1,
+.modal-content.menu-popup > .modal-header h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.25;
+}
+
+.modal-content.menu-popup > .modal-footer {
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+/* About Developer and Lucky Wheel previously used a corner-pinned
+   close button + centered title/avatar layout instead of a header
+   row (see the base .about-panel/.lucky-wheel-panel rules above,
+   still used as-is by game.html's own About modal). Their
+   Home instances now use the same header-row markup as every other
+   menu popup, so the old absolute-positioned close button and
+   top padding hack are no longer needed here — scoped to
+   `.menu-popup` only, so `.about-panel`/`.lucky-wheel-panel`
+   themselves are untouched for anything still using the old
+   layout. */
+.about-panel.menu-popup,
+.lucky-wheel-panel.menu-popup {
+    padding-top: 0;
+}
+
+.about-panel.menu-popup .about-body,
+.lucky-wheel-panel.menu-popup .modal-body {
+    text-align: center;
+}
+
+/* Card Guide's body now wraps several previously-top-level children
+   (.help-text, .help-divider, the Animal Abilities title, #animalGrid)
+   in one .modal-body so the existing Header/Scrollable-Body
+   architecture applies — this restores the 16px gap .help-layout
+   used to provide between those siblings directly. */
+.help-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ==========================================================
    TUTORIAL — redesigned help-page style
 ========================================================== */
 
@@ -7658,13 +7754,18 @@ body.gameplay-locked #playerHand .card {
      - base tier:            up to ~500px tall (932×430 and down)
      - standard tier (≤440): 667×375 / 844×390
      - small tier   (≤340):  568×320
-   Scrolling is not used as the fix for oversized content here —
-   each panel is resized/restructured to fit; `overflow-y: auto`
-   is kept only as a non-load-bearing safety net on a couple of
-   genuinely open-ended lists (Achievements/Card Guide grids)
-   where real content length can vary, exactly the "compact
-   first, scroll only as a last-resort net" approach described
-   in README.md § Responsive Design.
+   Scrolling is not used as the fix for oversized content on the
+   top-level screens below (Home, Choose Bot Difficulty, End Game,
+   etc.) — each panel is resized/restructured to fit. Popups are
+   different: `.modal-body` (see the base .modal-content > .modal-body
+   rule above) is the dedicated internal-scroll container for any
+   popup content that doesn't reliably fit after compaction — Card
+   Guide's Animal Ability grid and Profile's Achievements list in
+   particular are genuinely open-ended (their length depends on the
+   card set / what the player has unlocked), so they rely on real
+   scrolling here rather than a "safety net". The popup HEADER never
+   scrolls (flex: 0 0 auto); only its .modal-body does — see
+   README.md § Responsive Design / Panel Architecture.
 ========================================================== */
 
 @media (pointer: coarse) and (orientation: landscape) {
@@ -7715,19 +7816,46 @@ body.gameplay-locked #playerHand .card {
         font-size: clamp(11px, 2.6dvh, 14px);
     }
 
+    /* .modal-body is the intended internal-scroll container (see the
+       base .modal-content > .modal-body rule above: flex:1 1 auto;
+       min-height:0; overflow-y:auto — the standard fix for the
+       flexbox "min-height:auto" trap this section's own comment
+       warns about). This landscape layer previously forced it to
+       overflow-y:hidden, which was harmless while only Feedback's
+       short, always-fits form used .modal-body, but became a real
+       regression once Settings/Profile/Card Guide/About/Lucky Wheel
+       (see Home menu popup standardization) opted into the same
+       architecture: Card Guide's Animal Ability grid and Profile's
+       Achievements section could silently overflow past the popup's
+       bounded landscape height with no way to reach them — the
+       #animalGrid/.ach-grid overflow-auto "safety net" below never
+       actually engaged, because their own parent (this element) was
+       clipping them before their own overflow could ever matter.
+       Keeping this as plain overflow-y:auto (matching the base rule,
+       just restated here for clarity) means: content that already
+       fits after compaction shows no scrollbar and behaves exactly
+       as before, and content that doesn't fit scrolls internally
+       instead of being clipped — the page/body itself (html, body
+       {overflow:hidden} above) still never scrolls. */
     .modal-content > .modal-body,
     .modal-content > .modal-form > .modal-body {
-        overflow-y: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     /* Achievements and Card Guide are the two screens whose content
        length genuinely depends on how much the player has unlocked /
        how many cards the game has — real, growing lists rather than a
-       fixed composition. They keep a scroll safety net rather than
-       silently clipping content a player has earned, but the grid
-       sizing right below aims to fit the common case (a season's
-       worth of achievements, the current card set) without ever
-       needing it. */
+       fixed composition. The grid sizing right below aims to fit the
+       common case (a season's worth of achievements, the current
+       card set) so scrolling is rarely needed in practice. The actual
+       scrolling, when it is needed, now happens on the shared
+       .modal-body ancestor above (both grids sit inside one); this
+       rule is a harmless, non-load-bearing second overflow:auto on
+       the grid itself, kept in case a grid is ever placed somewhere
+       without a scrolling ancestor (e.g. game.html's in-game Help
+       modal, which never opted into .modal-body and still relies on
+       its whole .modal-content scrolling as one box). */
     #animalGrid,
     .ach-grid {
         overflow-y: auto;
