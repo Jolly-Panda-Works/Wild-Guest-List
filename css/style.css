@@ -1463,7 +1463,7 @@ body {
     width: 100%;
     background: rgba(0,0,0,0.38);
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     padding: 3% 7%;
     box-sizing: border-box;
@@ -1477,15 +1477,7 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    line-height: 1.2;
-}
-
-.card-power {
-    font-size: clamp(11px, 18cqw, 18px);
-    font-weight: 900;
-    color: #fbbf24;
-    flex-shrink: 0;
-    margin-left: 4%;
+    text-align: center;
     line-height: 1.2;
 }
 
@@ -5523,12 +5515,6 @@ body.gameplay-locked #playerHand .card {
     white-space: nowrap;
 }
 
-.tut-card-power {
-    font-size: 0.62rem;
-    color: var(--accent, #bd5d38);
-    font-weight: 700;
-}
-
 .tut-card-badge {
     position: absolute;
     top: -7px;
@@ -5986,7 +5972,6 @@ body.gameplay-locked #playerHand .card {
 #deckCount,
 .other-deck-count,
 .slot-number,
-.card-power,
 .lb-cards,
 .lb-score,
 .party-count,

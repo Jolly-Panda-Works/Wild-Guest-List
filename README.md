@@ -1203,7 +1203,28 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.30.11
+**Current version:** 1.30.12
+
+**Style — Animal Cards no longer show the power number on their face
+(1.30.12):** The in-play card footer (`createCard()` in
+`js/ui/game-ui.js`, used for hand/queue/party/trash alike) previously
+showed the animal's power as a bare digit next to its name
+(`.card-power`). That digit is now removed from the card face and
+`.card-footer` is centered on the name alone; the matching "Your
+hand" tutorial mock-up (`renderHandDiagram()` in
+`js/ui/tutorial-ui.js`, `.tut-card-power`) was updated to match so it
+keeps mirroring the real card. This is presentation-only — `power`
+is still the load-bearing gameplay stat behind sorting, strength
+comparisons, ability targeting, scoring, and AI evaluation (see
+`data/cardInfo.json`, `js/abilities/abilities.js`,
+`js/services/dataLoader.js`), and the technical `id` used for animal
+identity (`CARD_IDS.*`) is untouched, so none of that logic changed.
+The Card Guide grid and the Card Info detail popup (`js/game/help.js`,
+`.help-card-power`/`.power-badge`) and the ability-examples tutorial
+slide (`.tut-ability-power`) still show the power value on purpose —
+it's genuinely useful reference information for learning the game's
+strength hierarchy, not a leftover label, so it wasn't "obsolete" and
+stayed.
 
 **Fix — Queue door/trash icons showed on Desktop too (1.30.11):** The
 Party-door/Trash-exit icons flanking the Queue (`#queueDoorIcon`/

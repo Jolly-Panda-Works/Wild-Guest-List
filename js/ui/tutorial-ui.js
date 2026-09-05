@@ -60,7 +60,6 @@ function renderHandDiagram(diagram){
         <div class="tut-card">
             <div class="tut-card-emoji">${c.emoji}</div>
             <div class="tut-card-name">${c.name}</div>
-            <div class="tut-card-power"><span data-icon="power"></span>${c.power}</div>
         </div>
     `).join("");
     return `

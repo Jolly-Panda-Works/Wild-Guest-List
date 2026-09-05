@@ -361,7 +361,6 @@ export function createCard(card) {
         <div class="card-visual">${visual}</div>
         <div class="card-footer">
             <div class="card-name">${displayName}</div>
-            <div class="card-power">${card.power}</div>
         </div>
     `;
 
