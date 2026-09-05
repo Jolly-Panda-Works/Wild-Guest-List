@@ -4006,11 +4006,25 @@ body.gameplay-locked #playerHand .card {
         background: rgba(189,93,56,.2);
     }
 
-    /* ── Party / Trash popup ── */
+    /* ── Party / Trash popup ──
+       Same stretched-box issue as the Mobile Landscape version of
+       this popup below (see that rule's long comment for the full
+       root-cause explanation) — `top`/`bottom` here define the
+       maximum band on a narrow window, not a forced size, so
+       `margin: auto 0` centers the shrink-to-fit box instead of
+       stretching it and leaving all the slack below the content.
+       This rule is a `max-width: 600px` (not landscape-specific)
+       leftover from before the Mobile Landscape layer existed; touch
+       portrait is gated behind a rotate-to-landscape overlay (see
+       js/ui/orientation-ui.js), so in practice this only reaches a
+       narrow *non-touch* desktop window — included for consistency
+       since it's the same component and same bug, not because it's
+       one of this fix's required test sizes. */
     #partyArea, #trashArea {
         display: none;
         position: fixed;
         top: 20px; left: 12px; right: 12px; bottom: 20px;
+        margin: auto 0;
         z-index: 3000;
         background: rgba(10,31,15,0.92);
         backdrop-filter: blur(18px);
@@ -8256,11 +8270,38 @@ body.gameplay-locked #playerHand .card {
        which now groups all three as one open-one-at-a-time set) —
        this layer only handles sizing once open, fitting the
        landscape viewport without page-level scroll via a compact
-       layout rather than `overflow-y: auto`. */
+       layout rather than `overflow-y: auto`.
+
+       `top`/`bottom` (4dvh each) plus the explicit `max-height` below
+       define the MAXIMUM available band — the same role `88dvh` plays
+       for `.modal-content` above — not a forced size. `height` is left
+       at its default `auto`, so the box only grows to fit its actual
+       header + card grid, and `margin: auto 0` (vertical auto-margins
+       only; the fixed `left`/`right` keep the width unchanged) centers
+       that shrink-to-fit box within the band instead of stretching it
+       to fill it. Root cause of the old bottom-heavy look: with no
+       `margin`/`max-height` override here, this fixed-position box
+       (both `top` and `bottom` set) either stretched to fill the whole
+       4dvh–4dvh band with `height: auto`, or — once the base (desktop)
+       rule's inherited `max-height: calc(100vh - 120px)` clamped it
+       shorter than that band on most landscape phones — settled at
+       that clamped height anchored to `top` alone (per the CSS2.1
+       over-constrained rule, an unset `bottom` margin makes `bottom`
+       itself the ignored value). Either way the result was the same:
+       Party/Trash's actual content (often just a couple of cards) sat
+       flush against a small top gap while all the slack collected
+       below it as one large gap, reading as lopsided padding. Auto
+       margins fix both paths at once by centering whatever height the
+       box ends up at — content-based or `max-height`-clamped — within
+       the band; the `max-height` below replaces the inherited desktop
+       one so this rule's own sizing doesn't quietly depend on a value
+       tuned for a different (always-visible sidebar) layout. */
     #mobileLeaderboard, #partyArea, #trashArea {
         display: none;
         position: fixed;
         top: 4dvh; left: 6dvw; right: 6dvw; bottom: 4dvh;
+        max-height: calc(100dvh - 8dvh);
+        margin: auto 0;
         z-index: 3000;
         padding: 8px var(--popup-pad-x);
         overflow: hidden;
@@ -8296,7 +8337,23 @@ body.gameplay-locked #playerHand .card {
     #partyArea h3, #trashArea h3 { margin-bottom: 4px; font-size: 13px; }
 
     #mobileLeaderboardInline { overflow: hidden; }
-    #partyCards, #trashCards { overflow: hidden; gap: 4px; }
+    /* flex + min-height:0 gives these a bounded height within the
+       column (instead of growing unconstrained), which is what lets
+       `overflow-y: auto` actually trigger a scrollbar here instead of
+       silently doing nothing while the parent's `overflow: hidden`
+       clips the excess. Safety-net scroll, not the primary fix (same
+       rationale as Achievements' .ach-grid / Card Guide's
+       #animalGrid): the outer popup's `top`/`bottom`/`max-height`
+       band above already comfortably fits a full 12-card party or
+       trash grid at every tested landscape size, so this should never
+       actually engage — it just prevents clipping instead of a silent
+       overflow if that ever changes. */
+    #partyCards, #trashCards {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        gap: 4px;
+    }
 
     /* The base .leaderboard-header/.leaderboard-row rule (shared with
        the always-visible desktop sidebar leaderboard) sets

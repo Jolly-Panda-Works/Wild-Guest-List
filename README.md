@@ -1198,7 +1198,36 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.30.8
+**Current version:** 1.30.9
+
+**Fix — Party/Trash Area popup: lopsided bottom padding on Mobile
+Landscape (1.30.9):** The Mobile Landscape overlay for `#partyArea`/
+`#trashArea` (and `#mobileLeaderboard`, which shares the same rule)
+is a `position: fixed` box with both `top: 4dvh` and `bottom: 4dvh`
+set. With no `margin`/`max-height` override, a box like that either
+stretches to fill the whole band (`height: auto`) or — once the
+inherited desktop `max-height: calc(100vh - 120px)` clamped it
+shorter on most phones — settles anchored to `top` alone. Either way,
+Party/Trash's actual content (often just a couple of cards) sat flush
+against a small top gap while all the leftover space collected below
+it as one large gap. Fix: an explicit `max-height: calc(100dvh - 8dvh)`
+(replacing the inherited desktop value, which was tuned for a
+different, always-visible sidebar layout) plus `margin: auto 0`
+(vertical auto-margins only — the fixed `left`/`right` band keeps the
+width unchanged) so the shrink-to-fit box is centered within the band
+instead of stretched to fill it, top ≈ bottom either way. Same
+treatment applied to the older, non-landscape `max-width: 600px`
+version of this popup for consistency (in practice only reachable in
+a narrow non-touch desktop window, since touch portrait is gated
+behind a rotate overlay). `#partyCards`/`#trashCards` also picked up
+`flex: 1 1 auto; min-height: 0` alongside their existing safety-net
+`overflow-y: auto`, so that scrollbar can actually engage instead of
+silently doing nothing while the parent's `overflow: hidden` clips
+the excess — not the primary fix, just insurance against a future
+party/trash pile too tall for the band (none exist today: a full
+12-card grid fits comfortably at every tested landscape size). No
+Party/Trash gameplay, card movement, or animations were touched —
+layout/CSS only.
 
 **Style — Store/Tournament/Leaderboard Coming Soon: popup instead of
 a page navigation (1.30.8):** Home's bottom-nav Store, Tournament, and
