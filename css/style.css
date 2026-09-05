@@ -3712,7 +3712,20 @@ body.gameplay-locked #playerHand .card {
 }
 #queueInner { flex: 1; display: flex; justify-content: center; }
 #queueInner #queue { display: flex; gap: clamp(6px, 2vw, 30px); }
-.queue-icon { font-size: clamp(24px, 4vw, 52px); line-height: 1; flex-shrink: 0; opacity: 0.85; cursor: pointer; }
+/* Queue flanking icons (Party door / Trash exit) — Mobile Landscape
+   only. `display: none` here (not `visibility: hidden`, which would
+   still reserve their space) is the default for every OTHER viewport,
+   including Desktop; the `@media (pointer: coarse) and (orientation:
+   landscape)` block further down re-enables them for touch+landscape
+   only. #queueWithIcons is a `justify-content: center` flex row with
+   #queueInner (flex: 1) already doing the actual Queue centering, so
+   with these two hidden the row just naturally reflows around the
+   Queue alone — no gap, no extra CSS needed for Desktop specifically.
+   The underlying elements, their click/keyboard wiring (js/ui/
+   mobile-ui.js), and the Party/Trash popups themselves are all
+   untouched — Mobile Landscape still gets exactly the same
+   interaction it always did. */
+.queue-icon { display: none; font-size: clamp(24px, 4vw, 52px); line-height: 1; flex-shrink: 0; opacity: 0.85; cursor: pointer; }
 
 /* End game — sizing/scroll/footer-pinning comes from the shared
    .screen-content--panel rules; this just supplies the visual "card"
@@ -8452,6 +8465,14 @@ body.gameplay-locked #playerHand .card {
     #queueWithIcons { gap: clamp(4px, 1.5dvh, 10px); }
 
     .queue-icon {
+        /* Re-enable — hidden by default (Desktop and every other
+           viewport) at the base .queue-icon rule above; this is the
+           one place they're meant to render, per this task's own
+           Mobile Landscape design (see the base rule's comment for
+           why). */
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-size: clamp(20px, 6.5dvh, 34px);
         padding: 6px;
         border-radius: var(--radius-sm);

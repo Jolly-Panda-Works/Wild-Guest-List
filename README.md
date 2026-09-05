@@ -1057,8 +1057,13 @@ fix:
   (`#queueWithIcons`/`.queue-icon-entry`/`.queue-icon-exit`, built in
   `renderQueue()` — `js/ui/game-ui.js`), reusing the same
   `#partyArea`/`#trashArea` popups and one-open-at-a-time toggle group
-  in `js/ui/mobile-ui.js`'s `initMobileTabs()`. Because those icons
-  are created the first time the Queue renders, `initMobileTabs()` is
+  in `js/ui/mobile-ui.js`'s `initMobileTabs()`. These icons are
+  Mobile-Landscape-only (see `.queue-icon`'s `display: none` base rule
+  and its Landscape-layer override — 1.30.11): on Desktop, Party and
+  Trash are already their own always-visible sidebar panels, so a
+  second, Queue-adjacent way to reach the exact same popups was just
+  clutter, not a real Desktop feature. Because those icons are created
+  the first time the Queue renders, `initMobileTabs()` is
   called after the first `updateUI()` in `js/game-main.js` rather than
   before it. The old `#mobileTabs`/`#partyTab`/`#trashTab` markup is
   still present in `game.html` (it's also targeted by
@@ -1198,7 +1203,30 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.30.10
+**Current version:** 1.30.11
+
+**Fix — Queue door/trash icons showed on Desktop too (1.30.11):** The
+Party-door/Trash-exit icons flanking the Queue (`#queueDoorIcon`/
+`#queueTrashIcon`, see § Mobile Landscape and `renderQueue()` in
+`js/ui/game-ui.js`) are built unconditionally in JS and had no
+viewport gating in CSS at all, so they rendered on Desktop next to a
+Queue that already has its own always-visible Party/Trash sidebars —
+a redundant, unintended second way to open the same two popups.
+`.queue-icon` is now `display: none` by default (Desktop and every
+other viewport) and only re-enabled inside the existing
+`@media (pointer: coarse) and (orientation: landscape)` Mobile
+Landscape layer, rather than `visibility: hidden` (which would have
+still reserved their space) or deleting the elements. `#queueInner`
+(`flex: 1`) already does the Queue's own centering inside
+`#queueWithIcons`, so with the icons hidden the row just naturally
+reflows around the Queue alone on Desktop — no leftover gap, no
+Desktop-specific CSS needed beyond hiding the icons themselves. The
+underlying elements, their click/keyboard wiring
+(`js/ui/mobile-ui.js`), and the `#partyArea`/`#trashArea` popups are
+all untouched, so Mobile Landscape's interaction is unaffected.
+Desktop's own walkthrough targeting was already unaffected before
+this fix too — step 5 already targets `#partyCards`/`#trashCards`
+directly on Desktop (`isMobile()` decides which), never these icons.
 
 **Fix — Pause and the Step-by-Step walkthrough didn't actually freeze
 gameplay (1.30.10):** Pause (js/ui/pause-ui.js) and the in-game
