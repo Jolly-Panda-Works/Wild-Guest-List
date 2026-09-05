@@ -1198,7 +1198,34 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.30.9
+**Current version:** 1.30.10
+
+**Fix — Pause and the Step-by-Step walkthrough didn't actually freeze
+gameplay (1.30.10):** Pause (js/ui/pause-ui.js) and the in-game
+Step-by-Step walkthrough (js/ui/walkthrough.js) both only ever stopped
+the visible per-turn countdown (js/game/turnTimer.js) — nothing else in
+the pipeline that plays a card (queue entry → ability resolution →
+Queue-full → Party/Trash transition → draw → turn advance,
+js/game/turnManager.js's playCard()) ever checked either state, so an
+already-in-flight card could keep resolving, the Queue could still
+fill Party/Trash, and a bot's turn could still begin — all invisibly,
+underneath the Pause panel or the walkthrough's box. turnTimer.js's
+freeze flag is now a `Set` of independent reasons ("pause",
+"tutorial") instead of one boolean — `isPaused()`/`getGameRuntimeState()`
+(RUNNING/PAUSED/STEP_BY_STEP) reflect whichever are currently held, and
+`waitUntilResumed()` resolves once every reason clears. `playCard()`
+now awaits that at each "point of no return" (before resolving a
+card's ability, before a full Queue resolves into Party/Trash, before
+drawing the next card, before advancing the turn), and the walkthrough
+calls the exact same `pauseTurnTimer("tutorial")`/`resumeTurnTimer(
+"tutorial")` the Pause panel already used (reason "pause") instead of
+a second, competing mechanism — including js/game-main.js's portrait-
+orientation gate, which already reused this same architecture before
+this fix. A pending action (e.g. a Queue that just hit 5 right as
+Pause was clicked) now waits and completes exactly once after Resume,
+rather than executing silently or being lost. No card abilities, turn
+order, AI difficulty, scoring, or Queue/Party/Trash rules changed —
+synchronization only.
 
 **Fix — Party/Trash Area popup: lopsided bottom padding on Mobile
 Landscape (1.30.9):** The Mobile Landscape overlay for `#partyArea`/

@@ -1,17 +1,21 @@
 import { openModal, closeModal } from "./modal-ui.js";
-import { pauseTurnTimer, resumeTurnTimer, isPaused } from "../game/turnTimer.js";
+import { pauseTurnTimer, resumeTurnTimer, isPaused, getGameRuntimeState, GAME_STATE } from "../game/turnTimer.js";
 import { buildLangSelector } from "../i18n.js";
 
 // Re-exported so other modules (e.g. the hand's click/keyboard handlers
-// in game-ui.js, and the AI move scheduler in turnManager.js) can check
-// pause state too — as a second line of defense on top of the pause
-// panel's own full-screen overlay (which already blocks pointer clicks
-// on the board underneath it, but not a keyboard Enter/Space on a card
-// that still happens to hold focus, or a setTimeout already in flight).
-// turnTimer.js is the single source of truth for this flag — see its
+// in game-ui.js, and the AI move scheduler/gameplay checkpoints in
+// turnManager.js) can check gameplay-frozen state too — as a second
+// line of defense on top of the pause panel's own full-screen overlay
+// (which already blocks pointer clicks on the board underneath it, but
+// not a keyboard Enter/Space on a card that still happens to hold
+// focus, or a setTimeout/Promise chain already in flight). js/game/
+// turnTimer.js is the single source of truth for this — see its
 // pauseTurnTimer()/resumeTurnTimer()/isPaused() for why it lives there
-// instead of a separate flag here.
-export { isPaused };
+// instead of a separate flag here. isPaused() is true for BOTH this
+// Pause panel and the in-game Step-by-Step walkthrough (js/ui/
+// walkthrough.js) — getGameRuntimeState()/GAME_STATE are re-exported
+// too for anything that needs to tell the two apart.
+export { isPaused, getGameRuntimeState, GAME_STATE };
 
 // Tracks whether Settings was opened FROM the pause panel, so closing
 // Settings can bring the pause panel back up instead of just dropping
@@ -23,7 +27,7 @@ export function initializePause() {
     document
         .getElementById("pauseBtn")
         ?.addEventListener("click", () => {
-            pauseTurnTimer();
+            pauseTurnTimer("pause");
             openModal("pauseModal");
         });
 
@@ -31,7 +35,7 @@ export function initializePause() {
         .getElementById("pauseResumeBtn")
         ?.addEventListener("click", () => {
             closeModal("pauseModal");
-            resumeTurnTimer();
+            resumeTurnTimer("pause");
         });
 
     document

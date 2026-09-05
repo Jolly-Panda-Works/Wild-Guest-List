@@ -3,10 +3,26 @@
  *
  * Step 8: shows after card played — game waits until dismissed
  * Step 9: shows BEFORE queue resolves, with real card names — game waits until dismissed
+ *
+ * Freeze/resume: every step that actually shows its box to the player
+ * (i.e. everything except the interactive "play a card" step 7, and the
+ * hidden "waiting for the queue to fill" phase before step 9) calls
+ * js/game/turnTimer.js's pauseTurnTimer("tutorial") — the SAME freeze
+ * mechanism the Pause panel uses (reason "pause"), just a different
+ * reason — so the AI's thinking-delay callback, the turn timer, and the
+ * ability/queue/draw/turn-advance checkpoints in turnManager.js all
+ * correctly hold off while a walkthrough box is up, exactly as they
+ * already do for Pause. resumeTurnTimer("tutorial") is called wherever
+ * a step stops actively blocking (advancing past it, closing it, or
+ * intentionally letting the game play out — see the waitForQueueFull
+ * branch below). Step 7 deliberately never touches this: it's the
+ * human's own turn, and the ordinary turn timer should keep working
+ * exactly as it would without a walkthrough running at all.
  */
 
 import { t } from "../i18n.js";
 import { cardLabel } from "../services/logger.js";
+import { pauseTurnTimer, resumeTurnTimer } from "../game/turnTimer.js";
 
 const STORAGE_KEY = "walkthroughSeen";
 const PAD = 10;
@@ -177,8 +193,14 @@ function _showStep(index, doneFn) {
     const step = steps[index];
 
     if (step.waitForQueueFull) {
-        // Hide overlay and wait for queue to hit 5
+        // Hide overlay and wait for queue to hit 5 — the game is meant
+        // to keep playing itself out during this phase (that's the
+        // whole point: it needs several more turns, bot ones included,
+        // before there's a real queue to explain), so explicitly lift
+        // the freeze rather than leaving it held from whichever earlier
+        // step called pauseTurnTimer("tutorial").
         _hideOverlay();
+        resumeTurnTimer("tutorial");
         _onWillResolveReady = () => {
             // _onWillResolve now has { queue, resolve }
             _renderPausedStep(step, index, doneFn);
@@ -193,6 +215,10 @@ function _showStep(index, doneFn) {
     }
 
     if (step.waitForCardPlay) {
+        // The human's own turn — leave the ordinary turn timer running
+        // exactly as it would without a walkthrough at all, rather than
+        // freezing it while we wait for them to act.
+        resumeTurnTimer("tutorial");
         const box = document.getElementById("walkthroughBox");
         box.classList.add("wt-waiting");
         _setOverlayPassthrough(true);
@@ -207,14 +233,15 @@ function _showStep(index, doneFn) {
         return;
     }
 
-    if (step.pauseGame) {
-        // Show step, Next button unblocks game
-        _showOverlay();
-        _updateText(step, null);
-        _renderVisuals(step, index, doneFn);
-        return;
-    }
-
+    // Every remaining kind of step (plain informational steps 1–6, the
+    // pauseGame steps 8/10) actually shows its box and expects a "Next"
+    // click before anything continues — freeze gameplay for exactly as
+    // long as that box is up. In practice steps 1–6 happen before the
+    // very first card of the game is ever played, so this is a no-op
+    // for them today; it's here for the same reason step 8 needs it —
+    // so a future step, or a future change to when these can show,
+    // can't reopen this bug by accident.
+    pauseTurnTimer("tutorial");
     _showOverlay();
     _updateText(step, null);
     _renderVisuals(step, index, doneFn);
@@ -225,12 +252,21 @@ function _renderPausedStep(step, index, doneFn) {
     const { queue, resolve: unblockGame } = _onWillResolve;
     _onWillResolve = null;
 
+    // The resolveQueue() call this unblocks is already independently
+    // held up by its own awaited notifyQueueWillResolve() Promise (see
+    // js/game/queueManager.js) — this call is belt-and-suspenders so
+    // getGameRuntimeState() correctly reports STEP_BY_STEP while this
+    // box is up, and so the turn timer/AI thinking-delay/other
+    // checkpoints all agree gameplay is frozen for the same reason.
+    pauseTurnTimer("tutorial");
+
     _showOverlay();
     _updateText(step, queue);
     _renderVisuals(step, index, doneFn);
 
     // Override Next: unblock the game, then advance
     document.getElementById("wtNextBtn").onclick = () => {
+        resumeTurnTimer("tutorial");
         unblockGame();          // let queueManager.resolveQueue() continue
         _showStep(index + 1, doneFn);
     };
@@ -287,6 +323,11 @@ function _renderVisuals(step, index, doneFn) {
 function _finish(doneFn) {
     _active = false;
     markWalkthroughSeen();
+    // Covers every path here: the walkthrough finishing normally past
+    // its last step, and Skip being clicked mid-way through a step that
+    // had called pauseTurnTimer("tutorial") — safe to call even if
+    // "tutorial" was never held (see resumeTurnTimer()'s no-op case).
+    resumeTurnTimer("tutorial");
     _setOverlayPassthrough(false);
     _hideOverlay();
     if (doneFn) doneFn();

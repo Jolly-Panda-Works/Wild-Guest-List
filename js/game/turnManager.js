@@ -47,7 +47,7 @@ from "../ui/game-ui.js";
 
 import { isPaused } from "../ui/pause-ui.js";
 
-import { startTurnTimer, stopTurnTimer } from "./turnTimer.js";
+import { startTurnTimer, stopTurnTimer, waitUntilResumed } from "./turnTimer.js";
 
 import { director } from "../presentation/director.js";
 import { beginCapture, endCapture } from "../presentation/events.js";
@@ -99,7 +99,7 @@ export function startTurn(gameState){
     startTurnTimer({
         onTick: renderTurnTimer,
         onExpire: () => {
-            if (isPaused()) return; // frozen by pauseTurnTimer(); nothing to expire
+            if (isPaused()) return; // frozen (Pause and/or the walkthrough) by pauseTurnTimer(); nothing to expire — the interval itself is already cleared whenever either engages, so this only guards a narrow same-tick race
             if (director.isBusy()) return; // a play is already underway
             notifyTurnTimerExpired(player); // Achievement: Perfect Timing — a turn was missed
             const index = getRandomCardIndex(player, gameState);
@@ -135,13 +135,12 @@ export function startTurn(gameState){
 
     setTimeout(async ()=>{
 
-        // Don't let the AI's move land while the game is paused — wait
-        // (re-checking periodically) until pause-ui.js reports resumed,
-        // instead of playing behind the pause overlay and surprising
+        // Don't let the AI's move land while gameplay is frozen — Pause
+        // and/or the in-game Step-by-Step walkthrough (see js/game/
+        // turnTimer.js's waitUntilResumed(), the single shared check for
+        // both) — instead of playing behind an overlay and surprising
         // the player with an already-changed board once they resume.
-        while (isPaused()) {
-            await new Promise(resolve => setTimeout(resolve, 300));
-        }
+        await waitUntilResumed();
 
         const index =
             getRandomCardIndex(player, gameState);
@@ -242,6 +241,16 @@ export async function playCard(
         await director.presentCardEnteredQueue(card, sourceEl, gameState.queue.length - 1);
         await updateNonBoardUI(gameState);
 
+        // Point of no return #1: don't resolve this card's ability
+        // (which can eliminate/escape/reposition cards — see
+        // js/abilities/abilities.js) while gameplay is frozen. If
+        // Pause or the walkthrough engaged during the animation above,
+        // this waits here instead of letting the ability mutate state
+        // underneath the overlay; the animation that already started
+        // still finishes on its own (see the note on this file's
+        // checkpoints in the module doc below playCard()).
+        await waitUntilResumed();
+
         beginCapture();
         const { beforeQueue, afterQueue } = await resolveAbility(
             card,
@@ -288,6 +297,14 @@ export async function playCard(
         // فقط اگر هنوز 5 کارت یا بیشتر در صف بود
         if(gameState.queue.length >= 5){
 
+            // Point of no return #2: the Queue-full → Party/Trash
+            // transition. resolveQueue() already awaits the
+            // walkthrough's own step-9 gate internally (see
+            // js/game/queueManager.js), but has no idea about Pause —
+            // this is what stops "Queue becomes full → Pause → cards
+            // still move into Party" (see this task's TEST 1/TEST 2).
+            await waitUntilResumed();
+
             beginCapture();
             await resolveQueue(gameState);
             const queueEvents = endCapture();
@@ -298,10 +315,19 @@ export async function playCard(
 
         }
 
+        // Point of no return #3: don't deal the next card while frozen.
+        await waitUntilResumed();
+
         // کشیدن کارت جدید
         drawCard(player);
 
         await updateNonBoardUI(gameState);
+
+        // Point of no return #4: neither ending the game nor handing
+        // the turn to the next player (human or bot) should happen
+        // while frozen — this is what stops a bot turn from silently
+        // beginning behind a Pause or walkthrough overlay.
+        await waitUntilResumed();
 
         // پایان بازی؟
         if(isGameOver(gameState)){
