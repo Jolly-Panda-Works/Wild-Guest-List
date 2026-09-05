@@ -1093,11 +1093,15 @@ fix:
   Pause popup's icons are also grown independently of the top bar's
   small `.top-btn` size, so icon and label read as one balanced
   button instead of a small icon next to full-size text.
-- Two screens (Achievements' `.ach-grid`, Card Guide's `#animalGrid`)
-  keep `overflow-y: auto` as a deliberate, non-load-bearing safety
-  net rather than a primary fix — their content length depends on
-  how much a player has unlocked / the current card set, so an
-  unusually long list scrolls instead of being silently clipped.
+- Card Guide's `#animalGrid` and Achievements' `.ach-grid` keep no
+  scrolling/`max-height` of their own — both size to their full
+  content height and rely entirely on the popup's own `.modal-body`
+  to scroll (see the 1.30.6/1.30.13 fix notes below). Their content
+  length depends on how much a player has unlocked / the current
+  card set, so an unusually long list scrolls via `.modal-body`
+  instead of being silently clipped — there is no independent safety
+  net on the grid itself, since that's exactly what caused the
+  nested-scroll bugs those fixes address.
 
 Real-device/browser QA against this layer hasn't been done as part
 of this change (this environment can't render a browser) — see
@@ -1203,7 +1207,22 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.30.12
+**Current version:** 1.30.13
+
+**Fix — Profile → Achievements had a second, nested scroll container on
+Mobile, especially on Android (1.30.13):** `.ach-grid`
+(`#profileAchievementsList`, inside Profile's `.modal-body`) kept its
+own `max-height` + `overflow-y: auto` — a second independent scroll
+container nested inside `.modal-body`'s, the same bug `#animalGrid`
+(Card Guide) had already been fixed for in 1.30.6. A swipe starting on
+an Achievement card scrolled that small fixed-height box in place
+instead of the popup, and achievements past its `max-height` could
+become unreachable. `.ach-grid`'s own scrolling/`max-height` (base
+rule and both mobile-landscape tiers) is removed so it sizes to its
+full content height and contributes to `.modal-body`'s natural
+height, exactly like `#animalGrid` already does — `.modal-body` is
+now the one and only scroll container for both the Card Guide and
+Profile popups. No markup, gameplay, or Desktop behavior changed.
 
 **Style — Animal Cards no longer show the power number on their face
 (1.30.12):** The in-play card footer (`createCard()` in
@@ -1355,9 +1374,10 @@ Desktop and the documented Header/Scrollable-Body/Fixed-Footer
 architecture. This also happens to be what fixes the original 0-height
 collapse: an item with `overflow: visible` gets a normal content-based
 automatic minimum size in flexbox, so the min-height patch from 1.30.5
-is no longer needed either. Scoped to `#animalGrid` only — `.ach-grid`
-(Profile → Achievements) is unrelated UI and untouched; see Known
-Issues.
+is no longer needed either. Scoped to `#animalGrid` only at the time —
+`.ach-grid` (Profile → Achievements) had the identical bug and was
+left unrelated UI, untouched; it was fixed the same way in 1.30.13
+above.
 
 **Fix — Card Guide Animal Ability grid empty on Mobile (1.30.5,
 superseded by 1.30.6 above):** `#animalGrid` (Card Guide's Animal
