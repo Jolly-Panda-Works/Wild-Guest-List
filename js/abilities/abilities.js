@@ -29,7 +29,17 @@ from "../constants/cardIds.js";
 import { emit, wasAnimated, EVENTS }
 from "../presentation/events.js";
 
-export async function resolveAbility(card, gameState) {
+/**
+ * `preview = true` is set only by ../previewResolver.js. It runs this
+ * exact function — the same switch, the same helpers, the same event
+ * emissions — against a throwaway clone of gameState (see
+ * previewResolver.js's buildShadowGameState) so Preview and real
+ * execution can never drift apart into two competing rule sets. The
+ * only thing `preview` changes is threaded one level deeper, into
+ * kangaroo()'s chooseKangarooJump() call, to avoid popping the real
+ * chooser UI while only previewing.
+ */
+export async function resolveAbility(card, gameState, { preview = false } = {}) {
 
     const queue = gameState.queue;
     // Snapshot of card identity -> position before the ability runs, so we
@@ -56,7 +66,7 @@ export async function resolveAbility(card, gameState) {
         case 8:  giraffe(card, gameState); break;
         case 6:  seal(card, gameState); break;
         case 4:  parrot(card, gameState); break;
-        case 3:  await kangaroo(card, gameState); break;
+        case 3:  await kangaroo(card, gameState, preview); break;
         case 2:  monkey(card, gameState); break;
         case 1:  weasel(card, gameState); break;
         default: console.log(card.name, "no ability");
@@ -78,7 +88,7 @@ export async function resolveAbility(card, gameState) {
     return { beforeQueue, afterQueue: [...queue] };
 }
 
-async function kangaroo(card, gameState) {
+async function kangaroo(card, gameState, preview = false) {
     const queue = gameState.queue;
     const index = queue.indexOf(card);
     if(index === -1) return;
@@ -89,7 +99,7 @@ async function kangaroo(card, gameState) {
         return;
     }
 
-    const jump = await chooseKangarooJump(card.owner, maxJump);
+    const jump = await chooseKangarooJump(card.owner, maxJump, { preview });
     const targetIndex = index - jump;
     if(targetIndex < 0) return;
 

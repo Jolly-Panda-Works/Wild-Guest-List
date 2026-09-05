@@ -39,6 +39,7 @@ At the end, the player with the **most animals in their party wins**.
   * Medium
   * Hard
 * 🎯 Strategic shared queue system
+* 🔮 Drag-to-play with a live Ability Preview (see cards' effects before you play them)
 * 🎉 Party and Trash systems
 * 🏆 Match Standings (live in-match score panel)
 * 📜 Game log
@@ -290,11 +291,26 @@ After playing a card, another card is drawn when available.
 
 ### 3. Play a Card
 
-During a player's turn, they select one animal from their hand.
+During a player's turn, they **drag** one animal from their hand onto
+the Queue (dropping anywhere over the Queue works — where you drop
+never affects placement).
+
+While dragging, an **Ability Preview** appears: full-card overlays on
+whichever Queue cards the dragged animal would affect (and, if
+relevant, on the dragged card itself — e.g. it won't enter at all, or
+it'll jump to a specific slot), computed from the exact same rules
+real execution uses. Releasing over the Queue actually plays the card;
+releasing anywhere else cancels the drag with no effect. See
+`js/abilities/previewResolver.js` and `js/ui/previewOverlay-ui.js`
+under **Ability Preview System** below.
 
 The animal is added to the **back of the shared queue**.
 
 Its special ability is then triggered.
+
+Bots preview their chosen card the same way — the same Preview
+Resolver, briefly shown on the board — before actually playing it, so
+watching a Bot's turn reads the same way a human's drag does.
 
 ---
 
@@ -535,6 +551,8 @@ WildGuestList/
 │   │
 │   ├── abilities/
 │   │   ├── abilities.js
+│   │   ├── previewActions.js  (Ability Preview action enum — Stay/MoveBack/Remove/Defend/MoveToSlot/Attach/Escape)
+│   │   ├── previewResolver.js (Ability Preview Resolver — shared by Player drag and Bot; see § Ability Preview System)
 │   │   └── helpers/
 │   │       ├── chooser.js
 │   │       ├── followHelpers.js
@@ -546,7 +564,8 @@ WildGuestList/
 │   │
 │   ├── constants/
 │   │   ├── cardIds.js
-│   │   └── playerTypes.js
+│   │   ├── playerTypes.js
+│   │   └── preview.js      (Ability Preview / drag-to-play timing & thresholds)
 │   │
 │   ├── game/
 │   │   ├── deck.js
@@ -578,6 +597,7 @@ WildGuestList/
 │       ├── modal-ui.js    (Home's popup modals: Profile, Settings, Card Guide, About, Feedback, Tutorial — plus Game's own in-game Settings/Help)
 │       ├── orientation-ui.js (landscape-only gate — every top-level page)
 │       ├── pause-ui.js
+│       ├── previewOverlay-ui.js (Ability Preview's visual layer — full-card overlays; see § Ability Preview System)
 │       ├── profile-ui.js  (Profile popup content — name + avatar; opened from Home's profile chip)
 │       ├── tutorial-ui.js
 │       ├── ui.js
@@ -668,6 +688,63 @@ chooseKangarooJump()
 ```
 
 This keeps individual card behaviors separated from general queue manipulation.
+
+---
+
+### Ability Preview System
+
+```text
+js/abilities/previewActions.js    (action enum: Stay/MoveBack/Remove/Defend/MoveToSlot/Attach/Escape)
+js/abilities/previewResolver.js   (previewAbility() — the shared resolver)
+js/ui/previewOverlay-ui.js        (full-card overlays — visual layer only)
+js/constants/preview.js           (drag-start threshold, Bot preview duration)
+```
+
+Before a card actually enters the Queue, both the human player (via
+drag) and the Bot (before executing its chosen card) show what it
+would do — without touching real game state. `previewAbility(card,
+gameState)` is the single place that answers this: it runs the exact
+same `resolveAbility()` real execution uses, but against a disposable
+clone of the Queue (`{ queue: [...gameState.queue, card], trash: [],
+logs: [] }` — new arrays, but the same card object references, since
+nothing in `abilities.js` ever mutates a card's own fields), captures
+the same events real turns emit via `presentation/events.js`'s
+`beginCapture()`/`endCapture()`, and classifies the outcome per card:
+
+* **Stay** — no effect; no overlay is shown.
+* **Move Back** — displaced by another card's ability (e.g. pushed
+  back by a Hippo, or bumped by a Lion rushing to the front).
+* **Remove** — will be sent to the Trash (Weasel/Parrot/Crocodile/
+  Monkey's group effect).
+* **Defend** — Zebra specifically, blocking a Hippo or Crocodile.
+* **Move To Slot** — an ability relocates a card to a known slot
+  (Snake's sort, Seal's reverse, or the dragged card's own
+  self-relocation — Lion's rush, Hippo's push, Kangaroo's jump,
+  Giraffe's hop — each carries its real destination slot number,
+  never a hardcoded one).
+* **Attach** — Sloth Bear sticking directly behind whichever card just
+  passed over it (already a real, positional gameplay rule — see
+  `helpers/followHelpers.js` — not a Preview-only visual).
+* **Escape** — the dragged/selected card itself will not enter the
+  Queue at all (a duplicate Lion bouncing off the one already there).
+
+Because Preview and real execution share the exact same
+`resolveAbility()` call, they cannot drift into two different rule
+sets — there's only one gameplay-rule implementation, ever.
+
+`js/ui/previewOverlay-ui.js` turns a Preview result into the actual
+full-card overlays (dim + blur the card underneath, a large action
+icon, the destination slot number for Move To Slot) — it owns no
+gameplay rules itself, just presentation, and pools one overlay
+element per card rather than creating/destroying them repeatedly.
+
+The Preview is computed once per drag (it depends only on the dragged
+card and the current Queue, never on pointer position) — see
+`wireHandCardDrag()` in `js/ui/game-ui.js` for the player flow, and
+`previewThenPlayCard()` in `js/game/turnManager.js` for the Bot flow,
+which briefly shows a small preview badge (`showBotPreviewBadge()`)
+next to the Bot's seat before calling the same `playCard()` used
+everywhere else.
 
 ---
 
@@ -1207,7 +1284,17 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.30.13
+**Current version:** 1.31.0
+
+**Feature — Ability Preview System + drag-to-play (1.31.0):** Hand
+cards are no longer played by tapping/clicking — the player drags a
+card onto the Queue instead, and a live Preview (full-card overlays
+showing exactly what the card would do, computed from the same rules
+real execution uses) appears on the affected Queue cards while
+dragging. Bots preview their chosen card the same way, through the
+same resolver, before playing it. See § Ability Preview System under
+Main Systems, and § Core Gameplay → 3. Play a Card. The existing
+hold-to-open-Card-Information gesture on hand cards is unchanged.
 
 **Fix — Profile → Achievements had a second, nested scroll container on
 Mobile, especially on Android (1.30.13):** `.ach-grid`

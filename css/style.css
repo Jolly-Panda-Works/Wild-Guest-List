@@ -8566,3 +8566,156 @@ body.gameplay-locked #playerHand .card {
     #gameLayout { padding: 1px 6px 2px; }
     #otherPlayers { padding: 0; }
 }
+
+/* ==========================================================
+   ABILITY PREVIEW SYSTEM
+   Full-card overlays shown on Queue cards (and the dragged/selected
+   card itself) while previewing a card's effect before it's actually
+   played — see js/ui/previewOverlay-ui.js and js/abilities/
+   previewResolver.js. Purely visual: never applied by gameplay logic
+   directly, only by the preview UI layer.
+========================================================== */
+
+/* The real card underneath a visible overlay — dimmed + (where the
+   browser supports it) blurred, per Section 3 of the brief. Kept as a
+   plain filter (not backdrop-filter) since it's applied to the card
+   itself, not a layer floating above unrelated content. */
+.card.preview-underlay-dim .card-visual,
+.card.preview-underlay-dim .card-footer,
+.card.preview-underlay-dim .card-owner-badge {
+    filter: brightness(0.45) saturate(0.7) blur(1.5px);
+    transition: filter 120ms ease-out;
+}
+
+.preview-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 6; /* above .card-help-affordance (z-index 4) and the
+                   long-press ring (z-index 5) — a Preview is the most
+                   important thing on the card while it's showing */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: rgba(10, 12, 16, 0.55);
+    border-radius: inherit;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 140ms ease-out;
+}
+
+.preview-overlay.preview-overlay-visible {
+    opacity: 1;
+}
+
+.preview-overlay-icon {
+    font-size: clamp(22px, 3.4vw, 40px);
+    line-height: 1;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+}
+
+.preview-overlay-icon .icon-image {
+    width: clamp(22px, 3.4vw, 40px);
+    height: clamp(22px, 3.4vw, 40px);
+    object-fit: contain;
+}
+
+.preview-overlay-slot {
+    font-size: clamp(11px, 1.6vw, 15px);
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+/* Distinct per-action tint so the overlay reads at a glance even before
+   the icon itself is parsed — Remove/Escape skew red (danger), Defend
+   skews blue (protected), Attach/MoveToSlot/MoveBack stay neutral. */
+.preview-overlay[data-action="REMOVE"],
+.preview-overlay[data-action="ESCAPE"] {
+    background: rgba(120, 20, 20, 0.55);
+}
+.preview-overlay[data-action="DEFEND"] {
+    background: rgba(20, 60, 110, 0.55);
+}
+.preview-overlay[data-action="ATTACH"] {
+    background: rgba(90, 60, 20, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .preview-overlay,
+    .card.preview-underlay-dim .card-visual,
+    .card.preview-underlay-dim .card-footer,
+    .card.preview-underlay-dim .card-owner-badge {
+        transition: none;
+    }
+}
+
+/* ── Player drag-to-play ──────────────────────────────────
+   The hand card being dragged stays in place (and in the hand's normal
+   layout flow) but is invisible — a separate floating "ghost" (built
+   from the same createCard() markup) follows the pointer instead, so
+   the existing hand-card DOM node/listeners never move mid-drag. */
+#playerHand .card.card-drag-source {
+    visibility: hidden;
+}
+
+.card-drag-ghost {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100000; /* above everything, including modals — a drag in
+                         progress should never render underneath one */
+    pointer-events: none;
+    transform: translate(-9999px, -9999px); /* positioned via JS on every move */
+    transition: none;
+    box-shadow: var(--shadow-card), 0 12px 28px rgba(0, 0, 0, 0.45);
+    opacity: 0.96;
+}
+
+/* Reuse the exact same sizing #queue .card already gets, so the ghost
+   doesn't visibly resize on its way from hand-size to queue-size — a
+   drag is meant to preview it landing in the Queue, not in the hand. */
+.card-drag-ghost.card {
+    width: clamp(68px, 8vw, 110px);
+    height: clamp(96px, 11.5vw, 155px);
+}
+
+/* Valid-drop affordance while a card is actively being dragged over it. */
+#queueArea.drag-drop-target-active {
+    outline: 2px dashed var(--accent);
+    outline-offset: 4px;
+    border-radius: var(--radius-sm);
+}
+
+/* ── Bot preview badge ─────────────────────────────────────
+   A small floating card the Bot briefly reveals above its own seat
+   while its selected card's Preview is showing on the Queue (Section 7
+   of the brief) — see showBotPreviewBadge()/clearBotPreviewBadge() in
+   js/ui/game-ui.js. Deliberately separate from the anonymous card-back
+   elements in js/ui/game-ui.js's renderOtherPlayers(), so it never
+   disturbs the existing "face-down back flies in, then reveals" queue-
+   entry animation those elements are wired for. */
+.bot-preview-badge {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    z-index: 40;
+    opacity: 0;
+    transform: translateY(-6px) scale(0.92);
+    transition: opacity 160ms ease-out, transform 160ms ease-out;
+    pointer-events: none;
+}
+
+.bot-preview-badge.bot-preview-badge-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.bot-preview-badge .card {
+    width: clamp(52px, 6vw, 78px);
+    height: clamp(74px, 8.6vw, 110px);
+    box-shadow: var(--shadow-card), 0 0 0 2px var(--accent);
+}

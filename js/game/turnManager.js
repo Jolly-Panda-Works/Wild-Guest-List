@@ -42,8 +42,13 @@ from "./queueManager.js";
 import { notifyCardPlayed, isWalkthroughActive } from "../ui/walkthrough.js";
 import { dismissCardHelpHint } from "../ui/cardHelpHint.js";
 
-import { getHandCardElement, getOpponentHandBackElement, renderTurnTimer }
+import { getHandCardElement, getOpponentHandBackElement, renderTurnTimer, showBotPreviewBadge, clearBotPreviewBadge }
 from "../ui/game-ui.js";
+
+import { previewAbility } from "../abilities/previewResolver.js";
+import { showQueuePreview, clearAllPreviewOverlays } from "../ui/previewOverlay-ui.js";
+import { BOT_PREVIEW_DISPLAY_DURATION_MS } from "../constants/preview.js";
+import { wait } from "../presentation/flip.js";
 
 import { isPaused } from "../ui/pause-ui.js";
 
@@ -62,6 +67,10 @@ import { maybeOfferFeedbackToast } from "../ui/feedback-ui.js";
 import { notifyTurnTimerExpired, notifyAbilityResolved, notifyQueueEvents } from "../services/achievements.js";
 
 export function startTurn(gameState){
+
+    // Section 12: no stale Preview overlay should ever survive a turn
+    // change, whoever's turn is starting.
+    clearAllPreviewOverlays();
 
     const player =
         gameState.players[
@@ -145,13 +154,51 @@ export function startTurn(gameState){
         const index =
             getRandomCardIndex(player, gameState);
 
-        await playCard(
+        await previewThenPlayCard(
             player,
             index,
             gameState
         );
 
     }, AI_THINKING_DELAY_MIN_MS + Math.random() * (AI_THINKING_DELAY_MAX_MS - AI_THINKING_DELAY_MIN_MS));
+}
+
+/**
+ * Bot equivalent of the human player's drag: computes the exact same
+ * Ability Preview (see ../abilities/previewResolver.js — the same
+ * module the human drag flow in ../ui/game-ui.js calls) for the card
+ * the Bot has decided to play, shows it on the board for a short
+ * configurable duration (Section 7 of the brief), then hands off to the
+ * regular playCard() — completely unchanged below — to actually
+ * execute it. There is deliberately no separate Bot-specific preview
+ * calculation anywhere in here.
+ */
+async function previewThenPlayCard(player, index, gameState) {
+    if (index === -1 || player.hand.length === 0 || director.isBusy()) {
+        return playCard(player, index, gameState);
+    }
+
+    const card = player.hand[index];
+
+    try {
+        const result = await previewAbility(card, gameState);
+        if (result) {
+            showQueuePreview(result.queueActions);
+            showBotPreviewBadge(player, card);
+            await wait(BOT_PREVIEW_DISPLAY_DURATION_MS);
+            // Never let a Pause/walkthrough freeze land while the
+            // preview is sitting on screen — same "point of no return"
+            // pattern used throughout playCard() below.
+            await waitUntilResumed();
+        }
+    } catch (err) {
+        console.error("[turnManager] bot preview failed, playing without one", err);
+    } finally {
+        clearBotPreviewBadge();
+        clearAllPreviewOverlays();
+    }
+
+    return playCard(player, index, gameState);
 }
 
 /**
@@ -177,6 +224,12 @@ export async function playCard(
     index,
     gameState
 ){
+
+    // Defensive — a Preview (drag cancelled mid-flight, a stale Bot
+    // badge, etc.) must never survive into an actual play. See Section
+    // 12 of the brief: "no stale overlays after ... successful card
+    // play". Cheap no-op when nothing is showing.
+    clearAllPreviewOverlays();
 
     if(
         index === -1 ||
@@ -367,6 +420,10 @@ export async function playCard(
     } finally {
 
         director.unlock();
+        // Belt-and-suspenders: guarantees no Preview overlay can ever
+        // survive past the end of a play, on any exit path (including
+        // the catch-and-fallback-render path above).
+        clearAllPreviewOverlays();
 
     }
 

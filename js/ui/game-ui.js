@@ -15,6 +15,9 @@ import { loadIcons } from "./icon-ui.js";
 import { isPaused } from "./pause-ui.js";
 import { getPlayerAvatarId } from "./playerAvatar-ui.js";
 import { PLAYER_AVATARS } from "../constants/avatars.js";
+import { previewAbility } from "../abilities/previewResolver.js";
+import { showQueuePreview, showDraggedCardPreview, clearAllPreviewOverlays } from "./previewOverlay-ui.js";
+import { DRAG_START_THRESHOLD_PX } from "../constants/preview.js";
 
 // ── Warning toast ─────────────────────────────────────────
 export function showWarning(message) {
@@ -157,11 +160,10 @@ function renderHand(gameState) {
         gameState.players[0].deck.length;
 
     const player   = gameState.players[0];
-    const isMyTurn = gameState.currentPlayer === 0;
 
     renderPlayerDeckInfo(player);
 
-    player.hand.forEach((card, index) => {
+    player.hand.forEach((card) => {
         const cardEl = createCard(card);
         // createCard() already wired the long-press-to-Card-Info gesture
         // and its affordance badge (see wireCardHelpLongPress) — reuse
@@ -182,46 +184,27 @@ function renderHand(gameState) {
         // below is never the only way to find out about it.
         cardEl.setAttribute("aria-label", `${cardName} — ${t("cardHelpHintLabel")}`);
 
-        const playThisCard = async () => {
-            if (isPaused()) return;
-            if (!isMyTurn) {
-                showWarning(t("notYourTurn"));
-                return;
-            }
-            if (director.isBusy()) {
-                // A previous play/AI turn is still animating — ignore the
-                // click rather than starting a second, overlapping turn.
-                return;
-            }
-            // stop pulse before animation
-            setMyTurnHighlight(false);
-            await playCard(player, index, gameState);
-            playSound("playCard");
-        };
+        // Cards are no longer played by clicking/tapping — see
+        // wireHandCardDrag() below for the drag-to-play gesture that
+        // replaces it (Ability Preview system). The long-press-to-
+        // Card-Info gesture above is untouched: that's the "existing
+        // card interaction behavior unrelated to playing cards" the
+        // drag integration must preserve.
+        const dragHandle = wireHandCardDrag(cardEl, card, gameState, player);
+        handLongPressHandles.push(dragHandle);
 
-        cardEl.onclick = () => {
-            // A long-press that just fired also produces a trailing
-            // click/tap on release — swallow exactly that one so Help
-            // opening never also plays the card underneath it.
-            if (longPress.consumeSuppressedClick()) return;
-            playThisCard();
-        };
-
-        // Keyboard parity with the long-press gesture: holding Enter/Space
-        // for the same LONG_PRESS_DURATION_MS opens Card Information,
-        // exactly like holding the card with a pointer does. A quick
-        // tap still plays the card, so existing keyboard play behavior
-        // is unchanged — this only adds a hold action, it doesn't alter
-        // what a normal press does.
+        // Keyboard parity for the long-press-to-Card-Info gesture only
+        // (holding Enter/Space for LONG_PRESS_DURATION_MS opens Card
+        // Information, same as holding the card with a pointer does).
+        // Playing a card is drag-only now — there is intentionally no
+        // keyboard equivalent for that yet; see the deliverable notes
+        // for this task on it as a known accessibility gap to revisit.
         let keyHoldTimer = null;
-        let keyHoldFired = false;
         const onKeyDown = e => {
             if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
             e.preventDefault();
             if (e.repeat) return; // ignore OS key-repeat while held
-            keyHoldFired = false;
             keyHoldTimer = setTimeout(() => {
-                keyHoldFired = true;
                 dismissCardHelpHintOnSuccess();
                 openCardInfoByPower(card.power);
             }, LONG_PRESS_DURATION_MS);
@@ -229,8 +212,6 @@ function renderHand(gameState) {
         const onKeyUp = e => {
             if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
             clearTimeout(keyHoldTimer);
-            if (!keyHoldFired) playThisCard();
-            keyHoldFired = false;
         };
         cardEl.addEventListener("keydown", onKeyDown);
         cardEl.addEventListener("keyup", onKeyUp);
@@ -276,6 +257,210 @@ export function getHandCardElement(index) {
  *  flight source. */
 export function getOpponentHandBackElement(player) {
     return document.querySelector(`.card-back[data-player="${player.id}"]`);
+}
+
+// ── Ability Preview: player drag-to-play ────────────────────
+//
+// Replaces the old click-to-play handler (Section 2 of the feature
+// brief). The actual Hand card DOM node never moves during a drag — it
+// just becomes invisible (`.card-drag-source`, see style.css) — a
+// separate floating "ghost" built from the same createCard() markup
+// follows the pointer instead. This means playCard()'s existing
+// getHandCardElement()-based flight animation (cardEnteredQueue, above)
+// needs no changes at all: once the drag ends, the real card becomes
+// visible again exactly where it always was, then flies from there
+// into the Queue exactly like the old click flow did.
+//
+// The Preview itself is computed exactly ONCE per drag — at the moment
+// a press turns into a drag — since it depends only on the dragged
+// card and the current Queue, never on pointer position (see
+// previewResolver.js's own doc comment on why this is safe/correct,
+// and Section 13 of the brief on why recalculating more often than
+// that would be wasted work).
+function positionDragGhost(ghostEl, clientX, clientY) {
+    if (!ghostEl) return;
+    const w = ghostEl.offsetWidth || 90;
+    const h = ghostEl.offsetHeight || 128;
+    ghostEl.style.transform = `translate(${clientX - w / 2}px, ${clientY - h / 2}px)`;
+}
+
+function isOverQueueDropZone(clientX, clientY) {
+    const el = document.elementFromPoint(clientX, clientY);
+    return !!(el && el.closest("#queueArea"));
+}
+
+function wireHandCardDrag(cardEl, card, gameState, player) {
+    let pointerId = null;
+    let startX = 0;
+    let startY = 0;
+    let dragging = false;
+    let ghostEl = null;
+
+    function canStartDrag() {
+        if (isPaused()) return false;
+        if (gameState.currentPlayer !== 0) {
+            // Matches the old click-to-play warning exactly (Section 2
+            // doesn't ask for this, but it's existing, unrelated-to-
+            // playing UX — the "you tried to interact out of turn"
+            // feedback — that shouldn't quietly disappear).
+            showWarning(t("notYourTurn"));
+            return false;
+        }
+        if (director.isBusy()) return false;
+        if (player.hand.indexOf(card) === -1) return false; // already played/gone
+        return true;
+    }
+
+    function beginDrag(evt) {
+        dragging = true;
+        cardEl.classList.add("card-drag-source");
+
+        ghostEl = createCard(card);
+        ghostEl.classList.add("card-drag-ghost");
+        document.body.appendChild(ghostEl);
+        positionDragGhost(ghostEl, evt.clientX, evt.clientY);
+
+        const queueArea = document.getElementById("queueArea");
+        if (queueArea) queueArea.classList.add("drag-drop-target-active");
+
+        // Single Preview calculation for this whole drag — see the
+        // module-level note above. previewAbility() is defensive (see
+        // previewResolver.js) and simply resolves to null if a real
+        // turn's own capture happens to be open; either way this can
+        // never throw or leave the drag stuck.
+        previewAbility(card, gameState).then(result => {
+            if (!result || !dragging) return;
+            showQueuePreview(result.queueActions);
+            showDraggedCardPreview(ghostEl, result.cardAction);
+        });
+    }
+
+    function endDragVisuals() {
+        dragging = false;
+        cardEl.classList.remove("card-drag-source");
+        if (ghostEl) {
+            ghostEl.remove();
+            ghostEl = null;
+        }
+        const queueArea = document.getElementById("queueArea");
+        if (queueArea) queueArea.classList.remove("drag-drop-target-active");
+    }
+
+    function cleanupPointerTracking() {
+        window.removeEventListener("pointermove", onPointerMove);
+        window.removeEventListener("pointerup", onPointerUp);
+        window.removeEventListener("pointercancel", onPointerCancel);
+        pointerId = null;
+    }
+
+    function onPointerDown(evt) {
+        if (evt.pointerType === "mouse" && evt.button !== 0) return;
+        if (pointerId !== null) return; // already tracking a press
+        if (!canStartDrag()) return;
+
+        pointerId = evt.pointerId;
+        startX = evt.clientX;
+        startY = evt.clientY;
+        dragging = false;
+
+        window.addEventListener("pointermove", onPointerMove);
+        window.addEventListener("pointerup", onPointerUp);
+        window.addEventListener("pointercancel", onPointerCancel);
+    }
+
+    function onPointerMove(evt) {
+        if (evt.pointerId !== pointerId) return;
+
+        if (!dragging) {
+            const dx = evt.clientX - startX;
+            const dy = evt.clientY - startY;
+            if (Math.hypot(dx, dy) < DRAG_START_THRESHOLD_PX) return;
+            beginDrag(evt);
+            return;
+        }
+
+        positionDragGhost(ghostEl, evt.clientX, evt.clientY);
+    }
+
+    async function onPointerUp(evt) {
+        if (evt.pointerId !== pointerId) return;
+        const wasDragging = dragging;
+        const dropX = evt.clientX;
+        const dropY = evt.clientY;
+        cleanupPointerTracking();
+
+        if (!wasDragging) return; // a plain tap — playing is drag-only now
+
+        const validDrop = isOverQueueDropZone(dropX, dropY);
+        endDragVisuals();
+        clearAllPreviewOverlays();
+
+        if (!validDrop) return; // Section 2.7: cancelled drop, restore normal state
+
+        const currentIndex = player.hand.indexOf(card);
+        if (currentIndex === -1) return; // defensive — card already gone somehow
+
+        setMyTurnHighlight(false);
+        await playCard(player, currentIndex, gameState);
+        playSound("playCard");
+    }
+
+    function onPointerCancel(evt) {
+        if (evt.pointerId !== pointerId) return;
+        cleanupPointerTracking();
+        endDragVisuals();
+        clearAllPreviewOverlays();
+    }
+
+    cardEl.addEventListener("pointerdown", onPointerDown);
+
+    return {
+        el: cardEl,
+        destroy() {
+            cardEl.removeEventListener("pointerdown", onPointerDown);
+            cleanupPointerTracking();
+            endDragVisuals();
+            clearAllPreviewOverlays();
+        },
+    };
+}
+
+// ── Ability Preview: Bot ─────────────────────────────────────
+//
+// Shows which card the Bot is about to play, next to its seat, while
+// its Ability Preview is up on the Queue (Section 7 of the brief).
+// Deliberately a standalone floating element rather than reusing/
+// revealing one of renderOtherPlayers()'s own `.card-back` elements —
+// those are wired for the existing "face-down back flies to the queue,
+// then reveals" animation (see cardEnteredQueue above), and swapping
+// one out early for a face-up preview would desync that choreography
+// the moment the Bot's turn actually plays out.
+let _botPreviewBadgeEl = null;
+
+export function showBotPreviewBadge(player, card) {
+    clearBotPreviewBadge();
+
+    const row = document.querySelector(`.other-player-row[data-player="${player.id}"]`);
+    if (!row) return;
+
+    const badge = document.createElement("div");
+    badge.className = "bot-preview-badge";
+    badge.appendChild(createCard(card));
+    row.appendChild(badge);
+    loadIcons(badge);
+
+    // Next frame, so the opacity/transform transition in style.css
+    // actually plays instead of snapping straight to visible.
+    requestAnimationFrame(() => badge.classList.add("bot-preview-badge-visible"));
+
+    _botPreviewBadgeEl = badge;
+}
+
+export function clearBotPreviewBadge() {
+    if (_botPreviewBadgeEl) {
+        _botPreviewBadgeEl.remove();
+        _botPreviewBadgeEl = null;
+    }
 }
 
 // ── Other players — deck-back style with avatar & deck count ──

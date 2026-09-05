@@ -1,135 +1,141 @@
 {
-  "app": {
-    "version": "1.30.13"
-  },
-  "icons": {
-    "leaderboard": "assets/img/icons/leaderboard.png",
-    "gameLog": "assets/img/icons/log.png",
-    "chat": "assets/img/icons/message.png",
-    "party": "assets/img/icons/party.png",
-    "trash": "assets/img/icons/trash.png",
-    "settings": "assets/img/icons/setting.png",
-    "help": "assets/img/icons/help.png",
-    "close": "assets/img/icons/close.png",
-    "back": "assets/img/icons/back.png",
-    "kangaroo": "🦘",
-    "timer": "assets/img/icons/timer.png",
-    "sound": "assets/img/icons/sound.png",
-    "About Developer": "assets/img/icons/about-developer.png",
-    "tutorial": "assets/img/icons/tutorial.png",
-    "previous": "assets/img/icons/previous.png",
-    "next": "assets/img/icons/next.png",
-    "play": "assets/img/icons/play.png",
-    "globe": "assets/img/icons/globe.png",
-    "cards": "assets/img/icons/card guide.png",
-    "users": "👥",
-    "profile": "👤",
-    "playWith1Bot":"assets/img/icons/play with 1 bot.png",
-    "playWith2Bots":"assets/img/icons/play with 2 bots.png",
-    "playWith3Bots":"assets/img/icons/play with 3 bots.png",
-    "store": "assets/img/icons/shop.png",
-    "tournament": "assets/img/icons/tournament.png",
-    "bot-easy": "assets/img/icons/bot-easy.png",
-    "bot-medium": "assets/img/icons/bot-normal.png",
-    "bot-hard": "assets/img/icons/bot-hard.png",
-    "player": "🙋",
-    "rankGold": "assets/img/icons/1st.png",
-    "rankSilver": "assets/img/icons/2nd.png",
-    "rankBronze": "assets/img/icons/3rd.png",
-    "rankFourth": "assets/img/icons/4th.png",
-    "partyEmoji": "assets/img/icons/party (2).png",
-    "power": "assets/img/icons/power.png",
-    "trashEmoji": "🗑️",
-    "waiting": "⏳",
-    "trophy": "🏆",
-    "pointer": "👆",
-    "jumped": "⤴️",
-    "escaped": "↩️",
-    "star": "⭐",
-    "tip": "💡",
-    "videoPlay": "▶",
-    "videoPause": "⏸",
-    "pause": "assets/img/icons/pause.png",
-    "feedback": "assets/img/icons/feedback.png",
-    "pauseResume": "assets/img/icons/resume.png",
-    "pauseRestart": "assets/img/icons/restart.png",
-    "home": "assets/img/icons/home.png",
-    "edit": "✏️",
-    "confirm": "✅",
-    "achFirstSteps": "🎮",
-    "achPerfectTiming": "⏱️",
-    "achCrocodileHunter": "🐊",
-    "achNoEscape": "🦓",
-    "achPartyAnimal": "🎉",
-    "achPartyStarter": "🎊",
-    "achLastOneStanding": "👑",
-    "achStrategist": "🧠",
-    "achDuelMaster": "⚔️",
-    "achWildChampion": "🏆",
-    "orientationRotate": "🔄",
-    "luckyWheel": "assets/img/icons/lucky wheel.png",
-    "lockClosed": "🔒",
-    "coin":"assets/img/icons/coin.png",
-    "gem":"assets/img/icons/gem.png"
-  },
-  "branding": {
-    "developerLogo": "assets/img/branding/jolly-panda-logo.png"
-  },
-  "sounds": {
-    "playCard": "",
-    "queueFull": "",
-    "partyJoin": "",
-    "trashJoin": "",
-    "yourTurn": "",
-    "win": "",
-    "lose": "",
-    "background": "assets/sound/background.mp3",
-    "abilityActivated": "",
-    "cardRemoved": "",
-    "cardEaten": ""
-  },
-  "achievements": [
-    {
-      "id": "first_steps",
-      "target": 1
+    "app": {
+        "version": "1.31.0"
     },
-    {
-      "id": "perfect_timing",
-      "target": 1
+    "icons": {
+        "leaderboard": "assets/img/icons/leaderboard.png",
+        "gameLog": "assets/img/icons/log.png",
+        "chat": "assets/img/icons/message.png",
+        "party": "assets/img/icons/party.png",
+        "trash": "assets/img/icons/trash.png",
+        "settings": "assets/img/icons/setting.png",
+        "help": "assets/img/icons/help.png",
+        "close": "assets/img/icons/close.png",
+        "back": "assets/img/icons/back.png",
+        "kangaroo": "🦘",
+        "timer": "assets/img/icons/timer.png",
+        "sound": "assets/img/icons/sound.png",
+        "About Developer": "assets/img/icons/about-developer.png",
+        "tutorial": "assets/img/icons/tutorial.png",
+        "previous": "assets/img/icons/previous.png",
+        "next": "assets/img/icons/next.png",
+        "play": "assets/img/icons/play.png",
+        "globe": "assets/img/icons/globe.png",
+        "cards": "assets/img/icons/card guide.png",
+        "users": "👥",
+        "profile": "👤",
+        "playWith1Bot": "assets/img/icons/play with 1 bot.png",
+        "playWith2Bots": "assets/img/icons/play with 2 bots.png",
+        "playWith3Bots": "assets/img/icons/play with 3 bots.png",
+        "store": "assets/img/icons/shop.png",
+        "tournament": "assets/img/icons/tournament.png",
+        "bot-easy": "assets/img/icons/bot-easy.png",
+        "bot-medium": "assets/img/icons/bot-normal.png",
+        "bot-hard": "assets/img/icons/bot-hard.png",
+        "player": "🙋",
+        "rankGold": "assets/img/icons/1st.png",
+        "rankSilver": "assets/img/icons/2nd.png",
+        "rankBronze": "assets/img/icons/3rd.png",
+        "rankFourth": "assets/img/icons/4th.png",
+        "partyEmoji": "assets/img/icons/party (2).png",
+        "power": "assets/img/icons/power.png",
+        "trashEmoji": "🗑️",
+        "waiting": "⏳",
+        "trophy": "🏆",
+        "pointer": "👆",
+        "jumped": "⤴️",
+        "escaped": "↩️",
+        "star": "⭐",
+        "tip": "💡",
+        "videoPlay": "▶",
+        "videoPause": "⏸",
+        "pause": "assets/img/icons/pause.png",
+        "feedback": "assets/img/icons/feedback.png",
+        "pauseResume": "assets/img/icons/resume.png",
+        "pauseRestart": "assets/img/icons/restart.png",
+        "home": "assets/img/icons/home.png",
+        "edit": "✏️",
+        "confirm": "✅",
+        "achFirstSteps": "🎮",
+        "achPerfectTiming": "⏱️",
+        "achCrocodileHunter": "🐊",
+        "achNoEscape": "🦓",
+        "achPartyAnimal": "🎉",
+        "achPartyStarter": "🎊",
+        "achLastOneStanding": "👑",
+        "achStrategist": "🧠",
+        "achDuelMaster": "⚔️",
+        "achWildChampion": "🏆",
+        "orientationRotate": "🔄",
+        "luckyWheel": "assets/img/icons/lucky wheel.png",
+        "lockClosed": "🔒",
+        "coin": "assets/img/icons/coin.png",
+        "gem": "assets/img/icons/gem.png",
+        "previewMoveBack": "⬅️",
+        "previewRemove": "✕",
+        "previewDefend": "🛡️",
+        "previewMoveToSlot": "➡️",
+        "previewAttach": "🔗",
+        "previewEscape": "🚫"
     },
-    {
-      "id": "crocodile_hunter",
-      "target": 5
+    "branding": {
+        "developerLogo": "assets/img/branding/jolly-panda-logo.png"
     },
-    {
-      "id": "no_escape",
-      "target": 1
+    "sounds": {
+        "playCard": "",
+        "queueFull": "",
+        "partyJoin": "",
+        "trashJoin": "",
+        "yourTurn": "",
+        "win": "",
+        "lose": "",
+        "background": "assets/sound/background.mp3",
+        "abilityActivated": "",
+        "cardRemoved": "",
+        "cardEaten": ""
     },
-    {
-      "id": "party_animal",
-      "target": 1
-    },
-    {
-      "id": "party_starter",
-      "target": 3
-    },
-    {
-      "id": "last_one_standing",
-      "target": 1
-    },
-    {
-      "id": "strategist",
-      "target": 1,
-      "requiredUniqueAbilities": 3
-    },
-    {
-      "id": "duel_master",
-      "target": 1,
-      "requiredPlayerCount": 2
-    },
-    {
-      "id": "wild_champion",
-      "target": 10
-    }
-  ]
+    "achievements": [
+        {
+            "id": "first_steps",
+            "target": 1
+        },
+        {
+            "id": "perfect_timing",
+            "target": 1
+        },
+        {
+            "id": "crocodile_hunter",
+            "target": 5
+        },
+        {
+            "id": "no_escape",
+            "target": 1
+        },
+        {
+            "id": "party_animal",
+            "target": 1
+        },
+        {
+            "id": "party_starter",
+            "target": 3
+        },
+        {
+            "id": "last_one_standing",
+            "target": 1
+        },
+        {
+            "id": "strategist",
+            "target": 1,
+            "requiredUniqueAbilities": 3
+        },
+        {
+            "id": "duel_master",
+            "target": 1,
+            "requiredPlayerCount": 2
+        },
+        {
+            "id": "wild_champion",
+            "target": 10
+        }
+    ]
 }
