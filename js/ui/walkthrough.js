@@ -142,7 +142,7 @@ function getSteps() {
         },
         {   // 6
             // mobileLeaderboard is now a tap-to-open popup (hidden by
-            // default — see css/style.css's Landscape layer and
+            // default — see css/style.css's Portrait layer and
             // js/ui/mobile-ui.js), so it can't be highlighted directly
             // while closed. Target the always-visible button instead,
             // same reasoning as step 5 targeting mobileTabs rather than

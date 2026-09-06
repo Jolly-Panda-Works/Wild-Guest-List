@@ -14,9 +14,9 @@ export function initMobileUI() {
         openModal("logModal");
     });
 
-    // Landscape left-rail Log entry — same logModal the top-bar Log
+    // Mobile rail Log entry — same logModal the top-bar Log
     // button used to open. Now the entry point for Log on Mobile
-    // Landscape (see css/style.css's `#mobileSideRail`).
+    // Portrait (see css/style.css's `#mobileSideRail`).
     document.getElementById("railLogBtn")?.addEventListener("click", () => {
         openModal("logModal");
     });
@@ -41,7 +41,7 @@ export function initMobileTabs() {
     // Party/Trash now open from the door/trash icons that flank the
     // Queue itself (#queueWithIcons, built in renderQueue() —
     // js/ui/game-ui.js) rather than dedicated rail buttons — see the
-    // mobile Landscape refinement notes in css/style.css. This call
+    // mobile Portrait refinement notes in css/style.css. This call
     // must run after the Queue has rendered at least once (game-main.js
     // calls it after the first updateUI()) so these elements exist.
     const doorIcon  = document.getElementById("queueDoorIcon");
@@ -104,12 +104,11 @@ export function syncMobilePanels() {}
 export function initInfoPopups() {
     document.querySelectorAll(".panel-info-btn").forEach(btn => {
         btn.addEventListener("click", e => {
-            // Same reasoning as the Landscape layout layer in
-            // css/style.css: width alone can't tell a landscape phone
-            // (short but often >600px wide) from desktop, so this also
-            // checks pointer type — desktop (fine pointer) still relies
-            // on its CSS :hover tooltip and skips this click-to-open
-            // popup regardless of window width.
+            // Checks pointer type, not just width — a touch tablet can
+            // easily be wider than 600px, so width alone isn't a
+            // reliable "is this touch" signal. Desktop (fine pointer)
+            // still relies on its CSS :hover tooltip and skips this
+            // click-to-open popup regardless of window width.
             const isTouch = window.matchMedia?.("(pointer: coarse)").matches;
             if (!isTouch && window.innerWidth > 600) return;
             e.stopPropagation();

@@ -595,7 +595,7 @@ WildGuestList/
 │       ├── mobile-ui.js
 │       ├── homeGameStart-ui.js (Home's Play vs Bot / Rank / Friendly tab bar)
 │       ├── modal-ui.js    (Home's popup modals: Profile, Settings, Card Guide, About, Feedback, Tutorial — plus Game's own in-game Settings/Help)
-│       ├── orientation-ui.js (landscape-only gate — every top-level page)
+│       ├── orientation-ui.js (portrait-only gate — every top-level page)
 │       ├── pause-ui.js
 │       ├── previewOverlay-ui.js (Ability Preview's visual layer — full-card overlays; see § Ability Preview System)
 │       ├── profile-ui.js  (Profile popup content — name + avatar; opened from Home's profile chip)
@@ -797,7 +797,7 @@ icon in `data/config.json` → `icons`, its title/description in
   Unlocked" featured card that only appears once a real unlock exists,
   client-side category filter tabs (Progression/Gameplay/Modes — pure
   display filtering, no change to achievement state), and a responsive
-  card grid (2 columns on mobile landscape, more on wider viewports).
+  card grid (2 columns on mobile portrait, more on wider viewports).
   This is presentation only — it reads the exact same
   `getAchievements()`/`subscribeAchievements()` API as before and
   never touches unlock conditions, progress calculation, or
@@ -967,34 +967,49 @@ The game includes dedicated mobile UI logic:
 
 ```text
 js/ui/mobile-ui.js
-js/ui/orientation-ui.js  (landscape-only enforcement — see below)
+js/ui/orientation-ui.js  (portrait-only enforcement — see below)
 ```
 
 The interface adapts game controls and panels for smaller screens while maintaining the core gameplay experience.
 
-### Orientation — landscape-only on touch devices
+### Orientation — portrait-only on touch devices
 
-Wild Guest List is **landscape-only on touch devices**. A phone or
-tablet (coarse pointer) held in portrait is blocked by
+Wild Guest List is **portrait-only on touch devices**. A phone or
+tablet (coarse pointer) held in landscape is blocked by
 `js/ui/orientation-ui.js`'s gate: the normal app UI is hidden and a
 "Please rotate your device" overlay (`#orientationGate`, present on
-every top-level page) is shown instead. Rotating to landscape clears
+every top-level page) is shown instead. Rotating to portrait clears
 the gate automatically and reactively (via `matchMedia`, not a CSS
 `transform: rotate()` hack) — nothing underneath is destroyed or
 reset while blocked. Desktop/laptop (fine pointer) is never gated,
 regardless of window shape.
 
-This project briefly supported both orientations on mobile (portrait
-layouts adapting instead of gating) — that approach has been
-superseded by the landscape-only policy above; every mobile screen
-(Home, Game Mode Selection, Choose Bot Difficulty, Settings, Profile,
-Card Guide, Achievements, Game, Game Result, and every popup) is
-designed for landscape only, and there is deliberately no
-mixed-orientation system (e.g. portrait Home + landscape Game). See
+This project was previously landscape-only on touch devices (gating
+portrait instead) — that approach has been superseded by the
+portrait-only policy above; every mobile screen (Home, Game Mode
+Selection, Choose Bot Difficulty, Settings, Profile, Card Guide,
+Achievements, Game, Game Result, and every popup) is designed for
+portrait only, and there is deliberately no mixed-orientation system
+(e.g. landscape Home + portrait Game). See
 `tests/orientation.test.mjs` for the current gating behavior across
 every pointer/orientation combination.
 
-Do not re-enable a both-orientations mode without updating the gate,
+The Game Board screen's mobile layout (`css/style.css`'s "PORTRAIT-ONLY
+MOBILE — GAME BOARD LAYOUT LAYER", keyed on
+`(pointer: coarse) and (orientation: portrait)`) needed a real
+redesign rather than a simple flip: portrait's scarce dimension is
+width, landscape's was height, so card/UI sizing switched from
+height-driven (`dvh`) clamps to width-driven (`dvw`) ones, and the
+Leaderboard/Log/Chat rail moved from a column beside the board (spending
+landscape's spare width) to a row above it (spending portrait's spare
+height instead). Home and Choose Bot Difficulty needed no equivalent
+override — their base layout is already a vertical `flex-direction:
+column` stack sized for a normal-width column, which is exactly what a
+portrait phone already is; the old landscape layer only overrode them
+because landscape's short height forced everything into a compact
+grid, a constraint portrait doesn't have.
+
+Do not re-enable a landscape-locked mode without updating the gate,
 `tests/orientation.test.mjs`, and this section together.
 
 ### Panel Architecture — Header / Scrollable Body / Fixed Footer
@@ -1067,8 +1082,9 @@ Known Issues below.
 into `.modal-body` initially clipped content on Mobile Landscape
 (Card Guide's Animal Ability grid, Profile's Achievements section)
 instead of making it scrollable, because the Mobile Landscape
-"no-scroll" layer (see § Mobile landscape — no-scroll layout layer
-below) had `.modal-content > .modal-body { overflow-y: hidden }`,
+"no-scroll" layer (see § Mobile portrait — game board layout layer
+below, landscape-oriented at the time) had `.modal-content >
+.modal-body { overflow-y: hidden }`,
 written back when only Feedback's short, always-fits form used that
 architecture. That rule is now `overflow-y: auto` there too, so
 every popup's header stays fixed while its `.modal-body` scrolls
@@ -1086,99 +1102,87 @@ affected — this bug only existed in that one landscape+touch layer.
   centers, but content taller than the viewport scrolls into view
   from the top instead of being clipped/centered off both edges.
 
-### Mobile landscape — no-scroll layout layer
+### Mobile portrait — game board layout layer
 
 On top of the general Panel Architecture above, `css/style.css`'s
-**"LANDSCAPE-ONLY MOBILE — NO-SCROLL LAYOUT LAYER"** section (keyed on
-`(pointer: coarse) and (orientation: landscape)`, with additional
-`max-height` tiers for standard and small landscape phones) actively
-compacts and re-composes each mobile screen to fit its viewport
-without scrolling, rather than relying on `overflow-y: auto` as the
-fix:
+**"PORTRAIT-ONLY MOBILE — GAME BOARD LAYOUT LAYER"** section (keyed on
+`(pointer: coarse) and (orientation: portrait)`, with additional
+`max-width` tiers for narrow and smallest phones) adapts the Game
+Board screen specifically for a portrait phone.
 
-- **Why a separate layer, keyed on height, not the existing
-  `max-width: 600px` mobile rules**: those rules correctly target a
-  narrow *portrait* phone, but never fire for a *landscape* phone
-  (same device, same short dimension — except now it's the height
-  that's small, not the width). Left alone, a landscape phone at
-  700–930px wide fell through to the tablet/desktop layout, which
-  assumes far more vertical room than a phone in landscape actually
-  has. The new layer targets the actual constraint (short viewport +
-  touch input) instead of width.
-- **Home** is re-composed from a stacked column into a grid with the
-  top bar full-width across the top, and a 3-column row below it:
-  a left secondary-nav column, a centered Start Game / game-mode-tabs
-  column, and a right column holding Store / Tournament / Leaderboard
-  / Lucky Wheel (`.home-bottom-nav`, restyled to a compact vertical
-  icon+label list here — the `bottom` grid-area name is kept as-is
-  purely so `js/ui/home-ui.js`'s existing wiring needs no changes).
-  The left and right columns share the exact same `minmax(...)`
-  column track width, which is what keeps the center Start Game
-  column mathematically centered on the *viewport*, not just on the
-  leftover space between two differently-sized side groups (a plain
-  `justify-content: space-between` flex row can't guarantee that).
-- **Choose Bot Difficulty** compacts row height (avatar, difficulty
-  buttons, color picker) so the player row + all 3 bot rows + the
-  Play footer are always visible together.
-- **Game Board** forces the compact mobile shell regardless of
-  viewport width, and its header is scaled up to roughly match Home's
-  logo/height/top-padding instead of looking like a shrunken-down
-  version of it. Leaderboard, Log, and Chat are three compact buttons
-  stacked in a left-side rail (`#mobileSideRail`); Leaderboard opens
-  `#mobileLeaderboard`, Log opens the shared `#logModal`, and Chat (a
-  future feature) just shows "Coming Soon". Party and Trash are no
-  longer separate rail buttons — they open from the Party and Trash
-  icons (the same `icons.party`/`icons.trash` image assets used by
-  the Party/Trash Area headers themselves, not emoji) that already
-  flank the Queue
+- **Why a separate layer, keyed on width tiers, not the existing
+  `max-width: 600px` mobile rules**: this layer is the Game Board
+  screen's own layout (`#pageLayout` swapping from its desktop grid to
+  a single mobile column, `#gameLayout`'s rail, card sizing, the
+  Leaderboard/Party/Trash popups) — concerns the general mobile rules
+  were never responsible for. It targets a touch device now guaranteed
+  portrait by the orientation gate, and adds its own width tiers
+  because portrait's scarce dimension is width: a phone at, say,
+  360px wide needs smaller cards than one at 430px even though both
+  are portrait, the same way the old landscape-only design needed
+  separate height tiers because height was its scarce dimension.
+- **Home and Choose Bot Difficulty are *not* overridden here** — this
+  is the main structural difference from the old landscape-only
+  design, which forced both into a compact, height-constrained grid.
+  Their base rules (a plain `flex-direction: column` stack with
+  `overflow-y: auto`, sized for a normal-width column) already fit a
+  portrait phone directly, the same layout a narrow desktop window
+  already uses via the existing `max-width: 600px` rules. Portrait has
+  height to spare, so there's no "everything must fit without
+  scrolling" pressure the way there was in landscape.
+- **Game Board**: `#gameLayout` drops its rail-beside-board grid in
+  favor of a single flex column, since portrait can't spare the width
+  for a permanent second column the way landscape could spare the
+  height. Leaderboard, Log, and Chat are the same three compact
+  buttons as before (`#mobileSideRail`; Leaderboard opens
+  `#mobileLeaderboard`, Log opens the shared `#logModal`, Chat shows
+  "Coming Soon"), now laid out as a horizontal row stacked ABOVE the
+  play area instead of a vertical column beside it. Party and Trash
+  are still not rail buttons — they open from the Party and Trash
+  icons (the same `icons.party`/`icons.trash` image assets used by the
+  Party/Trash Area headers themselves, not emoji) that flank the Queue
   (`#queueWithIcons`/`.queue-icon-entry`/`.queue-icon-exit`, built in
   `renderQueue()` — `js/ui/game-ui.js`), reusing the same
   `#partyArea`/`#trashArea` popups and one-open-at-a-time toggle group
   in `js/ui/mobile-ui.js`'s `initMobileTabs()`. These icons are
-  Mobile-Landscape-only (see `.queue-icon`'s `display: none` base rule
-  and its Landscape-layer override — 1.30.11): on Desktop, Party and
-  Trash are already their own always-visible sidebar panels, so a
-  second, Queue-adjacent way to reach the exact same popups was just
-  clutter, not a real Desktop feature. Because those icons are created
-  the first time the Queue renders, `initMobileTabs()` is
-  called after the first `updateUI()` in `js/game-main.js` rather than
-  before it. The old `#mobileTabs`/`#partyTab`/`#trashTab` markup is
-  still present in `game.html` (it's also targeted by
-  `js/ui/walkthrough.js`'s width-based `<=600px` portrait tier), but
-  it plays no part in the Landscape rail and falls back to its base
-  `display: none` there.
+  Mobile-Portrait-only (see `.queue-icon`'s `display: none` base rule
+  and its portrait-layer override): on Desktop, Party and Trash are
+  already their own always-visible sidebar panels, so a second,
+  Queue-adjacent way to reach the exact same popups was just clutter,
+  not a real Desktop feature. Because those icons are created the
+  first time the Queue renders, `initMobileTabs()` is called after the
+  first `updateUI()` in `js/game-main.js` rather than before it. The
+  old `#mobileTabs`/`#partyTab`/`#trashTab` markup is still present in
+  `game.html` (it's also targeted by `js/ui/walkthrough.js`'s
+  width-based `<=600px` mobile tier), but it plays no part in the
+  Portrait rail and falls back to its base `display: none` there.
 
-  The main gameplay column (`#centerArea`, beside the rail) stacks
-  Other Players / Queue / Player Hand in that order, with a
-  responsive gap added below the header so Other Players isn't
-  crowding it, and Queue cards sized to ~90% of Player Hand's card
-  size (previously much smaller) so the Queue reads as the important
-  gameplay element it is, while Player Hand still gets the larger
-  flex-basis and card size of the two. An earlier version of this
-  layer had a latent bug here: `#otherPlayers` isn't a direct sibling
-  of `#mobileLeaderboard`/`#mobileTabs` (it's nested inside
-  `#centerArea`), so an `order` value written as if it were faded out
-  to have no effect where intended and an unintended one where it
-  actually applied — sorting Other Players *after* Queue and Hand
-  instead of before them. Fixed by relying on source order (Other
-  Players → Queue → Hand are already siblings in that DOM order in
-  `game.html`) instead of `order` for those three.
-- **Popups** get a taller `max-height` and tighter chrome padding in
-  landscape, plus an explicit symmetric `width`/`margin: 0 auto` so
-  left/right breathing room stays equal at every landscape size
-  instead of relying only on the flex-centering of `.modal`. The
-  Pause popup's icons are also grown independently of the top bar's
-  small `.top-btn` size, so icon and label read as one balanced
-  button instead of a small icon next to full-size text.
+  The main gameplay column (`#centerArea`, now the only column) stacks
+  Other Players / Queue / Player Hand in that same source order as
+  before — the DOM order was never landscape-specific, so it needed no
+  change. What did change is the sizing basis: card and layout
+  dimensions that used to be height-driven (`dvh`-based clamps, since
+  landscape's scarce dimension was height) are now width-driven
+  (`dvw`-based clamps), since portrait's scarce dimension is width.
+  Queue cards are still sized smaller than Player Hand's, which keeps
+  the same visual priority the landscape design had — Player Hand
+  reads as the more important, larger element of the two.
+- **Popups** (Leaderboard/Party/Trash) keep the same tap-to-open
+  overlay architecture and the same `margin: auto 0` centered-shrink
+  approach as before, just re-proportioned for portrait: more room is
+  given top/bottom (portrait's abundant dimension) and less left/right
+  (portrait's scarce one) — the inverse of the old landscape
+  proportions.
 - Card Guide's `#animalGrid` and Achievements' `.ach-grid` keep no
   scrolling/`max-height` of their own — both size to their full
   content height and rely entirely on the popup's own `.modal-body`
   to scroll (see the 1.30.6/1.30.13 fix notes below). Their content
-  length depends on how much a player has unlocked / the current
-  card set, so an unusually long list scrolls via `.modal-body`
-  instead of being silently clipped — there is no independent safety
-  net on the grid itself, since that's exactly what caused the
-  nested-scroll bugs those fixes address.
+  length depends on how much a player has unlocked / the current card
+  set, so an unusually long list scrolls via `.modal-body` instead of
+  being silently clipped — there is no independent safety net on the
+  grid itself, since that's exactly what caused the nested-scroll bugs
+  those fixes address. None of this changed with the portrait
+  conversion.
 
 Real-device/browser QA against this layer hasn't been done as part
 of this change (this environment can't render a browser) — see
@@ -1197,11 +1201,11 @@ rules — no per-screen markup changes — so every popup gets it
 automatically, and the existing Header/Scrollable Body/Fixed Footer
 structure described above is unaffected. `#logModal` keeps its own
 shorter height since log entries rarely need a near-full-screen
-sheet. Since landscape phones are rarely under 600px **wide**, this
-bottom-sheet treatment mostly applies to small windows/narrow tablets
-rather than typical mobile landscape widths (667–932px), which get
-the centered-dialog treatment with the landscape-specific sizing
-described above instead.
+sheet. Since portrait phones are almost always under 600px **wide**,
+this bottom-sheet treatment is what actually reaches real mobile
+players; the centered-dialog treatment with the portrait-specific
+sizing described above mostly applies to small non-touch
+windows/narrow desktop tablets that fall above the 600px breakpoint.
 
 ---
 
@@ -1334,7 +1338,8 @@ stayed.
 
 **Fix — Queue door/trash icons showed on Desktop too (1.30.11):** The
 Party-door/Trash-exit icons flanking the Queue (`#queueDoorIcon`/
-`#queueTrashIcon`, see § Mobile Landscape and `renderQueue()` in
+`#queueTrashIcon`, see § Mobile portrait — game board layout layer and
+`renderQueue()` in
 `js/ui/game-ui.js`) are built unconditionally in JS and had no
 viewport gating in CSS at all, so they rendered on Desktop next to a
 Queue that already has its own always-visible Party/Trash sidebars —
@@ -1422,7 +1427,7 @@ identifies the selected feature by name + icon (set per feature in
 `comingSoonText` copy. It's built from the same `menu-popup` +
 `lucky-wheel-panel` classes/markup shape as every other standardized
 Home popup, so it inherits the shared modal lifecycle (backdrop/
-Escape/focus-trap), Mobile Landscape sizing, and small-window
+Escape/focus-trap), Mobile Portrait sizing, and small-window
 bottom-sheet treatment for free — no new CSS was needed.
 `coming-soon.html`/`js/coming-soon-main.js` are unchanged and still
 work by direct URL; they're just no longer linked from Home. No
@@ -1433,15 +1438,15 @@ Coming Soon only.
 `game.html`'s in-game top bar (`#topRight`) no longer has its own
 `#logBtn`/`#aboutBtn` icon buttons — the header now shows only
 Pause / Help / Tutorial. Neither feature was deleted: Game Log
-(`#logModal`) is still reachable on Mobile Landscape via the
-`#mobileSideRail`'s `#railLogBtn` (see § Mobile landscape — no-scroll
+(`#logModal`) is still reachable on Mobile Portrait via the
+`#mobileSideRail`'s `#railLogBtn` (see § Mobile portrait — game board
 layout layer), and About Developer (`#aboutModal`) is still reachable
 from Home's Settings popup (`#settingsAboutBtn`, see § Navigation
 Architecture). `#topRight` is a plain flex row with `gap`/
 `justify-content: flex-end` and `.top-btn` sizes itself with `clamp()`
 rather than a fixed per-button width, so removing two buttons
 reflows the remaining three without leaving an empty gap or requiring
-new CSS, on both desktop and Mobile Landscape. Known gap: unlike Home,
+new CSS, on both desktop and Mobile Portrait. Known gap: unlike Home,
 `game.html`'s own in-game Settings modal (`#settingsModal`) has no
 `#settingsAboutBtn`-style link to About Developer, so mid-match there
 is currently no in-game entry point to it (only from Home) — see

@@ -45,8 +45,8 @@ initOrientationGate();
 // also used by the Pause panel — see js/ui/pause-ui.js) rather than a
 // second, orientation-specific pause mechanism. Only auto-resumes if
 // THIS gate is what paused the game — if the player had already paused
-// manually (Pause button) before rotating to portrait, rotating back to
-// landscape must not silently resume a game they paused on purpose.
+// manually (Pause button) before rotating to landscape, rotating back
+// to portrait must not silently resume a game they paused on purpose.
 let pausedByOrientation = false;
 
 onOrientationBlocked(() => {

@@ -3,10 +3,10 @@
 //
 // Policy (see README.md § Responsive Design and
 // js/ui/orientation-ui.js's header comment): Wild Guest List is
-// landscape-only on touch devices. The gate blocks whenever the
-// device is coarse-pointer (touch) AND currently portrait; it never
+// portrait-only on touch devices. The gate blocks whenever the
+// device is coarse-pointer (touch) AND currently landscape; it never
 // blocks fine-pointer (desktop/laptop) devices, regardless of window
-// shape, and never blocks a touch device already in landscape. These
+// shape, and never blocks a touch device already in portrait. These
 // tests assert that behavior across every pointer/orientation
 // combination, plus the mechanical guarantees that still matter
 // (idempotent init, no duplicate listeners, never touching DOM
@@ -108,50 +108,50 @@ beforeEach(async () => {
     mod = await freshOrientationModule();
 });
 
-test("Desktop (fine pointer), tall/portrait-shaped window: never blocks", async () => {
+test("Desktop (fine pointer), wide/landscape-shaped window: never blocks", async () => {
     mqlByQuery["(pointer: coarse)"]._set(false);
-    mqlByQuery["(orientation: portrait)"]._set(true);
+    mqlByQuery["(orientation: portrait)"]._set(false);
     mod.initOrientationGate();
 
     assert.equal(mod.isOrientationBlocked(), false);
     assert.equal(gateEl.classList.contains("hidden"), true);
 });
 
-test("Mobile portrait (coarse pointer + portrait): blocked — landscape-only policy", async () => {
+test("Mobile landscape (coarse pointer + landscape): blocked — portrait-only policy", async () => {
     mqlByQuery["(pointer: coarse)"]._set(true);
-    mqlByQuery["(orientation: portrait)"]._set(true);
+    mqlByQuery["(orientation: portrait)"]._set(false);
     mod.initOrientationGate();
 
     assert.equal(mod.isOrientationBlocked(), true);
     assert.equal(gateEl.classList.contains("hidden"), false);
 });
 
-test("Mobile landscape (coarse pointer, not portrait): playable", async () => {
+test("Mobile portrait (coarse pointer, portrait): playable", async () => {
     mqlByQuery["(pointer: coarse)"]._set(true);
-    mqlByQuery["(orientation: portrait)"]._set(false);
+    mqlByQuery["(orientation: portrait)"]._set(true);
     mod.initOrientationGate();
 
     assert.equal(mod.isOrientationBlocked(), false);
     assert.equal(gateEl.classList.contains("hidden"), true);
 });
 
-test("Tablet (coarse pointer), portrait: blocked — same landscape-only rule applies", async () => {
+test("Tablet (coarse pointer), landscape: blocked — same portrait-only rule applies", async () => {
     mqlByQuery["(pointer: coarse)"]._set(true);
-    mqlByQuery["(orientation: portrait)"]._set(true);
+    mqlByQuery["(orientation: portrait)"]._set(false);
     mod.initOrientationGate();
     assert.equal(mod.isOrientationBlocked(), true);
 });
 
-test("Tablet (coarse pointer), landscape: playable", async () => {
+test("Tablet (coarse pointer), portrait: playable", async () => {
     mqlByQuery["(pointer: coarse)"]._set(true);
-    mqlByQuery["(orientation: portrait)"]._set(false);
+    mqlByQuery["(orientation: portrait)"]._set(true);
     mod.initOrientationGate();
     assert.equal(mod.isOrientationBlocked(), false);
 });
 
 test("Rotating the device fires blocked/unblocked hooks and toggles the gate live", async () => {
     mqlByQuery["(pointer: coarse)"]._set(true);
-    mqlByQuery["(orientation: portrait)"]._set(false);
+    mqlByQuery["(orientation: portrait)"]._set(true);
     mod.initOrientationGate();
     assert.equal(mod.isOrientationBlocked(), false);
 
@@ -160,20 +160,20 @@ test("Rotating the device fires blocked/unblocked hooks and toggles the gate liv
     mod.onOrientationBlocked(() => { blockedFired = true; });
     mod.onOrientationUnblocked(() => { unblockedFired = true; });
 
-    mqlByQuery["(orientation: portrait)"]._set(true); // device physically rotated to portrait
+    mqlByQuery["(orientation: portrait)"]._set(false); // device physically rotated to landscape
     assert.equal(mod.isOrientationBlocked(), true);
     assert.equal(gateEl.classList.contains("hidden"), false);
     assert.equal(blockedFired, true);
 
-    mqlByQuery["(orientation: portrait)"]._set(false); // and back to landscape
+    mqlByQuery["(orientation: portrait)"]._set(true); // and back to portrait
     assert.equal(mod.isOrientationBlocked(), false);
     assert.equal(gateEl.classList.contains("hidden"), true);
     assert.equal(unblockedFired, true);
 });
 
-test("Attaching a mouse (pointer becomes fine) while portrait clears the gate", async () => {
+test("Attaching a mouse (pointer becomes fine) while landscape clears the gate", async () => {
     mqlByQuery["(pointer: coarse)"]._set(true);
-    mqlByQuery["(orientation: portrait)"]._set(true);
+    mqlByQuery["(orientation: portrait)"]._set(false);
     mod.initOrientationGate();
     assert.equal(mod.isOrientationBlocked(), true);
 
@@ -190,7 +190,7 @@ test("initOrientationGate() is idempotent: calling it twice does not attach dupl
     mod.onOrientationBlocked(() => { blockedCount += 1; });
 
     mqlByQuery["(pointer: coarse)"]._set(true);
-    mqlByQuery["(orientation: portrait)"]._set(true);
+    mqlByQuery["(orientation: portrait)"]._set(false);
     windowListeners.resize?.forEach(fn => fn()); // fallback listener re-checking same state
 
     // If init had double-attached listeners, this would fire twice.
@@ -203,7 +203,7 @@ test("Game state / DOM under the gate is never touched — only the gate element
     globalThis.document.someGameState = untouchedMarker;
 
     mqlByQuery["(pointer: coarse)"]._set(true);
-    mqlByQuery["(orientation: portrait)"]._set(true);
+    mqlByQuery["(orientation: portrait)"]._set(false);
     mod.initOrientationGate();
 
     assert.equal(globalThis.document.someGameState, untouchedMarker);
