@@ -18,23 +18,19 @@
                 "cards": [
                     {
                         "emoji": "🦁",
-                        "name": "Lion",
-                        "power": 12
+                        "name": "Lion"
                     },
                     {
                         "emoji": "🐊",
-                        "name": "Croc",
-                        "power": 10
+                        "name": "Croc"
                     },
                     {
                         "emoji": "🦛",
-                        "name": "Hippo",
-                        "power": 11
+                        "name": "Hippo"
                     },
                     {
                         "emoji": "🦓",
-                        "name": "Zebra",
-                        "power": 7
+                        "name": "Zebra"
                     }
                 ]
             },
@@ -51,24 +47,20 @@
                 "before": [
                     {
                         "emoji": "🦁",
-                        "name": "Lion",
-                        "power": 12
+                        "name": "Lion"
                     },
                     {
                         "emoji": "🦛",
-                        "name": "Hippo",
-                        "power": 11
+                        "name": "Hippo"
                     },
                     {
                         "emoji": "🐒",
-                        "name": "Monkey",
-                        "power": 2
+                        "name": "Monkey"
                     }
                 ],
                 "added": {
                     "emoji": "🦘",
-                    "name": "Kangaroo",
-                    "power": 3
+                    "name": "Kangaroo"
                 }
             },
             "title_key": "tutSlide3Title",
@@ -80,30 +72,26 @@
             "image": "",
             "diagram": {
                 "type": "ability-examples",
-                "label": "A few power examples",
+                "label": "A few ability examples",
                 "examples": [
                     {
                         "emoji": "🦁",
                         "name": "Lion",
-                        "power": 12,
                         "hint": "Rushes to the front!"
                     },
                     {
                         "emoji": "🦭",
                         "name": "Seal",
-                        "power": 6,
                         "hint": "Reverses the queue!"
                     },
                     {
                         "emoji": "🦘",
                         "name": "Kangaroo",
-                        "power": 3,
                         "hint": "Jumps 1–2 spots!"
                     },
                     {
                         "emoji": "🐍",
                         "name": "Snake",
-                        "power": 9,
                         "hint": "Sorts by power!"
                     }
                 ]
@@ -121,28 +109,23 @@
                 "queue": [
                     {
                         "emoji": "🦁",
-                        "name": "Lion",
-                        "power": 12
+                        "name": "Lion"
                     },
                     {
                         "emoji": "🦛",
-                        "name": "Hippo",
-                        "power": 11
+                        "name": "Hippo"
                     },
                     {
                         "emoji": "🦘",
-                        "name": "Kangaroo",
-                        "power": 3
+                        "name": "Kangaroo"
                     },
                     {
                         "emoji": "🦓",
-                        "name": "Zebra",
-                        "power": 7
+                        "name": "Zebra"
                     },
                     {
                         "emoji": "🐒",
-                        "name": "Monkey",
-                        "power": 2
+                        "name": "Monkey"
                     }
                 ],
                 "party": [

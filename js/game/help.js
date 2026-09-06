@@ -116,7 +116,6 @@ function renderHelpCards(cards) {
             ${visual}
             <div class="help-card-footer">
                 <div class="help-card-name">${name}</div>
-                <div class="help-card-power">${card.power}</div>
             </div>
         `;
 
@@ -146,7 +145,6 @@ function openCardInfo(card) {
         <div class="help-card-detail">
             ${visual}
             <h2>${name}</h2>
-            <div class="power-badge"><span data-icon="power"></span> Power ${card.power}</div>
 
             <h3>${t("howItWorks")}</h3>
             <p class="desc-text">${description}</p>

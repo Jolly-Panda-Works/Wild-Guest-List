@@ -28,3 +28,25 @@
   inside #queueArea's box, not just directly on a slot.
 - Queue slot size unified with the Player Hand's own card size (same
   clamp() values) instead of a separately-tuned smaller size.
+
+1.36.5
+- Removed the Power stat from Animal Ability Cards project-wide: the
+  Card Guide grid tiles and detail popup (js/game/help.js,
+  .help-card-power/.power-badge), the in-game ability guidance chip
+  (js/ui/cardGuidance-ui.js, .guide-chip-power), and the tutorial's
+  ability-examples slide (js/ui/tutorial-ui.js, .tut-ability-power)
+  no longer display a numeric Power value.
+- Cleaned up the now-obsolete "power" fields from data/tutorial.json's
+  diagram data (never rendered by any diagram type) and dropped the
+  dead .help-card-power/.power-badge/.guide-chip-power/.tut-ability-power
+  CSS rules.
+- Renamed the Card Guide modal title from "Animal Powers" to "Animal
+  Abilities" (en/ar/tr; fa already used this wording) and reworded the
+  tutorial's "A few power examples" diagram label to "A few ability
+  examples".
+- The underlying `power` field remains untouched as the load-bearing
+  gameplay stat behind sorting, ability targeting, scoring, and AI
+  evaluation (data/cardInfo.json, js/abilities/abilities.js,
+  js/services/dataLoader.js) — as does the separate end-of-game/
+  leaderboard "Power" score label, which is a distinct scoring feature,
+  not part of the Animal Ability Cards. No gameplay behavior changed.

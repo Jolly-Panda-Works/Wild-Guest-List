@@ -255,7 +255,6 @@ function chipFor(cardLike, { affectedSet, kind }) {
     return `
         <div class="${cls.join(" ")}">
             ${visual}
-            <span class="guide-chip-power">${cardLike.power}</span>
             ${badgeIcon ? `<span class="guide-chip-badge" data-icon="${badgeIcon}"></span>` : ""}
         </div>
     `;

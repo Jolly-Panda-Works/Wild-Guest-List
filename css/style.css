@@ -1397,15 +1397,6 @@ body {
     line-height: 1.2;
 }
 
-.card-info .help-card-power {
-    font-size: clamp(8px, 12cqw, 14px);
-    font-weight: 800;
-    color: #fbbf24;
-    flex-shrink: 0;
-    margin-left: 4%;
-    line-height: 1.2;
-}
-
 
 /*
   Interaction feedback:
@@ -2536,17 +2527,6 @@ body {
 
 
 
-.help-card-power {
-
-    font-size: 24px;
-
-    color: var(--accent);
-
-    font-weight: bold;
-}
-
-
-
 .help-card-detail {
 
     text-align: center;
@@ -2659,35 +2639,6 @@ body {
     object-fit: contain;
 }
 
-
-
-/* ==========================================================
-   POWER BADGE
-========================================================== */
-
-
-.power-badge {
-
-    display: inline-block;
-
-
-    padding: 8px 16px;
-
-
-    border-radius: 20px;
-
-
-    background: var(--accent);
-
-
-    color: white;
-
-
-    font-weight: bold;
-
-
-    margin-bottom: 20px;
-}
 
 
 
@@ -3717,21 +3668,6 @@ body.gameplay-locked #playerHand .card {
 }
 .guide-chip-img { width: 26px; height: 26px; object-fit: contain; }
 .guide-chip-emoji { font-size: 18px; line-height: 1; }
-.guide-chip-power {
-    position: absolute;
-    bottom: -4px;
-    right: -4px;
-    font-size: 9px;
-    font-weight: 700;
-    background: var(--accent, #22c55e);
-    color: #06210c;
-    border-radius: 50%;
-    width: 15px;
-    height: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 .guide-chip-badge {
     position: absolute;
     top: -8px;
@@ -5774,13 +5710,6 @@ body.gameplay-locked #playerHand .card {
     color: rgba(255,255,255,0.5);
 }
 
-.tut-ability-power {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--accent, #bd5d38);
-    flex-shrink: 0;
-}
-
 /* ── Scoreboard ── */
 
 .tut-scoreboard {
@@ -6105,8 +6034,7 @@ body.gameplay-locked #playerHand .card {
 .lb-cards,
 .lb-score,
 .party-count,
-.power-score,
-.power-badge {
+.power-score {
     direction: ltr;
     unicode-bidi: isolate;
 }

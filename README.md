@@ -1345,7 +1345,35 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.36.2
+**Current version:** 1.36.5
+
+**Cleanup — Power stat removed from Animal Ability Cards (1.36.5):**
+Continuing the presentation-only change from 1.30.12 (which removed the
+power digit from in-play cards but deliberately kept it on the Card
+Guide and tutorial ability slide "for reference"), the Power stat is
+now gone from every remaining Animal Ability Card surface too: the
+Card Guide grid tiles and detail popup (`js/game/help.js`,
+`.help-card-power`/`.power-badge`), the in-game "here's what just
+happened" ability guidance chip (`js/ui/cardGuidance-ui.js`,
+`.guide-chip-power`), and the tutorial's ability-examples slide
+(`js/ui/tutorial-ui.js`, `.tut-ability-power`) no longer render a
+numeric Power value or badge. The now-dead `.help-card-power`/
+`.power-badge`/`.guide-chip-power`/`.tut-ability-power` CSS rules were
+removed, `.power-badge` was dropped from the LTR-digit-direction
+selector list, and the unused `"power"` fields in
+`data/tutorial.json`'s diagram data (never read by any diagram
+renderer) were deleted along with the stale "A few power examples"
+label (now "A few ability examples"). The Card Guide modal's title
+changed from "Animal Powers" to "Animal Abilities" in en/ar/tr (fa
+already used this wording). None of this touches the load-bearing
+`power` field itself — it's still the gameplay stat behind ability
+dispatch, queue sorting, scoring, and AI evaluation
+(`data/cardInfo.json`, `js/abilities/abilities.js`,
+`js/services/dataLoader.js`, `js/game/scoreManager.js`,
+`js/ai/ai.js`), nor the separate end-of-game/leaderboard "Power" score
+label (`endgame-ui.js`/`leaderboard-ui.js`), which is a distinct
+scoring feature, not an Animal Ability Card. No gameplay behavior
+changed on either Desktop or Mobile.
 
 **Bugfix — Mobile popup positioning: centered with edge/safe-area margin, not a bottom sheet (1.36.2):**
 Every popup (Settings, Profile, Card Guide, About, Lucky Wheel,

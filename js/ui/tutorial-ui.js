@@ -100,7 +100,6 @@ function renderAbilityExamples(diagram){
                 <span class="tut-ability-name">${e.name}</span>
                 <span class="tut-ability-hint">${e.hint}</span>
             </div>
-            <span class="tut-ability-power"><span data-icon="power"></span>${e.power}</span>
         </div>
     `).join("");
     return `
