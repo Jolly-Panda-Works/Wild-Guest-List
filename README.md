@@ -1345,7 +1345,46 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.36.1
+**Current version:** 1.36.2
+
+**Bugfix — Mobile popup positioning: centered with edge/safe-area margin, not a bottom sheet (1.36.2):**
+Every popup (Settings, Profile, Card Guide, About, Lucky Wheel,
+Feedback, Tutorial, Log, card detail, Kangaroo, Help, Card Guidance,
+Pause — all sharing the `.modal`/`.modal-content` shell, see §
+Responsive Design / Panel Architecture) previously became a full-width
+"bottom sheet" on Mobile Portrait: anchored to the bottom edge,
+touching the left/right edges, only rounded on top. Per the Mobile
+Popup Positioning brief, popups must instead be centered both
+horizontally and vertically with a guaranteed gap from every edge,
+clear the device's notch/home-indicator safe area, and adapt to any
+portrait screen size or aspect ratio.
+
+Fixed at the shared container instead of per-popup: `.modal` (the
+fixed, `inset:0` backdrop, already `justify-content:center;
+align-items:center` from its base rule) now gets `padding:
+max(16px, env(safe-area-inset-*))` on all four sides — folding the
+edge gap and the safe-area clearance into one calculation, with no
+hardcoded coordinates. `.modal-content` sizes itself to
+`width:100%; max-width:480px; max-height:100%` — 100% of `.modal`'s
+own already-padded content box, not the raw viewport — so it can
+never grow past the guaranteed gap; the old slide-up-from-bottom
+animation and its bottom-sheet drag-handle affordance are replaced
+with a centered fade/scale-in (`prefers-reduced-motion` still
+respected).
+
+The same `.modal-content` override lived twice — once for the plain
+`≤600px` layer, once for real touch+portrait devices via
+`@media (pointer: coarse) and (orientation: portrait)`, which is the
+one that actually wins on a real phone — both were updated in lockstep
+so neither silently reintroduces edge-to-edge sizing (see § Mobile
+portrait). `#logModal`'s own fixed `70vh` height and `.tut-panel`'s
+(Tutorial) own unconditional width/height, both of which measured
+against the raw viewport instead of `.modal`'s padded box, are now
+scoped the same way. The separate Leaderboard/Party/Trash overlay
+(`#mobileLeaderboard`/`#partyArea`/`#trashArea`) already centered
+itself with edge margin via auto-margins and was left unchanged.
+Desktop/landscape popup sizing (`min(700px, 92vw)`, centered) is
+untouched — this only affects the Mobile Portrait override layer.
 
 **Style — Queue slots matched to Player Hand card size on mobile (1.36.1):**
 On the ≤600px Mobile Portrait layout, `.queue-slot`/`#queue .card` had

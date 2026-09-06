@@ -4212,75 +4212,75 @@ body.gameplay-locked #playerHand .card {
         height: 86px !important;
     }
 
-    /* ── Mobile popups: bottom-sheet, not a shrunken centered card ──
+    /* ── Mobile popups: centered card, margin on every side ──
        Every .modal (Settings, Profile, Card Guide, About, Lucky Wheel,
        Feedback, Tutorial, Log, card detail, etc.) shares one popup
        shell (see the base .modal-content rules above), so this single
        override upgrades all of them at once instead of each screen
-       inventing its own mobile treatment — see docs "MOBILE POPUPS" /
-       "VISUAL DESIGN SYSTEM". Anchored to the bottom edge, full width,
-       rounded only on top, sized to content up to ~92dvh so a short
-       popup (e.g. the Lucky Wheel placeholder) doesn't stretch to fill
-       the screen. Internal header/scroll-body/footer structure
-       (.modal-content:has(.modal-body) etc., set above) is unchanged —
-       only the outer shell's position/shape changes here. */
+       inventing its own mobile treatment.
+
+       Replaces the previous "bottom sheet" treatment (anchored to the
+       bottom edge, full width, rounded only on top). Per the Mobile
+       Popup Positioning brief, every popup must now sit centered both
+       horizontally and vertically, with a real gap from all four
+       edges, and never intrude into the device's notch/home-indicator
+       safe area.
+
+       The gap is applied as PADDING on `.modal` (the fixed,
+       inset:0 overlay) rather than as margin/position on
+       `.modal-content` — `.modal` already centers its child via the
+       base rule's `justify-content:center; align-items:center`, so
+       shrinking its own content box is all that's needed for the
+       child to end up centered *inside* the gap automatically, on
+       any portrait screen size or aspect ratio. `env(safe-area-inset-*)`
+       is folded into that same padding so the gap always clears the
+       notch/home-indicator instead of sitting flush against it — no
+       hardcoded coordinates anywhere. */
     .modal {
-        align-items: flex-end !important;
+        padding:
+            max(16px, env(safe-area-inset-top))
+            max(16px, env(safe-area-inset-right))
+            max(16px, env(safe-area-inset-bottom))
+            max(16px, env(safe-area-inset-left));
+        box-sizing: border-box;
     }
 
     .modal-content {
-        width: 100% !important;
-        max-width: 100% !important;
-        max-height: 92dvh !important;
-        margin: 0 !important;
-        border-radius: 20px 20px 0 0 !important;
-        border-left: none;
-        border-right: none;
-        border-bottom: none;
-        box-sizing: border-box;
-        animation: modalSheetUp .28s cubic-bezier(.4,0,.2,1);
-        /* Small top handle affordance, like a native bottom sheet —
-           purely decorative, no layout impact on the header below it. */
-        position: relative;
+        width: 100%;
+        max-width: 480px;
+        /* 100% of `.modal`'s own (already safe-area-padded) content
+           box — never the raw viewport — so the popup can never grow
+           past the guaranteed edge gap, regardless of how tall its
+           content is. Internal scrolling (.modal-body, or the plain
+           shell itself) takes over once content exceeds this. */
+        max-height: 100%;
+        margin: 0;
+        border-radius: var(--radius-lg);
+        animation: modalPopIn .2s cubic-bezier(.4,0,.2,1);
     }
 
-    /* Safe-area bottom padding only for modals using the plain
-       (no .modal-body/.tut-footer) scaffold — the header/body/footer
-       and tutorial layouts already add their own safe-area-aware
-       bottom padding on their footer, so adding it here too would
-       double up empty space below their buttons. */
-    .modal-content:not(:has(.modal-body)):not(.tut-panel) {
-        padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
-    }
-
-    .modal-content::before {
-        content: "";
-        position: absolute;
-        top: 8px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 36px;
-        height: 4px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.25);
-        pointer-events: none;
-    }
-
-    /* Give the handle breathing room without shifting every modal's
-       existing header/body padding values individually. */
-    .modal-content > .modal-header,
-    .modal-content > .modal-form > .modal-header,
-    .modal-content .tut-header {
-        padding-top: 22px !important;
-    }
-
-    @keyframes modalSheetUp {
-        from { transform: translateY(24px); opacity: 0; }
-        to   { transform: translateY(0);    opacity: 1; }
+    @keyframes modalPopIn {
+        from { transform: scale(.96); opacity: 0; }
+        to   { transform: scale(1);   opacity: 1; }
     }
 
     @media (prefers-reduced-motion: reduce) {
         .modal-content { animation: none; }
+    }
+
+    /* The Tutorial popup (.tut-panel) sets its own fixed width/height
+       elsewhere (unconditionally, so every step is the same size) at
+       equal specificity to the plain `.modal-content` rule above —
+       the extra `.modal-content.tut-panel` selector here (specificity
+       0,0,2,0) is what makes THIS rule win regardless of source
+       order, so Tutorial gets the same guaranteed edge gap and
+       safe-area clearance as every other popup instead of measuring
+       itself against the raw, unpadded viewport. */
+    .modal-content.tut-panel {
+        width: 100%;
+        max-width: 480px;
+        height: min(600px, 100%);
+        max-height: 100%;
     }
 
     /* ── Help grid ── */
@@ -5010,14 +5010,16 @@ body.gameplay-locked #playerHand .card {
     /* hide button tooltip on mobile (no hover) */
     .top-btn[data-title]::after { display: none; }
 
-    /* Log modal — same bottom-sheet shell as every other modal (see
+    /* Log modal — same centered popup shell as every other modal (see
        the shared .modal/.modal-content mobile rules above); only
        needs its own height since log entries are usually short and
-       shouldn't force a near-full-screen sheet like Settings/Profile
-       do. */
+       shouldn't force a near-full-height popup like Settings/Profile
+       do. `min(70dvh, 100%)` — not a bare `70dvh` — keeps it from
+       ever exceeding `.modal`'s own safe-area-padded content box on
+       a device with unusually large safe-area insets. */
     #logModal .modal-content {
-        height: 70vh !important;
-        max-height: 70dvh !important;
+        height: min(70dvh, 100%) !important;
+        max-height: min(70dvh, 100%) !important;
     }
 
     /* remove stray modal-content that causes scroll */
@@ -7926,14 +7928,44 @@ body.gameplay-locked #playerHand .card {
         height: 100%;
     }
 
-    /* Symmetric modal width, so popups never run edge-to-edge on a
-       narrow phone — same fix as the previous landscape-only layer,
-       kept unchanged since it isn't orientation-specific. */
+    /* Guaranteed edge gap + safe-area clearance for every popup on
+       any touch+portrait device, not just ones ≤600px wide (the
+       ≤600px `.modal` rule above already covers phones; a portrait
+       tablet matches this query but not that one, so it's restated
+       here — see that rule's comment for the full rationale). */
+    .modal {
+        padding:
+            max(16px, env(safe-area-inset-top))
+            max(16px, env(safe-area-inset-right))
+            max(16px, env(safe-area-inset-bottom))
+            max(16px, env(safe-area-inset-left));
+        box-sizing: border-box;
+    }
+
+    /* Popup sizing on real touch+portrait devices: matches the base
+       ≤600px `.modal`/`.modal-content` centered-popup rules above
+       (same values, restated here since this selector's equal
+       specificity + later source position would otherwise win and
+       silently reintroduce edge-to-edge sizing that ignores
+       `.modal`'s safe-area padding). `max-height: 100%` — not a raw
+       `dvh` value — is what keeps the popup inside `.modal`'s own
+       already-safe-area-padded content box instead of measuring
+       against the full, unpadded viewport. */
     .modal-content {
-        max-height: 94dvh;
-        width: calc(100% - 8dvw);
-        max-width: 640px;
-        margin: 0 auto;
+        width: 100%;
+        max-width: 480px;
+        max-height: 100%;
+        margin: 0;
+    }
+
+    /* Same reasoning as the ≤600px rule above: beats .tut-panel's own
+       unconditional width/height at equal specificity via the extra
+       class in the selector, not source order. */
+    .modal-content.tut-panel {
+        width: 100%;
+        max-width: 480px;
+        height: min(600px, 100%);
+        max-height: 100%;
     }
 
     /* .modal-body is the intended internal-scroll container (see the
