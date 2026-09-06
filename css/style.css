@@ -8215,12 +8215,19 @@ body.gameplay-locked #playerHand .card {
         gap: 6px;
     }
 
+    /* 4 columns (rank medal, name, cards, score) — matches the row
+       markup built in js/ui/leaderboard-ui.js's renderLeaderboard().
+       This used to be `1fr 44px 44px` (3 tracks for 4 grid items),
+       which silently pushed the rank-medal `.lb-rank` span into an
+       implicit extra row instead of its own column — the medal never
+       rendered next to the player's name on Mobile Portrait, only in
+       Landscape/desktop (see the working 4-col rules above). */
     #mobileLeaderboard .leaderboard-header,
     #mobileLeaderboard .leaderboard-row {
         font-size: 12px !important;
         padding: 4px 0 !important;
         gap: 6px !important;
-        grid-template-columns: 1fr 44px 44px !important;
+        grid-template-columns: 20px 1fr 40px 44px !important;
     }
 
     #mobileLeaderboard .leaderboard-header {
