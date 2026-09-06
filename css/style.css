@@ -1257,14 +1257,28 @@ body {
 #partyCards,
 #trashCards {
 
+    /* Single source of truth for the column width, referenced by
+       both grid-template-columns below and the .card rule right
+       after it, so the two can never drift apart again — that drift
+       (a 60–70px elastic track holding a fixed 62px card) was the
+       actual source of the uneven horizontal gaps between cards;
+       see the Mobile Party/Trash grid fix notes below for the full
+       root-cause writeup. */
+    --pt-card-w: 62px;
+
     display: grid;
 
     grid-template-columns:
-        repeat(auto-fill, minmax(60px, 70px));
+        repeat(auto-fill, var(--pt-card-w));
 
     gap: 6px;
 
-    justify-content: center;
+    /* Top-left, not centered-as-a-block: cards should pack from the
+       start of both axes, wrapping rows as needed, rather than the
+       whole grid (including any unfilled trailing auto-fill tracks)
+       being centered in the popup. */
+    justify-content: start;
+    align-content: start;
     overflow: visible;
 }
 
@@ -1272,7 +1286,14 @@ body {
 #partyCards .card,
 #trashCards .card {
 
-    width: 62px;
+    /* Matches --pt-card-w above exactly, including the border, via
+       border-box — with the default content-box sizing the card's
+       real rendered width was 62px content + 2px border = 64px, 2px
+       wider than its 62px grid track, which let each card overflow
+       slightly into the next track's gap and made the visual spacing
+       between cards look inconsistent row to row. */
+    box-sizing: border-box;
+    width: var(--pt-card-w);
     height: 84px;
     font-size: 11px;
     border-radius: 8px;
@@ -3119,8 +3140,10 @@ body {
 
     #queue { gap: clamp(8px, 1.5vw, 20px); }
 
+    #partyCards, #trashCards {
+        --pt-card-w: clamp(50px, 6vw, 80px);
+    }
     #partyCards .card, #trashCards .card {
-        width:  clamp(50px, 6vw, 80px);
         height: clamp(70px, 8.5vw, 110px);
     }
 
@@ -4207,8 +4230,10 @@ body.gameplay-locked #playerHand .card {
     }
 
     /* ── Party/Trash cards bigger ── */
+    #partyCards, #trashCards {
+        --pt-card-w: 62px !important;
+    }
     #partyCards .card, #trashCards .card {
-        width:  62px !important;
         height: 86px !important;
     }
 
