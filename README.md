@@ -47,6 +47,7 @@ At the end, the player with the **most animals in their party wins**.
 * 📖 Interactive tutorial
 * 🎓 First-time gameplay walkthrough
 * 🌍 Multi-language support
+* 🚀 Real asset-preload loading screen (splash + progress bar, no mid-game reloads)
 * 📱 Mobile-friendly interface
 * 🔊 Background music and sound system
 * ⚙️ Settings menu
@@ -157,27 +158,32 @@ is passed between pages except the one thing that has to be (the
 chosen bot difficulties, handed from `bot-difficulty.html` to
 `game.html` via `sessionStorage` right before navigating).
 
-## 🐼 Startup — Splash → Loading → Home
+## 🐼 Startup / Loading Screen — Splash+Progress → Home
 
-`index.html` boots behind a Splash/Loading overlay (`#startupScreen`,
+`index.html` boots behind a Splash overlay (`#startupScreen`,
 `js/ui/startup-ui.js`) instead of appearing bare while
 `js/home-main.js` is still initializing. This wraps Home's real boot
 sequence — it doesn't duplicate it:
 
-1. **Splash** — the Jolly Panda logo (`config.json` →
-   `branding.developerLogo`, not a hardcoded path) fades and scales
-   in, shown for a short minimum duration (900ms) so it doesn't just
-   flash by.
-2. **Loading** — only shown if `js/home-main.js`'s `bootHome()` (i18n
-   → modals/profile → Home wiring → icons — the same sequence that
-   ran directly before this feature) is genuinely still running once
-   the splash's minimum time is up. A real spinner + status text, no
-   fake progress percentage — there's nothing measurable to show one
-   for.
-3. **Ready** — the overlay fades out and is removed from the DOM;
-   Home underneath has been booting the whole time regardless, so
-   there's no separate "reveal" step and no reload.
-4. **Error** — if `bootHome()` throws (e.g. `config.json`/`i18n.json`
+1. **Splash+Progress** — the splash image (`config.json` →
+   `branding.splash`, not a hardcoded path) fades and scales in
+   immediately, with a progress bar, percentage, and a rotating
+   gameplay hint (`data/i18n.json`'s `startupHint1`..`startupHint6`)
+   underneath. The bar/percentage are driven by real numbers, not a
+   simulated animation: `js/home-main.js`'s `bootHome()` now takes an
+   `onProgress(loaded, total)` callback and forwards it into
+   `js/services/assetPreloader.js`'s `preloadAllImages()`, which
+   fetches and `decode()`s every image the game will ever show
+   before boot finishes — see § Asset Preloading below. A short
+   500ms floor keeps the splash from flashing by instantly on an
+   already-cached repeat visit; it's a minimum display time, not an
+   artificial delay.
+2. **Ready** — once both the image preload and the rest of
+   `bootHome()` (i18n → modals/profile → Home wiring → icons) have
+   resolved, the overlay fades out and is removed from the DOM; Home
+   underneath has been booting the whole time regardless, so there's
+   no separate "reveal" step and no reload.
+3. **Error** — if `bootHome()` throws (e.g. `config.json`/`i18n.json`
    failed to fetch), shows a plain error state with a **Retry**
    button that re-invokes `bootHome()`.
 
@@ -187,6 +193,37 @@ this only matters if a step fails *after* an earlier step has already
 attached DOM listeners — the two fetch-based steps (i18n, then
 config/icons) are the realistic failure points, and both fail before
 any listener wiring happens.
+
+### Asset Preloading (`js/services/assetPreloader.js`)
+
+Preloads and decodes every image the game can ever display — icons,
+card art, branding, avatars — during the Startup screen above, so the
+Queue, Hand, and Opponent cards never have to fetch or decode an image
+for the first time mid-match. The image list is never hand-maintained:
+it's assembled from the project's own existing manifests rather than a
+second copy of them —
+
+* `data/config.json`'s `icons` map (filtered to actual image paths,
+  the same test `js/ui/icon-ui.js`'s `loadIcons()` already uses, so
+  this list can't drift from what actually renders as an `<img>`) and
+  its `branding` entries (`developerLogo`, `splash`).
+* `data/cardInfo.json`'s card art, via the existing
+  `js/services/dataLoader.js`'s `loadCardData()` — reused, not
+  re-fetched.
+* `js/constants/avatars.js`'s `PLAYER_AVATARS`.
+* Three static paths not in any manifest (the Home banner image and
+  the small header logo, both referenced directly from HTML/CSS) —
+  the one narrow exception to "never hand-maintained" above, at the
+  top of `assetPreloader.js` as `STATIC_IMAGE_PATHS`.
+
+Each image is loaded via a real `Image()` (not a mere `fetch()`), and
+`.decode()`d when the browser supports it, so the preload guarantees a
+paint-ready decoded bitmap, not just a downloaded file sitting in the
+HTTP cache — and every `Image()` object is kept referenced for the
+page's lifetime so the browser has no reason to evict that decoded
+bitmap later. A missing/broken image resolves instead of rejecting
+(same fallback philosophy as `loadIcons()`), so one bad asset path
+can never block the whole game from starting.
 
 ## 🏠 Home Screen
 
@@ -580,6 +617,7 @@ WildGuestList/
 │   │
 │   ├── services/
 │   │   ├── achievements.js  (the achievement system — progress/persistence/unlocking)
+│   │   ├── assetPreloader.js  (preloads/decodes every game image on the Startup screen — see § Startup / Loading Screen)
 │   │   ├── dataLoader.js
 │   │   ├── logger.js
 │   │   ├── profile.js   (the one authoritative player profile)
@@ -1310,7 +1348,21 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.32.1
+**Current version:** 1.33.0
+
+**Feature — Real asset-preload loading screen (1.33.0):**
+The Startup screen's old spinner-only "Loading..." state (no
+measurable progress, per its own code comment) is replaced with a
+real one: `js/services/assetPreloader.js` fetches and `decode()`s
+every image the game will ever show — icons, card art, branding,
+avatars, assembled from the project's existing manifests, not a
+hand-maintained list — while the Startup screen shows the splash
+image (`config.json` → `branding.splash`, new key) with a progress
+bar, live percentage, and rotating gameplay hints underneath, all
+driven by real `(loaded, total)` counts from the preloader. Once
+preloading finishes during Startup, nothing in the Queue, Hand, or
+Opponent cards has to fetch or decode an image for the first time
+mid-match. See § Startup / Loading Screen.
 
 **Bugfix — Leaderboard/Party/Trash popups stuck open, legacy Party/Trash tab bar stuck visible (1.32.1):**
 Two pre-existing, unrelated legacy `@media (max-width: 600px)` rules

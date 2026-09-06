@@ -31,6 +31,7 @@
 
 import { loadI18n, buildLangSelector } from "./i18n.js";
 import { loadIcons } from "./ui/icon-ui.js";
+import { preloadAllImages } from "./services/assetPreloader.js";
 import { playBackgroundMusic } from "./services/soundManager.js";
 import { initSoundToggle } from "./services/soundManager.js";
 import { initializeTutorial } from "./ui/tutorial-ui.js";
@@ -50,9 +51,22 @@ import { initOrientationGate } from "./ui/orientation-ui.js";
 // it's wired directly, synchronously, before runStartup() even starts.
 initOrientationGate();
 
-async function bootHome() {
-    // ── i18n boot — runs before anything else ─────────────────
+/** `onProgress(loaded, total)` — forwarded straight from
+ *  js/ui/startup-ui.js, which uses it to drive the Startup screen's
+ *  real preload progress bar/percent. See
+ *  js/services/assetPreloader.js's preloadAllImages(). */
+async function bootHome(onProgress) {
+    // ── i18n boot — runs before anything else, so the Startup
+    //    screen's rotating hints are already in the right language
+    //    by the time image preloading (below) starts. ─────────────
     await loadI18n();
+
+    // Every game image (icons, card art, branding, avatars) is
+    // fetched and decoded here, up front, so nothing has to load for
+    // the first time mid-match — kicked off now, awaited at the very
+    // end so it runs alongside the rest of boot below rather than
+    // blocking it.
+    const preloadDone = preloadAllImages(onProgress);
 
     // ── Home's own genuine modals: Profile, Settings, Card Guide,
     //    About, Feedback, and the How-to-Play tutorial. All popups over
@@ -76,6 +90,8 @@ async function bootHome() {
     await initHome();
 
     await loadIcons();
+
+    await preloadDone;
 
     playBackgroundMusic();
 }

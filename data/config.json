@@ -1,6 +1,6 @@
 {
     "app": {
-        "version": "1.32.1"
+        "version": "1.33.0"
     },
     "icons": {
         "leaderboard": "assets/img/icons/leaderboard.png",
@@ -79,7 +79,8 @@
         "previewEscape": "🚫"
     },
     "branding": {
-        "developerLogo": "assets/img/branding/jolly-panda-logo.png"
+        "developerLogo": "assets/img/branding/jolly-panda-logo.png",
+        "splash": "assets/img/branding/splash.png"
     },
     "sounds": {
         "playCard": "",

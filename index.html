@@ -28,27 +28,32 @@
             </div>
         </div>
 
-        <!-- ── STARTUP (Splash → Loading → Ready) ──────────────
+        <!-- ── STARTUP (Splash+Progress → Ready) ──────────────
              Covers Home while js/ui/startup-ui.js runs bootHome()
-             (js/home-main.js's real boot sequence: i18n, config/
-             icons, Home's modals and wiring — nothing duplicated
-             here, this UI just gates it). Shows the Jolly Panda
-             logo (config.json → branding.developerLogo) for a
-             short minimum duration; only shows the Loading state
-             if boot genuinely takes longer than that. Removed from
-             the DOM once boot succeeds — Home underneath has been
-             booting the whole time regardless. On failure, shows
-             Retry, which re-runs bootHome(). See
-             docs/ARCHITECTURE_PLAN.md. -->
+             (js/home-main.js's real boot sequence: i18n, preloading
+             every game image via js/services/assetPreloader.js so
+             nothing has to fetch/decode again mid-match, config/
+             icons, and Home's modals and wiring — nothing duplicated
+             here, this UI just gates it and reflects real preload
+             progress). Shows the splash image (config.json →
+             branding.splash) immediately, with a progress bar/%/hint
+             underneath driven by actual image-load counts — not a
+             simulated animation. Removed from the DOM once boot
+             succeeds — Home underneath has been booting the whole
+             time regardless. On failure, shows Retry, which re-runs
+             bootHome(). See docs/ARCHITECTURE_PLAN.md. -->
         <div id="startupScreen" class="startup-screen" role="status" aria-live="polite">
 
             <div id="startupSplash" class="startup-splash">
-                <img id="startupLogo" class="startup-logo" alt="" data-i18n-alt="startupLogoAlt">
-            </div>
+                <img id="startupSplashImage" class="startup-splash-image" alt="" data-i18n-alt="startupSplashAlt">
 
-            <div id="startupLoading" class="startup-loading hidden">
-                <div class="startup-spinner" aria-hidden="true"></div>
-                <p class="startup-status" data-i18n="startupLoading">Loading...</p>
+                <div class="startup-progress-wrap">
+                    <div class="startup-progress-track">
+                        <div id="startupProgressFill" class="startup-progress-fill"></div>
+                    </div>
+                    <p id="startupPercent" class="startup-percent">0%</p>
+                    <p id="startupHint" class="startup-hint" aria-live="polite"></p>
+                </div>
             </div>
 
             <div id="startupError" class="startup-error hidden">
