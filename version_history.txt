@@ -1,0 +1,9 @@
+1.34.0
+- Mobile Portrait game screen layout reworked to match the new
+  layout brief: Logo -> Turn/Round/Timer + Pause/Help/Guide (two
+  rows) -> Standings/Log/Chat -> Opponents summary -> Party/Trash ->
+  Queue -> Player Hand.
+- Opponent summary rows moved above Party/Trash and simplified to
+  avatar + name + a single deck-back count (deck + hand combined).
+- Party/Trash buttons above the Queue restyled to match the
+  Standings/Log/Chat rail buttons (bordered, icon + label in a row).

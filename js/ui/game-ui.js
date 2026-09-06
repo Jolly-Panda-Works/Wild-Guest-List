@@ -503,11 +503,12 @@ async function renderOtherPlayers(gameState) {
             : "";
 
         // Compact summary row: avatar + name + a single face-down deck
-        // labelled with the TOTAL number of cards this player is
-        // currently holding (their hand) — not the separate draw-pile
-        // count. Deliberately no per-card hand preview here; this row
-        // sits above Party/Trash as a quick-glance opponent summary,
-        // not a detailed hand view (see game.html for its position).
+        // labelled with this player's TOTAL remaining cards — hand +
+        // draw pile combined — rather than either count on its own.
+        // Deliberately no per-card hand preview here; this row sits
+        // above Party/Trash as a quick-glance opponent summary, not a
+        // detailed hand view (see game.html for its position).
+        const totalCardsLeft = player.hand.length + player.deck.length;
         box.innerHTML = `
             <div class="other-player-row${isCurrentTurn ? " current-turn" : ""}"
                 data-player="${player.id}"
@@ -523,7 +524,7 @@ async function renderOtherPlayers(gameState) {
 
                 <div class="other-player-right">
                     <div class="deck-back other-deck-back" data-player="${player.id}">
-                        <span class="other-deck-count" aria-label="${t("handCountLabel")}">${player.hand.length}</span>
+                        <span class="other-deck-count" aria-label="${t("handCountLabel")}">${totalCardsLeft}</span>
                     </div>
                 </div>
             </div>
