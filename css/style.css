@@ -761,6 +761,23 @@ body {
     min-height: 0;
 }
 
+/* #gameLayout is a 3-column CSS Grid on desktop/tablet (Party | Center |
+   Trash — see the grid-template-columns rule above). #otherPlayers now
+   sits in the DOM between the mobile-only leaderboard popup and
+   #partyArea (see game.html), so on any layout still using this Grid it
+   needs an explicit column or the browser's auto-placement would shove
+   #partyArea/#centerArea/#trashArea sideways by one track. Pinning
+   #otherPlayers and #centerArea to the same (middle) column stacks the
+   opponents summary directly above the Queue/Hand, while #partyArea and
+   #trashArea keep their existing side columns untouched. Portrait mode
+   overrides #gameLayout to `display:flex` (see the Mobile Portrait
+   layer), where `grid-column` simply has no effect and normal DOM/
+   source order takes over instead. */
+#otherPlayers { grid-column: 2; }
+#partyArea    { grid-column: 1; }
+#centerArea   { grid-column: 2; }
+#trashArea    { grid-column: 3; }
+
 
 /* ==========================================================
    SPLASH FULL SCREEN
@@ -8538,33 +8555,41 @@ body.gameplay-locked #playerHand .card {
     opacity: 0.85;
 }
 
-/* ── Party / Trash as stacked buttons around the Queue (Section 8) ──
+/* ── Party + Trash as one button row above the Queue ──
    Mobile Portrait only (desktop keeps its #leftSidebar Party/Trash
-   panels reached another way). Base #queueWithIcons (defined earlier
-   in this file) lays the door icon, queue, and trash icon out as a
-   row flanking the Queue; in Portrait this switches to a column so
-   Party sits above the Queue and Trash sits below it, per the brief's
-   vertical hierarchy — same elements, same click/keyboard wiring
-   (js/ui/mobile-ui.js), same popups, just re-flowed. Each icon also
-   gains its visible i18n label underneath, in the same icon+label
-   language already used by the Leaderboard/Log/Chat rail buttons
-   (#mobileSideRail), so "Party"/"Trash" read as real buttons rather
-   than bare glyphs. */
+   panels reached another way). js/ui/game-ui.js's renderQueue() now
+   wraps the door icon and trash icon together in
+   #queuePartyTrashRow, placed before #queueInner — so #queueWithIcons
+   only ever has two direct children (the row, then the Queue itself),
+   stacked via flex-direction: column. Same elements, same
+   click/keyboard wiring (js/ui/mobile-ui.js), same popups as before,
+   just grouped into a single row per the gameplay screen's layout
+   spec. Each icon also carries its visible i18n label underneath, in
+   the same icon+label language already used by the Leaderboard/Log/
+   Chat rail buttons (#mobileSideRail), so "Party"/"Trash" read as
+   real buttons rather than bare glyphs. */
 @media (pointer: coarse) and (orientation: portrait) {
     #queueWithIcons {
         flex-direction: column;
         gap: clamp(4px, 1.5dvh, 10px);
     }
 
+    .queue-party-trash-row {
+        display: flex;
+        flex-direction: row;
+        gap: clamp(6px, 2vw, 14px);
+        width: 100%;
+    }
+
     .queue-icon {
+        flex: 1 1 0;
         flex-direction: column;
         gap: 2px;
-        width: 100%;
         font-size: unset;
     }
 
     .queue-icon-glyph {
-        font-size: clamp(20px, 7vw, 32px);
+        font-size: clamp(18px, 6vw, 28px);
         line-height: 1;
     }
 

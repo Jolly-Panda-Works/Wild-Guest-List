@@ -1182,31 +1182,28 @@ Board screen specifically for a portrait phone.
   buttons (the same `icons.party`/`icons.trash` image assets used by
   the Party/Trash Area headers themselves, not emoji, each now paired
   with a visible i18n label — "Party"/"Trash" — in the same
-  icon+label language `#mobileSideRail`'s buttons already use) that
-  flank the Queue in source order
-  (`#queueWithIcons`/`.queue-icon-entry`/`.queue-icon-exit`, built in
-  `renderQueue()` — `js/ui/game-ui.js`). In Mobile Portrait
-  specifically, `#queueWithIcons` switches from a row (icons flanking
-  the Queue left/right, still the Desktop/tablet arrangement) to a
-  column, so Party renders as a full-width button above the Queue and
-  Trash as one below it — no DOM reordering needed, since the door
-  icon already comes before `#queueInner` and the trash icon after it
-  in source order; only the flex-direction and each icon's own
-  internal layout change for this viewport. Clicking either still
-  reuses the exact same `#partyArea`/`#trashArea` popups and
-  one-open-at-a-time toggle group in `js/ui/mobile-ui.js`'s
-  `initMobileTabs()`. These buttons are Mobile-Portrait-only (see
-  `.queue-icon`'s `display: none` base rule and its portrait-layer
-  override): on Desktop, Party and Trash are already their own
-  always-visible sidebar panels, so a second, Queue-adjacent way to
-  reach the exact same popups was just clutter, not a real Desktop
-  feature. Because those icons are created the first time the Queue
-  renders, `initMobileTabs()` is called after the first `updateUI()`
-  in `js/game-main.js` rather than before it. The old
+  icon+label language `#mobileSideRail`'s buttons already use), grouped
+  together as one row directly above the Queue
+  (`#queuePartyTrashRow`/`.queue-icon-entry`/`.queue-icon-exit`, built
+  in `renderQueue()` — `js/ui/game-ui.js`), per the gameplay screen's
+  layout spec. `#queueWithIcons` wraps exactly two children in Mobile
+  Portrait — `#queuePartyTrashRow` (the button row) then `#queueInner`
+  (the Queue) — stacked with `flex-direction: column`; each button
+  itself is `flex: 1 1 0` inside that row, so Party and Trash always
+  split it evenly regardless of screen width. On Desktop/tablet
+  (`.queue-icon`'s base `display: none`), the empty row wrapper simply
+  collapses to nothing next to the Queue — no separate desktop-only
+  markup branch needed. Clicking either button still reuses the exact
+  same `#partyArea`/`#trashArea` popups and one-open-at-a-time toggle
+  group in `js/ui/mobile-ui.js`'s `initMobileTabs()`. Because those
+  icons are created the first time the Queue renders,
+  `initMobileTabs()` is called after the first `updateUI()` in
+  `js/game-main.js` rather than before it. The old
   `#mobileTabs`/`#partyTab`/`#trashTab` markup is still present in
   `game.html` (it's also targeted by `js/ui/walkthrough.js`'s
   width-based `<=600px` mobile tier), but it plays no part in the
-  Portrait rail and falls back to its base `display: none` there.
+  Portrait rail and stays hidden there (see § Version 1.32.1's bugfix
+  for the CSS rule that used to defeat that).
 
   Each opponent seat in `#otherPlayers` (built by `renderOtherPlayers()`
   in `js/ui/game-ui.js`) shows, next to the player's name, the same
@@ -1348,7 +1345,19 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.33.0
+**Current version:** 1.33.1
+
+**Style — Party/Trash grouped into one row above the Queue (1.33.1):**
+Per the gameplay screen's exact layout spec, Party and Trash are now
+a single row directly above the Queue in Mobile Portrait, rather than
+one above and one below it. `js/ui/game-ui.js`'s `renderQueue()` now
+wraps both in `#queuePartyTrashRow` (a new element, `display: flex`
+row) placed before `#queueInner`, so `#queueWithIcons` has exactly two
+stacked children — the button row, then the Queue — instead of three.
+Same ids, same click/keyboard wiring and popups as 1.32.0; only the
+grouping and CSS (`.queue-icon` is now `flex: 1 1 0` inside the row
+instead of `width: 100%` stacked alone) changed. See § Mobile portrait
+— game board layout layer.
 
 **Feature — Real asset-preload loading screen (1.33.0):**
 The Startup screen's old spinner-only "Loading..." state (no
