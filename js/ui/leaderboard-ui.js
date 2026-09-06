@@ -1,21 +1,15 @@
 import { t, playerDisplayName } from "../i18n.js";
 import { loadIcons } from "./icon-ui.js";
-
-const RANK_ICON = ["rankGold", "rankSilver", "rankBronze", "rankFourth"];
+import { getRankedPlayers, getPartyScore, RANK_ICONS } from "../game/scoreManager.js";
 
 export function renderLeaderboard(gameState) {
 
-    const sorted = [...gameState.players].sort((a, b) => {
-        const ap = a.party.reduce((s, c) => s + c.power, 0);
-        const bp = b.party.reduce((s, c) => s + c.power, 0);
-        if (b.party.length !== a.party.length) return b.party.length - a.party.length;
-        return bp - ap;
-    });
+    const sorted = getRankedPlayers(gameState);
 
     const rowsHTML = sorted.map((p, i) => {
-        const score = p.party.reduce((s, c) => s + c.power, 0);
+        const score = getPartyScore(p);
         const count = p.party.length;
-        const rankIcon = RANK_ICON[i];
+        const rankIcon = RANK_ICONS[i];
         const medal = rankIcon ? `<span data-icon="${rankIcon}"></span>` : `#${i + 1}`;
         return `<div class="leaderboard-row" data-player="${p.id}">
             <span class="lb-rank">${medal}</span>

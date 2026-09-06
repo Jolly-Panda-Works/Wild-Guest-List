@@ -3927,9 +3927,17 @@ body.gameplay-locked #playerHand .card {
     #mobileTabs        { order: 2; }
     #centerArea        { order: 3; }
 
-    /* ── Inline leaderboard ── */
+    /* ── Inline leaderboard ──
+       display intentionally NOT set here anymore: this used to be
+       `display: block !important`, forcing #mobileLeaderboard visible
+       on every narrow screen regardless of the `.mobile-open` popup
+       toggle it now uses (see the Mobile Portrait layer further down
+       — `#mobileLeaderboard, #partyArea, #trashArea { display: none }`
+       / `.mobile-open { display: flex }`). That !important permanently
+       beat the popup system's own display rules no matter what the
+       toggle did, so the panel could never close — this block now
+       only contributes background/spacing, not visibility. */
     #mobileLeaderboard {
-        display: block !important;
         margin: 6px 12px;
         padding: 8px 10px;
         background: rgba(255,255,255,0.05);
@@ -3991,9 +3999,21 @@ body.gameplay-locked #playerHand .card {
 
     .other-deck-count { font-size: clamp(12px, 4vw, 18px); }
 
-    /* ── mobileTabs (Party / Trash) ── */
+    /* ── mobileTabs (Party / Trash) ──
+       display intentionally NOT set here: this used to be
+       `display: flex`, which — same bug as #mobileLeaderboard above —
+       beat the base `#mobileTabs { display: none }` rule (equal
+       specificity, later in source order) and made this entire old
+       tab bar visible on every narrow screen. #mobileTabs/#partyTab/
+       #trashTab are superseded by the door/trash icons that flank the
+       Queue (`#queueWithIcons`, see the Mobile Portrait layer further
+       down) and are meant to stay hidden everywhere now — see
+       README.md's Mobile Portrait section. Kept as a selector here
+       (rather than deleted) only to hold the spacing/sizing for
+       #partyTab/#trashTab below, in case a future layout ever
+       reinstates this element. */
     #mobileTabs {
-        display: flex; gap: 8px;
+        gap: 8px;
         justify-content: center;
         padding: 6px 12px 4px;
     }
@@ -4885,9 +4905,12 @@ body.gameplay-locked #playerHand .card {
 
 @media (max-width: 600px) {
 
-    /* hide desktop leaderboard; show mobile one */
+    /* Same fix as the "Inline leaderboard" block above (this is a
+       duplicate, older MOBILE OVERRIDES section): no `display` here
+       — the popup toggle (`.mobile-open`, see the Mobile Portrait
+       layer) is the single source of truth for whether this is
+       visible, not this block. */
     #mobileLeaderboard {
-        display: block !important;
         order: 0;
         margin: 6px 12px 0;
         padding: 8px 10px;
@@ -8412,4 +8435,103 @@ body.gameplay-locked #playerHand .card {
     width: clamp(52px, 6vw, 78px);
     height: clamp(74px, 8.6vw, 110px);
     box-shadow: var(--shadow-card), 0 0 0 2px var(--accent);
+}
+
+/* ==========================================================
+   MOBILE GAMEPLAY SCREEN REDESIGN — Opponent rank badges,
+   hand-count display, and stacked Party/Trash queue buttons.
+   ----------------------------------------------------------
+   Placed last deliberately: these are small, targeted additions
+   to existing elements (.player-label, .other-hand, .queue-icon)
+   and rely on normal cascade order to win over the earlier base
+   rules for those same selectors, rather than needing !important
+   or re-touching every prior declaration site in this file.
+========================================================== */
+
+/* ── Opponent rank badge (Section 6 of the mobile gameplay brief) ──
+   Rendered by js/ui/game-ui.js's renderOtherPlayers() using the same
+   standings computed for the Match Standings/Leaderboard popup — see
+   js/game/scoreManager.js. Sits inline before the player's name. */
+.player-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.player-rank-badge {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.player-rank-badge .icon-image {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+}
+
+.player-name-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Opponent hand count (Section 5) ──
+   The face-down card-backs already convey "some cards", but at the
+   small sizes Mobile Portrait uses (see .other-hand .card-back rules
+   above) an explicit number stays legible where individual card-backs
+   may not. Styled as a small chip, matching .other-deck-count's
+   language (bold white number, dark shadow) rather than inventing a
+   new visual for the same kind of information. */
+.other-hand {
+    position: relative;
+}
+
+.other-hand-count {
+    flex-basis: 100%;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    opacity: 0.85;
+}
+
+/* ── Party / Trash as stacked buttons around the Queue (Section 8) ──
+   Mobile Portrait only (desktop keeps its #leftSidebar Party/Trash
+   panels reached another way). Base #queueWithIcons (defined earlier
+   in this file) lays the door icon, queue, and trash icon out as a
+   row flanking the Queue; in Portrait this switches to a column so
+   Party sits above the Queue and Trash sits below it, per the brief's
+   vertical hierarchy — same elements, same click/keyboard wiring
+   (js/ui/mobile-ui.js), same popups, just re-flowed. Each icon also
+   gains its visible i18n label underneath, in the same icon+label
+   language already used by the Leaderboard/Log/Chat rail buttons
+   (#mobileSideRail), so "Party"/"Trash" read as real buttons rather
+   than bare glyphs. */
+@media (pointer: coarse) and (orientation: portrait) {
+    #queueWithIcons {
+        flex-direction: column;
+        gap: clamp(4px, 1.5dvh, 10px);
+    }
+
+    .queue-icon {
+        flex-direction: column;
+        gap: 2px;
+        width: 100%;
+        font-size: unset;
+    }
+
+    .queue-icon-glyph {
+        font-size: clamp(20px, 7vw, 32px);
+        line-height: 1;
+    }
+
+    .queue-icon-label {
+        font-size: 11px;
+        font-weight: 600;
+        opacity: 0.85;
+    }
 }
