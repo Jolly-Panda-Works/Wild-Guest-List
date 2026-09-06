@@ -8204,9 +8204,9 @@ body.gameplay-locked #playerHand .card {
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         padding: 0;
-        gap: clamp(8px, 3dvh, 24px);
+        gap: 6px;
         overflow: hidden;
     }
 
@@ -8234,18 +8234,24 @@ body.gameplay-locked #playerHand .card {
     .other-deck-back { width: clamp(28px, 9dvw, 44px) !important; height: clamp(38px, 12dvw, 60px) !important; }
     .other-deck-count { font-size: 11px; }
 
-    /* Queue keeps a smaller share and smaller cards than the Hand
-       below it, same priority order as landscape — Player Hand is
-       still the higher-priority element. */
+    /* The Queue is now the FLEXIBLE element that absorbs all leftover
+       vertical space between Party/Trash (fixed size, top of this
+       area) and Player Hand (pinned to the very bottom via
+       #centerArea's flex layout below) — a bigger Queue area means a
+       bigger, easier drag-and-drop target (isOverQueueDropZone() in
+       js/ui/game-ui.js accepts a drop anywhere inside #queueArea's
+       box, not just on a slot itself). Slot/card size stays fixed
+       (matching the Hand's own card size — see the shared clamp()
+       values below) — only the empty space AROUND the slots grows. */
     #queueArea {
-        flex: 0 1 auto;
+        flex: 1 1 auto;
         min-height: 0;
         width: 100%;
         padding: 0 8px;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
+        align-items: stretch;
+        justify-content: flex-start;
     }
 
     #queue {
@@ -8254,13 +8260,12 @@ body.gameplay-locked #playerHand .card {
         justify-content: center;
     }
 
-    /* Width-driven now (dvw, not dvh) — a full queue must still fit
-       a ~360–430px-wide phone even though there's height to spare,
-       so card size tracks viewport WIDTH and wraps instead of
-       overflowing. */
+    /* Same size as the Player Hand's own cards (#playerHand .card-back
+       below) — one consistent card size on screen, per the layout
+       brief, instead of a separately-tuned smaller Queue size. */
     #queue .card, .queue-slot {
-        width: clamp(40px, 11dvw, 76px);
-        height: clamp(56px, 15.5dvw, 106px);
+        width: clamp(46px, 13dvw, 88px);
+        height: clamp(64px, 18dvw, 124px);
     }
 
     #queueWithIcons { gap: clamp(4px, 2vw, 10px); flex-wrap: wrap; justify-content: center; }
@@ -8625,7 +8630,16 @@ body.gameplay-locked #playerHand .card {
    Chat rail buttons (#mobileSideRail), so "Party"/"Trash" read as
    real buttons rather than bare glyphs. */
 @media (pointer: coarse) and (orientation: portrait) {
+    /* Fills #queueArea's full (now flex-grown) height: the Party/Trash
+       row keeps its natural size at the top (flex: 0 0 auto below),
+       #queueInner takes 100% of whatever height is left over and
+       centers the actual Queue slots within it — so the empty space
+       added by #queueArea's growth becomes extra drop-zone margin
+       around the slots, not a bigger gap before this whole block. */
     #queueWithIcons {
+        flex: 1 1 auto;
+        width: 100%;
+        display: flex;
         flex-direction: column;
         gap: clamp(4px, 1.5dvh, 10px);
     }
@@ -8633,8 +8647,17 @@ body.gameplay-locked #playerHand .card {
     .queue-party-trash-row {
         display: flex;
         flex-direction: row;
+        flex: 0 0 auto;
         gap: clamp(6px, 2vw, 14px);
         width: 100%;
+    }
+
+    #queueInner {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .queue-icon {

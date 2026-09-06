@@ -17,3 +17,14 @@
 - .player-deck-info (avatar + name) moved out of #deckStack and into
   its own row inside #handArea; #deckStack is now the Hand+Deck row
   itself.
+
+1.36.0
+- Player Hand now sits flush at the bottom of the screen: #queueArea
+  is the flexible element that grows to absorb all leftover vertical
+  space between Party/Trash and the Hand, instead of shrink-wrapping
+  to its own content and leaving a big empty gap below the Queue.
+- Bigger Queue area also means a bigger drag-and-drop target, since
+  the drop check (isOverQueueDropZone) already accepts any point
+  inside #queueArea's box, not just directly on a slot.
+- Queue slot size unified with the Player Hand's own card size (same
+  clamp() values) instead of a separately-tuned smaller size.
