@@ -1050,9 +1050,28 @@ body {
 
 @media(max-width:600px){
 
+    /* Safe-area-aware top/bottom padding — every .screen-overlay page
+       (Home, Profile, Settings, Game Modes, Coming Soon, and notably
+       the Cards/Animal Ability page, cards.html) shares this same
+       scroll container (.screen-content already has overflow-y:auto
+       from its base rule above), so fixing it once here clears every
+       one of them at once — same approach as the .modal safe-area
+       padding fix below. On a device with a notch/Dynamic Island the
+       top padding grows to clear it instead of sitting flush against
+       it; on a device with a home indicator the bottom padding grows
+       so the last scrolled content (e.g. the last row of the Animal
+       Ability grid) never sits under/behind it. `env(safe-area-inset-*)`
+       resolves to 0 on devices without either, so the fixed 20px
+       floor is exactly what plain phones and Desktop already got —
+       no layout change there. Left/right stay a flat 20px: this app
+       is portrait-only on touch (see the Orientation Gate), where the
+       notch/indicator only ever intrudes from the top or bottom. */
     .screen-content{
 
-        padding:20px;
+        padding:
+            max(20px, env(safe-area-inset-top))
+            20px
+            calc(20px + env(safe-area-inset-bottom, 0px));
 
     }
 

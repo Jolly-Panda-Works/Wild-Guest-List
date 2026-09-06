@@ -50,3 +50,22 @@
   js/services/dataLoader.js) — as does the separate end-of-game/
   leaderboard "Power" score label, which is a distinct scoring feature,
   not part of the Animal Ability Cards. No gameplay behavior changed.
+
+1.36.6
+- The Cards/Animal Ability page (cards.html) is safe-area-aware on
+  Mobile: .screen-content (the shared, already-scrolling container
+  behind every top-level .screen-overlay page — Home, Profile,
+  Settings, Game Modes, Coming Soon, and Cards) now applies
+  max(20px, env(safe-area-inset-top)) at the top and
+  calc(20px + env(safe-area-inset-bottom, 0px)) at the bottom instead
+  of a flat 20px, inside the existing @media(max-width:600px) rule.
+- Devices with a notch/Dynamic Island or a home indicator now get
+  guaranteed clearance above and below the content — including the
+  last row of the Animal Ability grid, which previously could sit
+  flush against (or behind) the home indicator on some devices — while
+  plain phones and Desktop are unaffected (env() resolves to 0, same
+  20px/untouched padding as before).
+- Left/right padding, Desktop's own padding (>600px), and every other
+  .screen-overlay page's layout are unchanged; this only strengthens
+  the shared mobile scroll-container rule already in place, matching
+  the same safe-area pattern used by the .modal popup fix (1.36.2).

@@ -1345,7 +1345,37 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.36.5
+**Current version:** 1.36.6
+
+**Fix — Cards/Animal Ability page safe-area-aware on Mobile (1.36.6):**
+The Cards page (`cards.html` — Home's Card Guide destination, a
+top-level `.screen-overlay` page, see § Navigation Architecture) had
+only a flat `padding: 20px` on `.screen-content` at `≤600px`, with no
+awareness of a device's notch/Dynamic Island or home indicator. On
+devices with either, the top of the page (back link/title) could sit
+flush against the notch, and the bottom of the scrollable Animal
+Ability grid (`#animalGrid`, inside `.screen-content`, which is
+already the scroll container via its base rule's `overflow-y: auto`)
+could end flush against — or behind — the home indicator, with the
+last row never fully clear of it.
+
+Fixed at the shared container instead of per-page, the same approach
+1.36.2 used for `.modal`: inside the existing
+`@media (max-width: 600px)` rule, `.screen-content`'s padding is now
+`max(20px, env(safe-area-inset-top))` on top and
+`calc(20px + env(safe-area-inset-bottom, 0px))` on the bottom, instead
+of a flat `20px` on every side. Because `.screen-content` is the
+scroll container itself, the extra bottom padding is real scrollable
+space, not just a static gap — the grid's last row scrolls fully past
+the home indicator instead of stopping short of it. `env()` resolves
+to `0` on devices without a notch/indicator, so plain phones keep the
+exact same `20px` they always had, and Desktop (`>600px`, a separate
+rule) is untouched entirely. Left/right stay a flat `20px` — the app
+is portrait-only on touch (see the Orientation Gate), where a
+notch/indicator only ever intrudes from the top or bottom, never the
+sides. Every other `.screen-overlay` page sharing `.screen-content`
+(Home, Profile, Settings, Game Modes, Coming Soon) picks up the same
+fix for free, with no markup or per-page CSS changes needed.
 
 **Cleanup — Power stat removed from Animal Ability Cards (1.36.5):**
 Continuing the presentation-only change from 1.30.12 (which removed the
