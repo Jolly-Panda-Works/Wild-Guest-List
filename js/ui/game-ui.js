@@ -18,6 +18,7 @@ import { PLAYER_AVATARS } from "../constants/avatars.js";
 import { previewAbility } from "../abilities/previewResolver.js";
 import { showQueuePreview, showDraggedCardPreview, clearAllPreviewOverlays } from "./previewOverlay-ui.js";
 import { DRAG_START_THRESHOLD_PX } from "../constants/preview.js";
+import { getPlayerRankIndexes, getRankIcon } from "../game/scoreManager.js";
 
 // ── Warning toast ─────────────────────────────────────────
 export function showWarning(message) {
@@ -74,11 +75,17 @@ async function renderQueue(gameState) {
         wrapper = document.createElement("div");
         wrapper.id = "queueWithIcons";
         wrapper.innerHTML = `
-            <div id="queueDoorIcon" class="queue-icon queue-icon-entry" data-icon="party"
-                 role="button" tabindex="0" aria-label="${t("partyPanel")}"></div>
+            <div id="queueDoorIcon" class="queue-icon queue-icon-entry"
+                 role="button" tabindex="0" aria-label="${t("partyPanel")}">
+                <span class="queue-icon-glyph" data-icon="party"></span>
+                <span class="queue-icon-label" data-i18n="partyPanel">${t("partyPanel")}</span>
+            </div>
             <div id="queueInner"></div>
-            <div id="queueTrashIcon" class="queue-icon queue-icon-exit" data-icon="trash"
-                 role="button" tabindex="0" aria-label="${t("trashPanel")}"></div>
+            <div id="queueTrashIcon" class="queue-icon queue-icon-exit"
+                 role="button" tabindex="0" aria-label="${t("trashPanel")}">
+                <span class="queue-icon-glyph" data-icon="trash"></span>
+                <span class="queue-icon-label" data-i18n="trashPanel">${t("trashPanel")}</span>
+            </div>
         `;
         queue.parentNode.insertBefore(wrapper, queue);
         wrapper.querySelector("#queueInner").appendChild(queue);
@@ -474,6 +481,12 @@ async function renderOtherPlayers(gameState) {
     const positions    = [top, left, right];
     const currentId    = gameState.players[gameState.currentPlayer]?.id;
 
+    // Rank badges reuse the exact same standings math as the Match
+    // Standings/Leaderboard popup (js/game/scoreManager.js), computed
+    // once per render, so a player's medal here can never disagree
+    // with the popup's.
+    const rankIndexes = getPlayerRankIndexes(gameState);
+
     others.forEach((player, i) => {
         const box = positions[i];
         if (!box) return;
@@ -486,6 +499,11 @@ async function renderOtherPlayers(gameState) {
             `<div class="card-back" data-player="${player.id}"></div>`
         ).join("");
 
+        const rankIcon = getRankIcon(rankIndexes.get(player.id));
+        const rankBadge = rankIcon
+            ? `<span class="player-rank-badge" data-icon="${rankIcon}" aria-hidden="true"></span>`
+            : "";
+
         box.innerHTML = `
             <div class="other-player-row${isCurrentTurn ? " current-turn" : ""}"
                 data-player="${player.id}"
@@ -496,10 +514,13 @@ async function renderOtherPlayers(gameState) {
                         <span data-icon="bot-${diff}"></span>
                     </div>
 
-                    <div class="player-label">${playerDisplayName(player)}</div>
+                    <div class="player-label">${rankBadge}<span class="player-name-text">${playerDisplayName(player)}</span></div>
                 </div>
 
-                <div class="other-hand">${handCards}</div>
+                <div class="other-hand">
+                    ${handCards}
+                    <span class="other-hand-count" aria-label="${t("handCountLabel")}">${player.hand.length}</span>
+                </div>
 
                 <div class="other-player-right">
                     <div class="deck-back other-deck-back" data-player="${player.id}">

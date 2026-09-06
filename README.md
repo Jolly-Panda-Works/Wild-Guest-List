@@ -39,6 +39,7 @@ At the end, the player with the **most animals in their party wins**.
   * Medium
   * Hard
 * 🎯 Strategic shared queue system
+* 🥇 Live rank badges on opponent seats (mirrors Match Standings)
 * 🔮 Drag-to-play with a live Ability Preview (see cards' effects before you play them)
 * 🎉 Party and Trash systems
 * 🏆 Match Standings (live in-match score panel)
@@ -565,7 +566,8 @@ WildGuestList/
 │   ├── constants/
 │   │   ├── cardIds.js
 │   │   ├── playerTypes.js
-│   │   └── preview.js      (Ability Preview / drag-to-play timing & thresholds)
+│   │   ├── preview.js      (Ability Preview / drag-to-play timing & thresholds)
+│   │   └── rank.js         (shared rank-medal icon list, read by scoreManager.js)
 │   │
 │   ├── game/
 │   │   ├── deck.js
@@ -573,7 +575,7 @@ WildGuestList/
 │   │   ├── gameState.js
 │   │   ├── help.js         (Card Guide — shared by Home's #helpModal popup and game.html's in-game Help modal)
 │   │   ├── queueManager.js
-│   │   ├── scoreManager.js
+│   │   ├── scoreManager.js  (party-count/power ranking math — shared by leaderboard-ui.js's Match Standings and game-ui.js's opponent rank badges)
 │   │   └── turnManager.js
 │   │
 │   ├── services/
@@ -1139,23 +1141,43 @@ Board screen specifically for a portrait phone.
   "Coming Soon"), now laid out as a horizontal row stacked ABOVE the
   play area instead of a vertical column beside it. Party and Trash
   are still not rail buttons — they open from the Party and Trash
-  icons (the same `icons.party`/`icons.trash` image assets used by the
-  Party/Trash Area headers themselves, not emoji) that flank the Queue
+  buttons (the same `icons.party`/`icons.trash` image assets used by
+  the Party/Trash Area headers themselves, not emoji, each now paired
+  with a visible i18n label — "Party"/"Trash" — in the same
+  icon+label language `#mobileSideRail`'s buttons already use) that
+  flank the Queue in source order
   (`#queueWithIcons`/`.queue-icon-entry`/`.queue-icon-exit`, built in
-  `renderQueue()` — `js/ui/game-ui.js`), reusing the same
-  `#partyArea`/`#trashArea` popups and one-open-at-a-time toggle group
-  in `js/ui/mobile-ui.js`'s `initMobileTabs()`. These icons are
-  Mobile-Portrait-only (see `.queue-icon`'s `display: none` base rule
-  and its portrait-layer override): on Desktop, Party and Trash are
-  already their own always-visible sidebar panels, so a second,
-  Queue-adjacent way to reach the exact same popups was just clutter,
-  not a real Desktop feature. Because those icons are created the
-  first time the Queue renders, `initMobileTabs()` is called after the
-  first `updateUI()` in `js/game-main.js` rather than before it. The
-  old `#mobileTabs`/`#partyTab`/`#trashTab` markup is still present in
+  `renderQueue()` — `js/ui/game-ui.js`). In Mobile Portrait
+  specifically, `#queueWithIcons` switches from a row (icons flanking
+  the Queue left/right, still the Desktop/tablet arrangement) to a
+  column, so Party renders as a full-width button above the Queue and
+  Trash as one below it — no DOM reordering needed, since the door
+  icon already comes before `#queueInner` and the trash icon after it
+  in source order; only the flex-direction and each icon's own
+  internal layout change for this viewport. Clicking either still
+  reuses the exact same `#partyArea`/`#trashArea` popups and
+  one-open-at-a-time toggle group in `js/ui/mobile-ui.js`'s
+  `initMobileTabs()`. These buttons are Mobile-Portrait-only (see
+  `.queue-icon`'s `display: none` base rule and its portrait-layer
+  override): on Desktop, Party and Trash are already their own
+  always-visible sidebar panels, so a second, Queue-adjacent way to
+  reach the exact same popups was just clutter, not a real Desktop
+  feature. Because those icons are created the first time the Queue
+  renders, `initMobileTabs()` is called after the first `updateUI()`
+  in `js/game-main.js` rather than before it. The old
+  `#mobileTabs`/`#partyTab`/`#trashTab` markup is still present in
   `game.html` (it's also targeted by `js/ui/walkthrough.js`'s
   width-based `<=600px` mobile tier), but it plays no part in the
   Portrait rail and falls back to its base `display: none` there.
+
+  Each opponent seat in `#otherPlayers` (built by `renderOtherPlayers()`
+  in `js/ui/game-ui.js`) shows, next to the player's name, the same
+  rank medal (🥇/🥈/🥉/4th) currently shown for that player in the
+  Match Standings/Leaderboard popup — both read the standings through
+  `js/game/scoreManager.js` so the two can never disagree — plus an
+  explicit hand-card count alongside the existing deck count, since
+  the face-down card-backs alone can be hard to count at the small
+  sizes Mobile Portrait uses.
 
   The main gameplay column (`#centerArea`, now the only column) stacks
   Other Players / Queue / Player Hand in that same source order as
@@ -1288,7 +1310,22 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.31.0
+**Current version:** 1.32.0
+
+**Feature — Mobile Portrait gameplay screen redesign (1.32.0):**
+Party and Trash now render as full-width, labeled buttons stacked
+above and below the Queue in Mobile Portrait (`#queueWithIcons`
+switches from flanking the Queue left/right to a column — same
+elements, same click/keyboard wiring and popups, see § Mobile
+portrait — game board layout layer). Each opponent seat also gains a
+rank medal next to their name (mirroring their current Match
+Standings position) and an explicit hand-card count next to the
+existing deck count. The rank math powering both the Match Standings
+panel and these new badges was previously duplicated between
+`leaderboard-ui.js` and `endgame-ui.js`; it's now consolidated in
+`js/game/scoreManager.js` (previously an empty, unused stub) so the
+two can never disagree. `endgame-ui.js`'s own final-results medal
+display is unchanged.
 
 **Feature — Ability Preview System + drag-to-play (1.31.0):** Hand
 cards are no longer played by tapping/clicking — the player drags a
