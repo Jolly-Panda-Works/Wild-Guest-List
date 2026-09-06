@@ -4149,10 +4149,13 @@ body.gameplay-locked #playerHand .card {
     }
     #queue::-webkit-scrollbar { display: none; }
 
+    /* Same size as the Player Hand's own cards (#playerHand .card
+       below) — one consistent card size on screen instead of a
+       separately-tuned Queue size that drifts from the Hand's. */
     #queue .card, .queue-slot {
         flex: 0 0 auto;
-        width:  clamp(52px, 14vw, 80px);
-        height: clamp(74px, 20vw, 114px);
+        width:  clamp(50px, 13vw, 70px);
+        height: clamp(70px, 18vw, 98px);
     }
 
     /* ── Hand: pinned to bottom ── */
@@ -4320,9 +4323,12 @@ body.gameplay-locked #playerHand .card {
         height: clamp(62px, 22vw, 82px);
     }
 
+    /* Match the Player Hand's card size exactly (was a couple of
+       px larger at this tier) — see the matching comment on the
+       main ≤600px Queue rule above. */
     #queue .card, .queue-slot {
-        width:  clamp(44px, 16vw, 60px);
-        height: clamp(62px, 22vw, 84px);
+        width:  clamp(44px, 16vw, 58px);
+        height: clamp(62px, 22vw, 82px);
     }
 }
 
@@ -8375,9 +8381,13 @@ body.gameplay-locked #playerHand .card {
         height: clamp(26px, 7vw, 32px) !important;
     }
 
+    /* Same size as the Player Hand's own cards (#playerHand
+       .card-back below) — was a smaller, separately-tuned Queue
+       size at this tier; now matched so Queue and Hand cards read
+       as one consistent size on screen. */
     #queue .card, .queue-slot {
-        width: clamp(36px, 10dvw, 66px);
-        height: clamp(50px, 14dvw, 92px);
+        width: clamp(40px, 12dvw, 76px);
+        height: clamp(56px, 16.5dvw, 108px);
     }
 
     #playerHand .card-back, .card-back {
@@ -8395,10 +8405,14 @@ body.gameplay-locked #playerHand .card {
     #gameLayout { padding: 4px 6px 6px; }
     #otherPlayers { padding: 0; gap: 6px; }
 
-    #queue .card, .queue-slot {
-        width: clamp(32px, 9dvw, 58px);
-        height: clamp(44px, 12.5dvw, 80px);
-    }
+    /* No Queue-specific card size here (unlike the ≤380px tier
+       above): the dvw-based clamp() on #queue .card/.queue-slot
+       already shrinks with the viewport, and leaving it alone here
+       keeps the Queue card the same size as the Player Hand card
+       (#playerHand .card-back), which also has no override at this
+       tier. A separate, smaller override used to live here and made
+       Queue cards visibly smaller than Hand cards on 320px-class
+       phones. */
 }
 
 /* ==========================================================

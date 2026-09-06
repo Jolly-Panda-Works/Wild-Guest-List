@@ -1345,7 +1345,22 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.33.1
+**Current version:** 1.36.1
+
+**Style — Queue slots matched to Player Hand card size on mobile (1.36.1):**
+On the ≤600px Mobile Portrait layout, `.queue-slot`/`#queue .card` had
+its own, separately-tuned size that drifted from `#playerHand .card`
+(and `.card-back`) at several breakpoints — most noticeably the main
+≤600px tier and the ≤380px-wide touch-portrait tier, where Queue cards
+rendered visibly smaller than Hand cards. A third, 320px-class tier
+(`@media (pointer: coarse) and (orientation: portrait) and
+(max-width: 340px)`) shrank the Queue further still with no matching
+Hand override at all. All of these now use the exact same
+`clamp()` width/height as the Player Hand card at their tier — the
+340px tier's Queue-only override was removed entirely so it falls
+back to the shared ≤380px value both elements already use, keeping
+Queue and Hand one consistent card size across every mobile size
+tested. CSS-only change (`css/style.css`); no JS or markup touched.
 
 **Style — Party/Trash grouped into one row above the Queue (1.33.1):**
 Per the gameplay screen's exact layout spec, Party and Trash are now
