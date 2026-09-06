@@ -1698,17 +1698,17 @@ body {
 
     display:flex;
 
+    flex-direction: column;
+
     justify-content:center;
 
     align-items:center;
 
-    gap: clamp(8px, 2vw, 25px);
+    gap: 8px;
 
     margin-top:8px;
 
     flex-shrink: 0;
-
-    flex-wrap: wrap;
 
 }
 
@@ -1749,33 +1749,38 @@ body {
    Deck Stack
 ========================= */
 
-
+/* #deckStack is now the ROW holding Player Hand next to the player's
+   own deck-back — matching how each opponent shows their hand-count +
+   deck together (renderOtherPlayers() in js/ui/game-ui.js). The
+   avatar+name tag (.player-deck-info) that used to live inside this
+   stack now sits above it instead, as #handArea's own header row — see
+   the layout brief: Hand + Deck side by side under one player-identity
+   line, not the deck carrying its own separate avatar/name anymore. */
 #deckStack {
-
 
     display:flex;
 
-    flex-direction: column;
+    flex-direction: row;
 
     justify-content:center;
 
     align-items:center;
 
-    gap: 6px;
+    gap: clamp(8px, 2vw, 25px);
 
 
 }
 
-/* Name + avatar tag above the player's own deck, matching how each
-   opponent shows their avatar and name next to their hand
+/* Name + avatar tag above the player's own hand+deck row, matching how
+   each opponent shows their avatar and name next to their hand
    (.other-avatar / .player-label in the OTHER PLAYER ROW rules
-   above) — this is the human seat's equivalent, sitting by their own
-   deck instead since their hand is laid out full-width. */
+   above) — this is the human seat's equivalent. */
 .player-deck-info {
     display: flex;
     align-items: center;
+    align-self: flex-start;
     gap: 6px;
-    max-width: clamp(90px, 10vw, 130px);
+    max-width: none;
 }
 
 .player-deck-avatar-wrap {
@@ -1801,6 +1806,7 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: clamp(120px, 40vw, 220px);
 }
 
 @media (max-width: 600px) {
@@ -4156,13 +4162,23 @@ body.gameplay-locked #playerHand .card {
         background: var(--bg-main);
         border-top: 1px solid var(--border);
         padding: 8px 12px 16px !important;
-        display: flex; justify-content: center;
-        align-items: center; gap: clamp(6px, 2vw, 14px);
+        display: flex; flex-direction: column;
+        align-items: center; gap: 6px;
         box-sizing: border-box;
     }
 
+    .player-deck-info { align-self: flex-start; }
+
+    #deckStack {
+        width: 100%;
+        flex-wrap: nowrap;
+        gap: clamp(6px, 2vw, 14px);
+    }
+
     #playerHand {
-        display: flex; justify-content: center;
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex; justify-content: flex-start;
         gap: clamp(4px, 1.5vw, 8px);
         flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
     }
@@ -4174,7 +4190,7 @@ body.gameplay-locked #playerHand .card {
         height: clamp(70px, 18vw, 98px);
     }
 
-    #deckStack { flex-shrink: 0; }
+    #deckStack .deck-back { flex-shrink: 0; }
     .deck-back {
         width:  clamp(50px, 13vw, 70px);
         height: clamp(70px, 18vw, 98px);
@@ -8294,12 +8310,38 @@ body.gameplay-locked #playerHand .card {
         background: transparent;
         padding: 6px 8px !important;
         display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
+        flex-direction: column;
         align-items: center;
-        gap: clamp(4px, 2vw, 10px);
+        gap: 6px;
         box-sizing: border-box;
     }
+
+    /* Player-identity line (avatar + name) above the Hand + Deck row —
+       left-aligned per the layout brief, same as an opponent's name
+       sitting beside their own hand summary. */
+    .player-deck-info { align-self: flex-start; padding: 0 4px; }
+
+    /* Hand + Deck stay on ONE row, side by side (never wrapping onto
+       separate lines) — #playerHand scrolls horizontally instead of
+       wrapping if the hand ever has more cards than fit, so the deck
+       always stays visible next to it rather than dropping to its own
+       line. */
+    #deckStack {
+        width: 100%;
+        flex-wrap: nowrap;
+        gap: clamp(4px, 2vw, 10px);
+    }
+
+    #playerHand {
+        flex: 1 1 auto;
+        min-width: 0;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        justify-content: flex-start;
+    }
+
+    #playerHand::-webkit-scrollbar { display: none; }
 
     /* Player Hand cards still the largest on the board — same
        priority as landscape, sized off width instead of height. */
@@ -8308,7 +8350,7 @@ body.gameplay-locked #playerHand .card {
         height: clamp(64px, 18dvw, 124px) !important;
     }
 
-    #deckStack { transform: scale(0.9); transform-origin: center; }
+    #deckStack .deck-back { flex-shrink: 0; transform: scale(0.9); transform-origin: center; }
 
     /* ── PROFILE / SETTINGS / CARD GUIDE (small-popup panels) ── */
     .small-popup { padding: 14px 18px; }

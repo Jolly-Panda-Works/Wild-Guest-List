@@ -7,3 +7,13 @@
   avatar + name + a single deck-back count (deck + hand combined).
 - Party/Trash buttons above the Queue restyled to match the
   Standings/Log/Chat rail buttons (bordered, icon + label in a row).
+
+1.35.0
+- Player's own Hand + Deck now sit side by side in one row (Deck to
+  the right, never wrapping onto its own line), with the player's
+  avatar + name shown as a single header line above that row —
+  matching the "avatar/name on top, hand cards + deck in a row
+  below" reference layout.
+- .player-deck-info (avatar + name) moved out of #deckStack and into
+  its own row inside #handArea; #deckStack is now the Hand+Deck row
+  itself.
