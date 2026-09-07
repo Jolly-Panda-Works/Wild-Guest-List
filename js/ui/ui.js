@@ -27,8 +27,6 @@ from "./icon-ui.js"
 
 import { initSoundToggle } from "../services/soundManager.js"
 
-import { initStepGuidanceToggle } from "./cardGuidance-ui.js"
-
 import { initCardColorPicker } from "./cardColor-ui.js"
 
 import {
@@ -48,7 +46,6 @@ export async function initializeUI(){
     initializeModals();
     initializePause();
     initSoundToggle();
-    initStepGuidanceToggle();
     await initCardColorPicker();
 
     // Re-render everything when language changes

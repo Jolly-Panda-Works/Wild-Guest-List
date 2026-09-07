@@ -69,3 +69,33 @@
   .screen-overlay page's layout are unchanged; this only strengthens
   the shared mobile scroll-container rule already in place, matching
   the same safe-area pattern used by the .modal popup fix (1.36.2).
+
+1.36.7
+- Removed the "Step-by-step Guidance" toggle from Settings (Home's
+  Settings page, index.html's popup, and game.html's in-game Pause →
+  Settings modal): the settings-row/label/#stepGuidanceToggle checkbox
+  markup, its settingsStepGuidance i18n key (en/fa/ar/tr), the
+  initStepGuidanceToggle() wiring function in
+  js/ui/cardGuidance-ui.js, its 4 call sites/imports
+  (js/home-main.js, js/ui/ui.js, js/game-main.js,
+  js/settings-main.js), and its dead
+  #stepGuidanceToggle:focus-visible CSS rule are all gone.
+- The independent, pre-game "Show step-by-step help?" prompt
+  (guidancePromptModal, asked once per new game before it starts —
+  game-modes.html/bot-difficulty.html, js/game-modes-main.js,
+  js/bot-difficulty-main.js, js/ui/playVsBot-ui.js) is untouched and
+  is now the sole opt-in surface for this feature. It reads/writes
+  the exact same wgl_stepGuidance/wgl_hideGuidancePrompt localStorage
+  keys the old Settings toggle used
+  (isStepGuidanceEnabled/setStepGuidanceEnabled,
+  isGuidancePromptHidden/setGuidancePromptHidden — all kept, still
+  exported from js/ui/cardGuidance-ui.js), so an existing player's
+  saved preference keeps working with no migration and no data loss;
+  it simply can no longer be changed mid-game from Settings.
+- The contextual per-card guidance popups themselves
+  (shouldShowGuidance/buildGuidancePayload/showCardGuidance,
+  js/game/turnManager.js's integration, the STEP_BY_STEP freeze
+  reason in js/game/turnTimer.js, and the unrelated in-game
+  Walkthrough) are unchanged — only the Settings entry point to this
+  shared setting was removed, not the setting or the feature behind
+  it.

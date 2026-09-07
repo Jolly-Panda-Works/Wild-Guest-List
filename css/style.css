@@ -3716,8 +3716,7 @@ body.gameplay-locked #playerHand .card {
     [dir="rtl"] .guide-diagram-arrow { transform: rotate(90deg) scaleX(-1); }
 }
 
-.guide-continue-btn:focus-visible,
-#stepGuidanceToggle:focus-visible + .switch-track {
+.guide-continue-btn:focus-visible {
     outline: 2px solid var(--accent, #22c55e);
     outline-offset: 2px;
 }

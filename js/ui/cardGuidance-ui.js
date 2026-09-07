@@ -15,11 +15,10 @@
  * Gating (see shouldShowGuidance):
  *   - never while the in-game Walkthrough is actively running (it has its
  *     own steps for this) — this layer picks up once that's done/skipped
- *   - shown only if the player opted in — either at the "show step-by-step
- *     help?" prompt asked before every new game starts (main.js, right
- *     before startGame()), or by turning "Step-by-step Guidance" on in
- *     Settings mid-game. Both write the same localStorage setting, so
- *     they always agree.
+ *   - shown only if the player opted in at the "show step-by-step help?"
+ *     prompt asked before every new game starts (main.js, right before
+ *     startGame()) — the sole opt-in surface now that the old mid-game
+ *     Settings toggle has been removed (see 1.36.x history)
  *   - only once per ability, ever — tracked in localStorage so it's
  *     never "excessive", per ability, across games and sessions
  */
@@ -53,37 +52,15 @@ export function setStepGuidanceEnabled(enabled) {
     // Turning the setting ON — whether from off, or for the very first
     // time — should reliably start showing per-card guidance again from
     // here on, even for abilities already marked "explained" in an
-    // earlier session/game. Otherwise a player who re-enables this
-    // mid-game (or after having played with it on before) can end up
-    // seeing nothing at all, silently suppressed by old dismissal
+    // earlier session/game. Otherwise a player who re-enables this at
+    // the pre-game prompt (after having played with it on before) can
+    // end up seeing nothing at all, silently suppressed by old dismissal
     // history that has nothing to do with their current request.
     // Re-saving an already-matching value (off->off, on->on) never
     // touches that history, so this can't turn into a reset loop.
     if (enabled && !wasEnabled) {
         resetExplainedAbilities();
     }
-}
-
-/** Wires the Settings toggle. Safe to call more than once (e.g. once at
- *  boot so a pre-game toggle in the splash Settings modal isn't silently
- *  ignored, and again from initializeUI() once the game has started) —
- *  the checked state is always re-synced, but the change listener is
- *  only ever attached a single time. */
-export function initStepGuidanceToggle() {
-    const toggle = document.getElementById("stepGuidanceToggle");
-    if (!toggle) return;
-
-    toggle.checked = isStepGuidanceEnabled();
-
-    if (toggle._stepGuidanceWired) return;
-    toggle._stepGuidanceWired = true;
-
-    toggle.addEventListener("change", () => {
-        // Persisted immediately — the very next card played reads this
-        // fresh (see shouldShowGuidance), so the setting takes effect
-        // right away, not just on the next game.
-        setStepGuidanceEnabled(toggle.checked);
-    });
 }
 
 /* ─────────────────────────────────────────

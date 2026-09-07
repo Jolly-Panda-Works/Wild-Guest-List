@@ -1345,7 +1345,48 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.36.6
+**Current version:** 1.36.7
+
+**Cleanup — "Step-by-step Guidance" toggle removed from Settings (1.36.7):**
+Settings had two independent ways to opt into the contextual per-card
+guidance popups (`js/ui/cardGuidance-ui.js`): a "Step-by-step Guidance"
+toggle in every Settings surface (Home's Settings page, its popup on
+`index.html`, and `game.html`'s in-game Pause → Settings modal), and a
+"Show step-by-step help?" prompt asked once before every new game
+starts (`guidancePromptModal` on `game-modes.html`/
+`bot-difficulty.html`). Both read and wrote the exact same
+`wgl_stepGuidance` localStorage flag via
+`isStepGuidanceEnabled()`/`setStepGuidanceEnabled()`, so they always
+agreed with each other.
+
+Only the Settings toggle is removed here — the pre-game prompt is a
+similar-looking but genuinely independent surface for the same
+underlying setting, and per this cleanup's own scope stays exactly as
+it was. Removed: the `settings-row`/label/`#stepGuidanceToggle`
+checkbox markup from all three Settings surfaces, the
+`settingsStepGuidance` i18n key (en/fa/ar/tr), the
+`initStepGuidanceToggle()` wiring function and its now-dead
+`#stepGuidanceToggle:focus-visible` CSS rule, and its 4 call
+sites/imports (`js/home-main.js`, `js/ui/ui.js`, `js/game-main.js`,
+`js/settings-main.js`). Left alone, because they're the independent
+prompt flow or the shared setting itself, not the Settings option:
+`guidancePromptModal`/`guidanceRestartModal` and their i18n strings,
+`isStepGuidanceEnabled`/`setStepGuidanceEnabled`/
+`isGuidancePromptHidden`/`setGuidancePromptHidden` (still exported
+from `js/ui/cardGuidance-ui.js` and used by
+`js/game-modes-main.js`/`js/bot-difficulty-main.js`/
+`js/ui/playVsBot-ui.js`), and the contextual guidance popups
+themselves (`shouldShowGuidance`/`buildGuidancePayload`/
+`showCardGuidance`, wired into `js/game/turnManager.js`).
+
+Since the underlying `wgl_stepGuidance`/`wgl_hideGuidancePrompt`
+localStorage keys and their reader/writer functions are all still
+live (used by the surviving prompt flow), there's no migration
+concern at all: an existing player's saved preference keeps applying
+exactly as before. The only real-world change is that a player who'd
+previously dismissed the pre-game prompt with "don't show again" now
+has no remaining UI to change that preference — Settings no longer
+offers it, by design, per this cleanup's scope.
 
 **Fix — Cards/Animal Ability page safe-area-aware on Mobile (1.36.6):**
 The Cards page (`cards.html` — Home's Card Guide destination, a

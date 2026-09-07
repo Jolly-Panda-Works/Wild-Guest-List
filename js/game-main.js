@@ -29,7 +29,6 @@ import { initializeTutorial } from "./ui/tutorial-ui.js";
 import { startWalkthrough, shouldShowWalkthrough } from "./ui/walkthrough.js";
 import { maybeShowCardHelpHint } from "./ui/cardHelpHint.js";
 import { initCardColorPicker } from "./ui/cardColor-ui.js";
-import { initStepGuidanceToggle } from "./ui/cardGuidance-ui.js";
 import { getProfile } from "./services/profile.js";
 import { notifyGameStarted } from "./services/achievements.js";
 import { initAchievementNotifications } from "./ui/achievementNotification-ui.js";
@@ -71,7 +70,6 @@ await loadI18n();
 buildLangSelector(document.getElementById("langSelector"));
 
 await initCardColorPicker();
-initStepGuidanceToggle();
 
 // Card Guide / Tutorial are reachable from the in-game top bar too.
 await initializeTutorial();
