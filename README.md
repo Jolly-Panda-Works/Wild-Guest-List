@@ -1345,7 +1345,40 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.36.7
+**Current version:** 1.36.8
+
+**Fix — Player avatars no longer shown inside a circular frame (1.36.8):**
+Three of the game's avatar render surfaces still cropped the player's
+avatar illustration into a circle (`border-radius: 50%` +
+`overflow: hidden` + `object-fit: cover`): the human player's own
+name+avatar tag above their hand in-game
+(`.player-deck-avatar-wrap`/`.player-deck-avatar-img`), the
+avatar-picker popover's choice buttons (`.avatar-choice`/
+`.avatar-choice img`, used on Choose Bot Difficulty/Play vs Bot/Game
+Modes), and Home's compact profile chip (`.home-profile-chip-avatar`).
+Three siblings had already been fixed to show the full, uncropped
+illustration instead — `.player-avatar-display` (Choose Bot
+Difficulty's read-only avatar), `.avatar-trigger-btn` (the same
+picker's trigger button), and `.profile-avatar-choice` (the Profile
+modal's avatar grid, whose own CSS comment already says it "matches
+`.player-avatar-display`'s untouched, uncropped look") — this finishes
+that same fix everywhere else it hadn't landed yet.
+
+All three now use `object-fit: contain` instead of `cover`, so the
+avatar's full illustration shows with its real aspect ratio, no
+cropping or distortion, and `border-radius: 0`, so no circular mask
+remains. `.player-deck-avatar-wrap` keeps its colored player-identity
+border — a separate, meaningful piece of UI (which player this is),
+not the circular framing itself — just reshaped from a circle to a
+small rounded rectangle (6px corners); `.avatar-choice` keeps its
+border/active-state ring the same way. Bot avatars
+(`.other-avatar`, an icon glyph, not an image) and the About Developer
+panel's photo (`.about-avatar` — the app's creator, not a player)
+were already circle-free and untouched. Fixed once, in the single
+shared `css/style.css` (no per-page CSS or markup changes, since
+there's no separate Avatar component to change — every render site
+already reads through this one stylesheet), so every avatar surface
+in the game is now consistent on both Mobile and Desktop.
 
 **Cleanup — "Step-by-step Guidance" toggle removed from Settings (1.36.7):**
 Settings had two independent ways to opt into the contextual per-card

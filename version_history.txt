@@ -99,3 +99,32 @@
   Walkthrough) are unchanged — only the Settings entry point to this
   shared setting was removed, not the setting or the feature behind
   it.
+
+1.36.8
+- Player avatars are no longer shown inside a circular frame anywhere
+  in the game. Three remaining spots still had border-radius:50% +
+  overflow:hidden + object-fit:cover, cropping the avatar image into
+  a circle: the human player's own name+avatar tag above their hand
+  in-game (.player-deck-avatar-wrap/.player-deck-avatar-img), the
+  avatar-picker popover's choice buttons
+  (.avatar-choice/.avatar-choice img — Choose Bot Difficulty/Play vs
+  Bot/Game Modes screens), and Home's compact profile chip
+  (.home-profile-chip-avatar).
+- All three now render the full, uncropped avatar illustration
+  (object-fit switched from cover to contain, no distortion, aspect
+  ratio preserved) with no circular mask. .player-deck-avatar-wrap
+  keeps its colored player-identity border — a genuinely meaningful,
+  separate piece of UI, not the circular framing itself — just as a
+  small rounded rectangle (6px corners) instead of a circle.
+  .avatar-choice keeps its border/active-state ring the same way.
+- This now matches the three avatar surfaces that already had no
+  circular framing (.player-avatar-display, .avatar-trigger-btn,
+  .profile-avatar-choice — Choose Bot Difficulty's read-only
+  display, its editable trigger button, and the Profile modal's
+  avatar grid), so every avatar render site in the game — Mobile and
+  Desktop, Home, Profile, Game Modes, Choose Bot Difficulty, and
+  in-game — is consistent. Fixed once in the single shared
+  css/style.css (no per-page markup changes needed, no exceptions).
+- Bot avatars (.other-avatar, an icon glyph, not an image) and the
+  About Developer panel's photo (.about-avatar — not a player avatar)
+  were already circle-free and are untouched.

@@ -1817,8 +1817,7 @@ body {
 .player-deck-avatar-wrap {
     width: 26px;
     height: 26px;
-    border-radius: 50%;
-    overflow: hidden;
+    border-radius: 6px;
     flex-shrink: 0;
     border: 2px solid var(--p1, #4ade80);
 }
@@ -1826,7 +1825,7 @@ body {
 .player-deck-avatar-img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     display: block;
 }
 
@@ -4542,18 +4541,18 @@ body.gameplay-locked #playerHand .card {
     width: 54px;
     height: 54px;
     padding: 0;
-    border-radius: 50%;
+    border-radius: 0;
     border: 2px solid rgba(255,255,255,0.15);
     background: transparent;
     cursor: pointer;
-    overflow: hidden;
+    overflow: visible;
     transition: transform 0.15s ease, border-color 0.15s ease;
 }
 
 .avatar-choice img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     display: block;
 }
 
@@ -7350,8 +7349,8 @@ body.gameplay-locked #playerHand .card {
 .home-profile-chip-avatar {
     width: 28px;
     height: 28px;
-    border-radius: 50%;
-    object-fit: cover;
+    border-radius: 0;
+    object-fit: contain;
     background: rgba(255, 255, 255, 0.1);
     flex-shrink: 0;
 }
