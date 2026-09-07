@@ -6,17 +6,18 @@ export function initMobileUI() {
 
     initInfoPopups();
 
-    // Historical top-bar Log button (#logBtn) was removed from the
-    // Game Header — this lookup is kept as a harmless no-op in case a
-    // future header layout reintroduces it (see js/ui/modal-ui.js's
-    // "no-op on a page missing a given element" convention).
+    // Desktop Header's Log button (#topRight, next to Pause) — Log no
+    // longer sits as a permanent #leftSidebar panel, it opens the same
+    // #logModal popup Mobile already uses. (This lookup was a no-op
+    // for a while after #logBtn was first removed from the header in
+    // 1.30.7 — it's a real entry point again now.)
     document.getElementById("logBtn")?.addEventListener("click", () => {
         openModal("logModal");
     });
 
-    // Mobile rail Log entry — same logModal the top-bar Log
-    // button used to open. Now the entry point for Log on Mobile
-    // Portrait (see css/style.css's `#mobileSideRail`).
+    // Mobile rail Log entry — same logModal the desktop header's Log
+    // button opens. The entry point for Log on Mobile Portrait (see
+    // css/style.css's `#mobileSideRail`).
     document.getElementById("railLogBtn")?.addEventListener("click", () => {
         openModal("logModal");
     });

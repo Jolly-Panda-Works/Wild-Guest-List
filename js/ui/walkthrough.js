@@ -147,8 +147,13 @@ function getSteps() {
             // while closed. Target the always-visible button instead,
             // same reasoning as step 5 targeting mobileTabs rather than
             // the also-hidden partyCards/trashCards.
+            // Desktop's fallback used to be the permanent #logEntries
+            // sidebar panel; Log is now reached via the #logBtn header
+            // button next to Pause instead (see game.html's #topRight
+            // and #logModal), which fits this step's "Leaderboard &
+            // Log" copy just as well.
             targetId:   mobile ? "leaderboardBtn" : "leaderboardRows",
-            fallbackId: mobile ? null : "logEntries",
+            fallbackId: mobile ? null : "logBtn",
             titleKey: "wt6Title", textKey: "wt6Text",
             arrowDir: mobile ? "up" : "left",
             boxPos:   mobile ? "below" : "right",

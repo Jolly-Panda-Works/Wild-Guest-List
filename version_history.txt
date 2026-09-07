@@ -197,3 +197,28 @@
   disrupt the name's existing long-name truncation
   (.player-deck-name's max-width/ellipsis) or the avatar/name layout
   around it.
+
+1.36.12
+- Desktop Chat/Log layout reworked: Log's permanent #leftSidebar panel
+  (#gameLog/#logEntries) was removed and replaced with a #logBtn
+  button in the Header's #topRight, right next to Pause — same
+  .top-btn markup/styling/tooltip pattern as Pause/Help/Tutorial.
+- Clicking #logBtn opens #logModal, the same popup Mobile Portrait's
+  #railLogBtn already used, via the project's shared openModal()/
+  closeModal() (js/ui/modal-ui.js), so Desktop gets identical
+  centered/backdrop/focus-trap/Escape-to-close popup behavior to every
+  other popup instead of a bespoke one.
+- #chatPanel now fills the freed-up space (flex: 1 instead of a fixed
+  140px), with its Coming Soon placeholder centered in the larger
+  area.
+- No Log state or gameplay logging logic changed — gameState.logs and
+  everything that appends to it are untouched; renderLog()
+  (js/ui/log-ui.js) still writes the same markup into
+  #mobileLogContent (shared by both entry points), it just no longer
+  also mirrors it into the removed #logEntries element.
+- Walkthrough tutorial's Desktop "Leaderboard & Log" step (step 6,
+  js/ui/walkthrough.js) had its fallback target updated from the
+  removed #logEntries to #logBtn.
+- Mobile Portrait is unaffected: #leftSidebar (including the old
+  #gameLog markup) was already display: none there, and #railLogBtn
+  opens the same #logModal it always did.

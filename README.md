@@ -1345,7 +1345,34 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.36.11
+**Current version:** 1.36.12
+
+**Refactor — Desktop Chat/Log layout: Log moved from a permanent sidebar panel into a Header popup (1.36.12):**
+On Desktop, `#leftSidebar` used to give Log its own permanent panel
+(`#gameLog`/`#logEntries`) squeezed between Match Standings and Chat,
+leaving Chat a fixed, cramped `height: 140px`. Log now opens from a
+new `#logBtn` button in the Header's `#topRight`, right next to
+Pause — same `.top-btn` markup, styling, and tooltip pattern
+(`data-title-key`) as Pause/Help/Tutorial, so it reflows and scales
+identically at every breakpoint. Clicking it opens `#logModal`, the
+same popup Mobile Portrait's `#railLogBtn` already used, via the
+project's shared `openModal()`/`closeModal()` (`js/ui/modal-ui.js`) —
+so Desktop gets the exact same centered, backdrop, focus-trap, and
+Escape-to-close behavior every other popup (Settings, Help, etc.)
+already has, with no bespoke popup built for it. `#chatPanel` now
+takes the freed-up vertical space (`flex: 1` instead of a fixed
+140px), with its "Coming Soon" placeholder centered in the larger
+area. No Log state or gameplay logging logic changed — `gameState.logs`
+and everything that appends to it are untouched; `js/ui/log-ui.js`'s
+`renderLog()` still builds identical markup and still writes it into
+`#mobileLogContent` (shared by both entry points), it just no longer
+also mirrors it into the now-removed `#logEntries` element. The
+Walkthrough tutorial's Desktop "Leaderboard & Log" step (step 6,
+`js/ui/walkthrough.js`) had its fallback target updated from the
+removed `#logEntries` to `#logBtn` for the same reason. Mobile
+Portrait is untouched — `#leftSidebar` (including the old `#gameLog`
+markup) was already `display: none` there, and `#railLogBtn` opens
+the identical `#logModal` it always did.
 
 **Fix — Other Players stacked vertically instead of one row on Desktop (1.36.11):**
 `#otherPlayers` (the compact opponent summary row above Party/Trash and

@@ -40,11 +40,16 @@
                     <div id="leaderboardRows"></div>
                 </div>
 
-                <div id="gameLog">
-                    <h3><span data-icon="gameLog"></span> <span data-i18n="gameLog">Game Log</span></h3>
-                    <div id="logEntries"></div>
-                </div>
-
+                <!-- Game Log used to live here as its own permanent
+                     sidebar panel (#gameLog/#logEntries). It's now
+                     reached via the #logBtn header button next to
+                     Pause (see #topRight below), which opens the same
+                     #logModal popup Mobile already used — freeing this
+                     space up for Chat. Log's state/rendering
+                     (js/ui/log-ui.js's renderLog()) is unchanged; it
+                     still writes into #mobileLogContent (shared by
+                     both entry points), it just no longer also writes
+                     into a desktop-only #logEntries element. -->
                 <div id="chatPanel">
                     <h3><span data-icon="chat"></span> <span data-i18n="chat">Chat</span></h3>
                     <div class="comingSoon" data-i18n="comingSoon">Coming Soon</div>
@@ -80,6 +85,9 @@
                         <div id="topRight">
                             <button id="pauseBtn" class="top-btn" data-title="Pause" data-title-key="btnPause">
                                 <span data-icon="pause"></span>
+                            </button>
+                            <button id="logBtn" class="top-btn" data-title="Log" data-title-key="btnLog">
+                                <span data-icon="gameLog"></span>
                             </button>
                             <button id="helpBtn" class="top-btn" data-title="Help" data-title-key="btnHelp">
                                 <span data-icon="help"></span>
@@ -252,7 +260,14 @@
             </div>
         </div>
 
-        <!-- Log (mobile) -->
+        <!-- Log — shared popup for the Log entry point in both places:
+             the desktop Header's #logBtn (next to Pause, see #topRight
+             above) and Mobile Portrait's #mobileSideRail #railLogBtn.
+             Renders via the same centered .modal/.modal-content shell
+             as every other popup in the project (js/ui/modal-ui.js's
+             openModal/closeModal), so desktop gets identical spacing/
+             backdrop/focus-trap/Escape behavior to Settings, Help,
+             etc. — no separate desktop-only popup was built. -->
         <div id="logModal" class="modal hidden">
             <div class="modal-content mobile-panel-content">
                 <div class="panel-header">
