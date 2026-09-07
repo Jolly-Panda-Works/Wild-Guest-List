@@ -1345,7 +1345,30 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.36.9
+**Current version:** 1.36.10
+
+**Fix — Queue Slot too small vs. Player Hand card on Mobile (1.36.10):**
+On real touch+portrait phones (`@media (pointer: coarse) and
+(orientation: portrait)` — the actual Mobile gameplay layer, since
+Mobile landscape is gated behind the "please rotate" screen; see
+`js/ui/orientation-ui.js`), the Queue slot sizing rule
+(`#queue .card, .queue-slot`) was correctly matched to the Player
+Hand's card size, but the *Hand* side of that pairing
+(`#playerHand .card-back, .card-back`) targeted a class
+(`.card-back`) that nothing in the current DOM actually carries —
+`createCard()` (`js/ui/game-ui.js`) puts a plain `.card` class on
+every real Hand/Queue/Party/Trash card. With no matching selector,
+real Hand cards silently fell through to the larger desktop-tier
+`#playerHand .card` rule while the Queue slot rule *did* apply,
+leaving the Queue visibly smaller than the Hand on phones. Fixed by
+targeting `#playerHand .card` (keeping `.card-back` alongside for any
+future face-down element) at both the base Mobile Portrait tier and
+its ≤380px narrow-phone tier, so Queue and Hand share the exact same
+`clamp()` width/height (and therefore aspect ratio) at every mobile
+size — same fix pattern the ≤600px and ≤380px non-portrait tiers
+already had correct. Desktop and Tablet sizing are unchanged; the
+Queue's existing wrap/scroll behavior and drag-and-drop, Ability
+Preview overlay, and drag-ghost sizing were untouched.
 
 **Fix — Player's own rank badge missing next to their in-game name (1.36.9):**
 Opponents' compact name tags (`renderOtherPlayers()`, `js/ui/game-ui.js`)

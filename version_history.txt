@@ -129,6 +129,27 @@
   About Developer panel's photo (.about-avatar — not a player avatar)
   were already circle-free and are untouched.
 
+1.36.10
+- On real touch+portrait phones (the actual Mobile gameplay layer —
+  Mobile landscape is gated behind the "please rotate" screen), Queue
+  slots rendered visibly smaller than Player Hand cards.
+- Root cause: the Mobile Portrait tier's Hand-card sizing rule
+  (`#playerHand .card-back, .card-back` in css/style.css) targeted a
+  class no real card element carries — createCard() (js/ui/game-ui.js)
+  puts a plain `.card` class on every Hand/Queue/Party/Trash card.
+  With no matching selector, real Hand cards fell through to the
+  larger desktop-tier `#playerHand .card` rule while the sibling Queue
+  slot rule (`#queue .card, .queue-slot`) correctly applied its
+  smaller mobile size, so the two drifted apart.
+- Fixed by re-targeting `#playerHand .card` (keeping `.card-back`
+  alongside for any future face-down element) at both the base Mobile
+  Portrait tier and its ≤380px narrow-phone tier, so Queue and Hand
+  share the exact same clamp() width/height — and therefore the same
+  aspect ratio — at every mobile size.
+- No change to Desktop/Tablet sizing, the Queue's existing wrap/
+  scroll behavior, drag-and-drop, the Ability Preview overlay, or the
+  drag-ghost card size.
+
 1.36.9
 - The human player's own name tag (next to their hand/deck, in-game)
   was missing the live rank/medal badge that opponents' name tags

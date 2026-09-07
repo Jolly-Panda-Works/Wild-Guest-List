@@ -8275,7 +8275,7 @@ body.gameplay-locked #playerHand .card {
         justify-content: center;
     }
 
-    /* Same size as the Player Hand's own cards (#playerHand .card-back
+    /* Same size as the Player Hand's own cards (#playerHand .card
        below) — one consistent card size on screen, per the layout
        brief, instead of a separately-tuned smaller Queue size. */
     #queue .card, .queue-slot {
@@ -8364,8 +8364,18 @@ body.gameplay-locked #playerHand .card {
     #playerHand::-webkit-scrollbar { display: none; }
 
     /* Player Hand cards still the largest on the board — same
-       priority as landscape, sized off width instead of height. */
-    #playerHand .card-back, .card-back {
+       priority as landscape, sized off width instead of height.
+       Targets `.card` (the real class createCard() puts on every
+       face-up Hand/Queue/Party/Trash card — see js/ui/game-ui.js)
+       instead of `.card-back`, which nothing in the current DOM
+       actually carries; the old selector matched no live element,
+       so real Hand cards were silently falling through to the
+       larger desktop-tier `#playerHand .card` rule above while the
+       Queue slot rule just below WAS applying, leaving Queue
+       visibly smaller than the Hand on real touch+portrait phones.
+       `.card-back` is kept alongside for any future/legacy face-down
+       element that reintroduces that class. */
+    #playerHand .card, .card-back {
         width: clamp(46px, 13dvw, 88px) !important;
         height: clamp(64px, 18dvw, 124px) !important;
     }
@@ -8390,16 +8400,19 @@ body.gameplay-locked #playerHand .card {
         height: clamp(26px, 7vw, 32px) !important;
     }
 
-    /* Same size as the Player Hand's own cards (#playerHand
-       .card-back below) — was a smaller, separately-tuned Queue
-       size at this tier; now matched so Queue and Hand cards read
-       as one consistent size on screen. */
+    /* Same size as the Player Hand's own cards (#playerHand .card
+       below) — was a smaller, separately-tuned Queue size at this
+       tier; now matched so Queue and Hand cards read as one
+       consistent size on screen. */
     #queue .card, .queue-slot {
         width: clamp(40px, 12dvw, 76px);
         height: clamp(56px, 16.5dvw, 108px);
     }
 
-    #playerHand .card-back, .card-back {
+    /* Same fix as the base Mobile Portrait tier above: target the
+       real `.card` class so this narrow-phone override actually
+       reaches Hand cards instead of silently matching nothing. */
+    #playerHand .card, .card-back {
         width: clamp(40px, 12dvw, 76px) !important;
         height: clamp(56px, 16.5dvw, 108px) !important;
     }
@@ -8418,7 +8431,7 @@ body.gameplay-locked #playerHand .card {
        above): the dvw-based clamp() on #queue .card/.queue-slot
        already shrinks with the viewport, and leaving it alone here
        keeps the Queue card the same size as the Player Hand card
-       (#playerHand .card-back), which also has no override at this
+       (#playerHand .card), which also has no override at this
        tier. A separate, smaller override used to live here and made
        Queue cards visibly smaller than Hand cards on 320px-class
        phones. */
