@@ -1345,7 +1345,31 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.36.10
+**Current version:** 1.36.11
+
+**Fix — Other Players stacked vertically instead of one row on Desktop (1.36.11):**
+`#otherPlayers` (the compact opponent summary row above Party/Trash and
+the Queue) had no `display` set outside its two Mobile-only overrides
+(plain ≤600px, and the touch+portrait gameplay layer), so on Desktop it
+fell back to `display: block` — `#topPlayer`/`#leftPlayer`/`#rightPlayer`
+(three plain divs, one per opponent) simply stacked one above another
+instead of appearing side by side. Added a new
+`@media (min-width: 601px) and (pointer: fine)` rule — scoped to the
+same fine/coarse-pointer split the Orientation Gate already uses
+(`js/ui/orientation-ui.js`) to define "real Desktop", so it can never
+interact with the touch+portrait Mobile layer's own wrapping-chips
+treatment — making `#otherPlayers` a `flex-direction: row` with the
+three columns sharing width evenly (`flex: 1 1 0`). Each opponent's
+avatar, rank badge, name, and card count are all preserved; if a
+column gets tight the **name** truncates first via ellipsis (same
+priority already used for the human player's own deck name), while the
+avatar and the card-count badge keep their own (slightly smaller,
+since three now share the room one previously had alone) fixed sizes.
+Verified the row fits without overflow at 1024px and every common
+desktop/laptop width above it (1280, 1366, 1440, 1600, 1920, 2560).
+Mobile (≤600px stacked, and the touch+portrait wrapping-chip layout)
+is untouched — the new rule is gated on `(pointer: fine)`, which no
+touch device ever matches.
 
 **Fix — Queue Slot too small vs. Player Hand card on Mobile (1.36.10):**
 On real touch+portrait phones (`@media (pointer: coarse) and

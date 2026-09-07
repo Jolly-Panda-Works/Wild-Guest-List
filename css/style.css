@@ -5163,6 +5163,99 @@ body.gameplay-locked #playerHand .card {
     .other-player-left { min-width: 50px; gap: 3px; }
 }
 
+/* ── Desktop: Other Players side by side in one row ──────────
+   #otherPlayers previously had no `display` set outside the two
+   Mobile-only overrides above/below (plain ≤600px, and the touch+
+   portrait gameplay layer further down) — its base rule (see the
+   OTHER PLAYER HANDS section near the top of this file) only set
+   flex-direction/align-items/gap with no actual `display: flex`, so
+   on Desktop it rendered as `display: block` and #topPlayer/
+   #leftPlayer/#rightPlayer (three plain divs) simply stacked one
+   above another instead of appearing beside each other.
+
+   Scoped to `(pointer: fine)` — the same fine/coarse-pointer split
+   the Orientation Gate itself uses (js/ui/orientation-ui.js) to
+   define "real Desktop" vs. a touch device — so this can never
+   combine with the touch+portrait Mobile layer's own row-of-
+   wrapping-chips treatment, whose children need to stay sized to
+   their own content (`width: auto`) rather than stretched into equal
+   columns. `min-width: 601px` matches the existing Tablet/Mobile
+   boundary used throughout this file, so a resized *desktop* browser
+   window down at Tablet width still gets one row (not the ≤600px
+   stacked Mobile treatment, which stays untouched either way since
+   it isn't gated on pointer type at all). */
+@media (min-width: 601px) and (pointer: fine) {
+    #otherPlayers {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        justify-content: center;
+        gap: clamp(8px, 1.6vw, 24px);
+    }
+
+    /* Equal-width columns that CAN shrink (unlike the previous
+       column stack, where each div just took its own full content
+       width) — `min-width: 0` is what lets the name-truncation chain
+       below actually engage instead of the row overflowing at
+       narrower Desktop/Tablet widths. */
+    #topPlayer, #leftPlayer, #rightPlayer {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    /* Three columns now share the width one used to have alone, so
+       the row's own chrome (padding/gaps) and its two fixed-size
+       pieces (avatar, deck) are trimmed down to leave room for all
+       three side by side without overflowing — same compaction
+       already applied for Mobile's own narrower tiers (see
+       .other-deck-back's mobile overrides above), just tuned for
+       three-abreast instead of stacked. */
+    .other-player-row {
+        gap: 4px;
+        padding: 3px 4px;
+        border-left-width: 2px;
+    }
+
+    /* If a column ever gets tight, the player's NAME gives way first
+       (ellipsis, via the existing .player-name-text rule) — never the
+       avatar or the card-count badge, which keep their own fixed
+       sizes below — same "name truncates, everything else stays
+       fixed" priority already used for the human player's own deck
+       info (.player-deck-name above). Requires `min-width: 0` at
+       every flex level between here and .player-name-text, the
+       standard fix for text-overflow being ignored inside a flex
+       row. */
+    .other-player-left {
+        flex-shrink: 1;
+        min-width: 0;
+        gap: 2px;
+    }
+
+    .player-label {
+        min-width: 0;
+        gap: 2px;
+    }
+
+    .player-name-text {
+        min-width: 0;
+    }
+
+    /* Smaller avatar + deck-back so three columns' worth of fixed-size
+       chrome actually fits at common laptop widths (~1280–1440px),
+       where each column now has roughly a third of the space the old
+       single-column stack gave it. Deck count stays fully legible —
+       only the glyph/card shrink, never the number itself. */
+    .other-avatar {
+        font-size: clamp(12px, 1.3vw, 20px);
+    }
+
+    .other-deck-back {
+        width:  clamp(22px, 2.8vw, 44px);
+        height: clamp(30px, 3.9vw, 60px);
+    }
+}
+
 
 /* ==========================================================
    MAIN MENU POPUP STANDARDIZATION (Mobile) — Settings, Profile,

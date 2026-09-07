@@ -129,6 +129,29 @@
   About Developer panel's photo (.about-avatar — not a player avatar)
   were already circle-free and are untouched.
 
+1.36.11
+- On Desktop, the three opponents in `#otherPlayers` (`#topPlayer`,
+  `#leftPlayer`, `#rightPlayer`) stacked vertically instead of
+  appearing side by side, because `#otherPlayers` had no `display`
+  set outside its two Mobile-only overrides — it fell back to plain
+  `display: block` on Desktop.
+- Fixed with a new `@media (min-width: 601px) and (pointer: fine)`
+  rule (css/style.css) — scoped to the same fine/coarse-pointer split
+  the Orientation Gate already uses to define "real Desktop" — making
+  `#otherPlayers` a `flex-direction: row` with the three columns
+  (`flex: 1 1 0`) sharing width evenly.
+- Avatar, rank badge, name, and card count are all preserved for each
+  opponent; if a column gets tight the name truncates first via
+  ellipsis (same priority as the human player's own deck name),
+  never the avatar or the card-count badge. Avatar/deck-back are
+  slightly smaller than before since three columns now share the
+  room one previously had alone.
+- Verified no overflow at 1024px and every common desktop/laptop
+  width above it (1280, 1366, 1440, 1600, 1920, 2560).
+- Mobile (≤600px stacked, and the touch+portrait wrapping-chip
+  layout) is untouched — the new rule is gated on `(pointer: fine)`,
+  which no touch device ever matches.
+
 1.36.10
 - On real touch+portrait phones (the actual Mobile gameplay layer —
   Mobile landscape is gated behind the "please rotate" screen), Queue
