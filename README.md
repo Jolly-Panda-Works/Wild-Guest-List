@@ -1345,7 +1345,30 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.36.8
+**Current version:** 1.36.9
+
+**Fix — Player's own rank badge missing next to their in-game name (1.36.9):**
+Opponents' compact name tags (`renderOtherPlayers()`, `js/ui/game-ui.js`)
+already show a live rank/medal badge — the same standings computation
+used by the Match Standings/Leaderboard popup
+(`getPlayerRankIndexes()`/`getRankIcon()`,
+`js/game/scoreManager.js`) — but the human player's own name tag next
+to their hand/deck (`renderPlayerDeckInfo()`) never got the same
+treatment; it only ever rendered the avatar and name.
+
+Added a `#playerDeckRankBadge` span to `game.html`'s `#playerDeckInfo`
+and wired `renderPlayerDeckInfo()` to populate it through the exact
+same `getPlayerRankIndexes()`/`getRankIcon()` call opponents already
+use, fed the same live `gameState` already passed into every render.
+No new or parallel state: the badge is recomputed on every
+`renderGame()`/`renderNonBoard()` pass — the same two render paths
+that already refresh the opponents' badges and the player's own name
+after every turn — so it always matches current standings and
+disappears cleanly when there's no rank to show, never a
+hardcoded/stuck value. Reuses the existing `.player-rank-badge` style
+verbatim (same 14px medal icon, inline right before the name), so it
+inherits the same Mobile/Desktop responsiveness and the name's
+existing long-name truncation without any new CSS.
 
 **Fix — Player avatars no longer shown inside a circular frame (1.36.8):**
 Three of the game's avatar render surfaces still cropped the player's

@@ -128,3 +128,28 @@
 - Bot avatars (.other-avatar, an icon glyph, not an image) and the
   About Developer panel's photo (.about-avatar — not a player avatar)
   were already circle-free and are untouched.
+
+1.36.9
+- The human player's own name tag (next to their hand/deck, in-game)
+  was missing the live rank/medal badge that opponents' name tags
+  already show. Added a #playerDeckRankBadge span to that tag
+  (game.html's #playerDeckInfo) and had renderPlayerDeckInfo()
+  (js/ui/game-ui.js) populate it exactly the same way
+  renderOtherPlayers() already does for bots: through
+  getPlayerRankIndexes()/getRankIcon() (js/game/scoreManager.js) —
+  the single, existing standings computation already shared by the
+  opponent badges and the Match Standings/Leaderboard popup — fed the
+  same live gameState already flowing through every render.
+- No new/parallel state was introduced: the badge is recomputed from
+  the live gameState on every renderGame()/renderNonBoard() call (the
+  same two render passes that already refresh the player's name and
+  the opponents' rank badges after every turn), so it can never
+  disagree with or lag behind the opponents' badges or the Leaderboard
+  popup, and it disappears if no rank is available (rankIcon is null)
+  instead of ever being hardcoded on or off.
+- Reused the existing .player-rank-badge component/styling verbatim —
+  same 14px medal icon, same inline placement immediately before the
+  name — so it's already responsive on Mobile and Desktop and doesn't
+  disrupt the name's existing long-name truncation
+  (.player-deck-name's max-width/ellipsis) or the avatar/name layout
+  around it.

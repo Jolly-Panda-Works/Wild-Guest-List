@@ -127,13 +127,14 @@ function queueSlotEl(index) {
 let handLongPressHandles = [];
 
 // ── Player's own name + avatar, shown by their deck ─────────
-// Mirrors playerDisplayName()/avatar shown for each bot in
+// Mirrors playerDisplayName()/avatar/rank-badge shown for each bot in
 // renderOtherPlayers() below, but for the human seat (p1), whose hand
 // is laid out full-width instead of sitting in one of the three
 // opponent boxes — so this tag lives next to their own deck instead.
-function renderPlayerDeckInfo(player) {
+function renderPlayerDeckInfo(player, gameState) {
     const avatarImg = document.getElementById("playerDeckAvatarImg");
     const nameEl     = document.getElementById("playerDeckName");
+    const badgeEl    = document.getElementById("playerDeckRankBadge");
     if (!avatarImg || !nameEl) return;
 
     const avatarId = getPlayerAvatarId();
@@ -145,6 +146,25 @@ function renderPlayerDeckInfo(player) {
     }
 
     nameEl.textContent = playerDisplayName(player);
+
+    // Live standings badge — same computation, same medal icons, as
+    // the opponents' rank badges and the Match Standings/Leaderboard
+    // popup (see js/game/scoreManager.js), so the player's own medal
+    // can never disagree with either. Recomputed from the live
+    // gameState on every render (renderGame()/renderNonBoard() both
+    // call this after every turn), never a stored/hardcoded value.
+    if (badgeEl) {
+        const rankIndexes = getPlayerRankIndexes(gameState);
+        const rankIcon = getRankIcon(rankIndexes.get(player.id));
+        if (rankIcon) {
+            badgeEl.dataset.icon = rankIcon;
+            badgeEl.style.display = "";
+            loadIcons(badgeEl);
+        } else {
+            badgeEl.style.display = "none";
+            delete badgeEl.dataset.icon;
+        }
+    }
 }
 
 // ── Hand ──────────────────────────────────────────────────
@@ -170,7 +190,7 @@ function renderHand(gameState) {
 
     const player   = gameState.players[0];
 
-    renderPlayerDeckInfo(player);
+    renderPlayerDeckInfo(player, gameState);
 
     player.hand.forEach((card) => {
         const cardEl = createCard(card);
