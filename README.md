@@ -1203,7 +1203,11 @@ Board screen specifically for a portrait phone.
   `game.html` (it's also targeted by `js/ui/walkthrough.js`'s
   width-based `<=600px` mobile tier), but it plays no part in the
   Portrait rail and stays hidden there (see § Version 1.32.1's bugfix
-  for the CSS rule that used to defeat that).
+  for the CSS rule that used to defeat that). Desktop shows the same
+  two icons too now, arranged differently — see § Desktop —
+  Party/Trash flank the Queue below (this used to say the icon row
+  simply collapsed to nothing on Desktop; that was true only before
+  that section's change).
 
   Each opponent seat in `#otherPlayers` (built by `renderOtherPlayers()`
   in `js/ui/game-ui.js`) shows, next to the player's name, the same
@@ -1244,6 +1248,79 @@ Board screen specifically for a portrait phone.
 Real-device/browser QA against this layer hasn't been done as part
 of this change (this environment can't render a browser) — see
 Known Issues below.
+
+### Desktop — Party/Trash flank the Queue
+
+Desktop no longer shows `#partyArea`/`#trashArea` as permanent big
+sidebars either — `#gameLayout`'s grid is a single `1fr` column now
+(it used to be `clamp(180px, 22vw, 280px) 1fr clamp(180px, 22vw,
+280px)`, one side column each for Party and Trash), and
+`#partyArea`/`#trashArea` default to `display: none` as a centered,
+fixed-position popup everywhere, Desktop included (see the "PARTY /
+TRASH" section in `css/style.css`) — the same popup, toggled by the
+same `.mobile-open` class, that Mobile Portrait already used. Reached
+the same way Mobile Portrait reaches it, too: no second popup
+implementation was built. What differs from Mobile Portrait is only
+how the two buttons are arranged around the Queue and how the popup
+itself is sized/positioned, both purely presentational:
+
+- **Buttons flank the Queue instead of stacking above it.**
+  `#queuePartyTrashRow` (the wrapper `renderQueue()` — `js/ui/game-
+  ui.js` — builds around `#queueDoorIcon`/`#queueTrashIcon`, the exact
+  same elements Mobile Portrait uses) is unwrapped via `display:
+  contents` on Desktop (`@media (min-width: 601px) and (pointer:
+  fine)`), so its two icon children become direct flex items of
+  `#queueWithIcons` alongside `#queueInner`. `order` then places the
+  Party icon before the Queue and the Trash icon after it — flanking
+  both sides — instead of Mobile Portrait's single row above the
+  Queue. No JS or markup change was needed for this: same DOM, same
+  click/keyboard wiring (`js/ui/mobile-ui.js`'s `initMobileTabs()`,
+  already unconditional — never gated to mobile), only the CSS
+  differs. Each button is a small icon+label control (`clamp(56px,
+  6vw, 76px)` wide) that reads as a compact button flanking the Queue
+  rather than eating into its own space.
+- **The popup itself renders as a centered floating card** on Desktop
+  (`top/left: 50%` + `translate(-50%, -50%)`, `width: min(420px,
+  92vw)`) rather than Mobile's edge-anchored sheet (`top/left/right/
+  bottom` band with `margin: auto 0`) — a better fit for a wide,
+  mouse-driven viewport. The narrower/touch breakpoints each restate
+  their own `transform: none` to cancel the Desktop default's
+  `transform`, since a property set by an earlier, unqualified rule
+  otherwise still applies underneath a later media-scoped rule that
+  doesn't happen to touch that same property.
+- **The popup's close (X) button is shown again**, scoped to just
+  `#partyArea`/`#trashArea` (`.panel-close`/`.mobile-only-btn` default
+  to `display: none`, "shown only on mobile", since Desktop never
+  opened these as a popup before). Re-clicking the same flanking icon,
+  and clicking the popup's own empty background (both already wired
+  in `initMobileTabs()`), still work as backup close paths, same as
+  Mobile — the visible X is just the expected affordance for a
+  centered Desktop modal on top of those.
+- **Notification badges** — `#partyIconBadge`/`#trashIconBadge`, small
+  circular counts absolutely-positioned on each flanking icon (and, on
+  Mobile Portrait, on the same row-above-the-Queue icons too) — show
+  how many cards have entered Party/Trash so far. They're driven by
+  the real DOM contents of `#partyCards`/`#trashCards`: `renderParty()`
+  /`renderTrash()` (`js/ui/game-ui.js`) rebuild those from `gameState`
+  on every full render and then read the resulting child count back
+  off; the Director's own mid-turn card-move animations
+  (`onEnteredParty`/`onRejected`/`onRemoved`, same file — these append
+  the real moved card into `#partyCards`/`#trashCards` one at a time,
+  independent of any full render, since "the Director never touches
+  gameState") call the same refresh right after their own append, so
+  the count stays live during an animated turn too, not just after a
+  full re-render. The `hidden` attribute (not an empty/zero badge)
+  drops the badge entirely at a count of `0`.
+- `#gameLayout`'s Tablet-width override (`601px`–`1024px`) used to
+  restate its own three-column `grid-template-columns`; it now just
+  inherits the base single column and only re-declares the tighter
+  `gap` Tablet needs.
+
+Real-device/browser QA against this hasn't been done as part of this
+change (this environment can't render a browser) — see Known Issues
+below. `tests/desktopPartyTrash.test.mjs` covers the CSS/JS-source
+invariants above (no DOM/layout harness exists in this project — see
+`tests/README.md`).
 
 ### Mobile popups — bottom sheet, not a shrunken dialog
 
@@ -1345,7 +1422,41 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.36.12
+**Current version:** 1.37.0
+
+**Feature — Desktop Party/Trash: permanent sidebars replaced by buttons flanking the Queue, plus live notification-count badges (1.37.0):**
+Desktop no longer shows `#partyArea`/`#trashArea` as the two big
+always-visible sidebar panels either side of the Queue —
+`#gameLayout`'s grid drops from three columns
+(`clamp(180px, 22vw, 280px) 1fr clamp(180px, 22vw, 280px)`) to a
+single `1fr` column, and `#partyArea`/`#trashArea` now default to
+`display: none` everywhere (Desktop included) as a centered,
+fixed-position popup, toggled by the exact same `.mobile-open` class
+Mobile Portrait already used — no second popup implementation. Party
+and Trash are reached the same way Mobile already reached them too:
+the door/trash icons that flank the Queue (`#queueDoorIcon`/
+`#queueTrashIcon`, built once in `renderQueue()` — `js/ui/game-ui.js`
+— and wired in `js/ui/mobile-ui.js`'s `initMobileTabs()`, which was
+already unconditional, never gated to mobile). On Desktop these are
+now unwrapped from their Mobile Portrait row (`#queuePartyTrashRow {
+display: contents }`) and placed via `order` — Party before the
+Queue, Trash after it — so they flank both sides of the Queue itself
+as small, compact icon+label buttons instead of eating into its
+space, rather than stacking above it the way Mobile Portrait does.
+No gameplay logic changed anywhere in this — purely presentation and
+access point, same as the 1.36.12 Log change below. Each button also
+now carries a live notification badge (`#partyIconBadge`/
+`#trashIconBadge`) showing how many cards have entered that section
+so far, read from the real DOM contents of `#partyCards`/
+`#trashCards` (never hardcoded): `renderParty()`/`renderTrash()`
+refresh it on every full render, and the Director's own mid-turn
+card-move handlers (`onEnteredParty`/`onRejected`/`onRemoved`, same
+file) refresh it again right after their own append, so the count
+stays live during an animated turn too. See § Desktop — Party/Trash
+flank the Queue for the full breakdown (popup positioning, the
+restored close button, badge details) and `tests/desktopPartyTrash.
+test.mjs` for the regression coverage. Mobile Portrait is untouched —
+same elements, same row-above-the-Queue arrangement, same popups.
 
 **Refactor — Desktop Chat/Log layout: Log moved from a permanent sidebar panel into a Header popup (1.36.12):**
 On Desktop, `#leftSidebar` used to give Log its own permanent panel

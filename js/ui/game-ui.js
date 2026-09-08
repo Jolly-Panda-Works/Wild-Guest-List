@@ -80,11 +80,13 @@ async function renderQueue(gameState) {
                      role="button" tabindex="0" aria-label="${t("partyPanel")}">
                     <span class="queue-icon-glyph" data-icon="party"></span>
                     <span class="queue-icon-label" data-i18n="partyPanel">${t("partyPanel")}</span>
+                    <span id="partyIconBadge" class="queue-icon-badge" aria-hidden="true" hidden>0</span>
                 </div>
                 <div id="queueTrashIcon" class="queue-icon queue-icon-exit"
                      role="button" tabindex="0" aria-label="${t("trashPanel")}">
                     <span class="queue-icon-glyph" data-icon="trash"></span>
                     <span class="queue-icon-label" data-i18n="trashPanel">${t("trashPanel")}</span>
+                    <span id="trashIconBadge" class="queue-icon-badge" aria-hidden="true" hidden>0</span>
                 </div>
             </div>
             <div id="queueInner"></div>
@@ -554,11 +556,46 @@ async function renderOtherPlayers(gameState) {
     await loadIcons();
 }
 
+// ── Party/Trash notification badges ──────────────────────
+// Live count of cards that have entered Party/Trash so far, shown on
+// the Party/Trash buttons flanking the Queue (Desktop) / above it
+// (Mobile Portrait) — see #partyIconBadge/#trashIconBadge, built in
+// renderQueue() above. Always driven by the real DOM contents of
+// #partyCards/#trashCards, which renderParty()/renderTrash() (a full
+// reconcile against gameState) and the mid-turn Director handlers
+// below (onEnteredParty/onRejected/onRemoved, which append the actual
+// moved card element one at a time) are both kept perfectly in sync
+// with — so the badge can never disagree with, or lag behind, what's
+// actually on screen, whether it's a full render or a single
+// mid-animation card move.
+function setQueueIconBadge(id, count) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (count > 0) {
+        el.textContent = count > 99 ? "99+" : String(count);
+        el.hidden = false;
+    } else {
+        el.textContent = "0";
+        el.hidden = true;
+    }
+}
+
+function refreshPartyBadge() {
+    const party = document.getElementById("partyCards");
+    setQueueIconBadge("partyIconBadge", party ? party.children.length : 0);
+}
+
+function refreshTrashBadge() {
+    const trash = document.getElementById("trashCards");
+    setQueueIconBadge("trashIconBadge", trash ? trash.children.length : 0);
+}
+
 // ── Party ─────────────────────────────────────────────────
 function renderParty(gameState) {
     const party = document.getElementById("partyCards");
     party.innerHTML = "";
     gameState.players.forEach(p => p.party.forEach(c => party.appendChild(createCard(c))));
+    refreshPartyBadge();
 }
 
 // ── Trash ─────────────────────────────────────────────────
@@ -566,6 +603,7 @@ function renderTrash(gameState) {
     const trash = document.getElementById("trashCards");
     trash.innerHTML = "";
     gameState.trash.forEach(c => trash.appendChild(createCard(c)));
+    refreshTrashBadge();
 }
 
 // ── Card factory ──────────────────────────────────────────
@@ -889,6 +927,7 @@ async function onRemoved(evt, { reaction, sound }) {
     const trash = document.getElementById("trashCards");
     if (!trash) return;
     await flip(el, () => trash.appendChild(el), { duringClass: "card-to-trash", duration: T.importantFlip });
+    refreshTrashBadge();
     await playBeat(el, "card-in-trash", 220); // card-in-trash's own animation is 0.22s
 }
 
@@ -946,11 +985,13 @@ async function onEnteredParty(evt) {
     if (!party) return;
     if (!el) {
         party.appendChild(createCard(evt.card));
+        refreshPartyBadge();
         playSound("partyJoin");
         return;
     }
     await playBeat(el, "card-result-anticipation", T.majorBeat);
     await flip(el, () => party.appendChild(el), { duringClass: "card-to-party", duration: T.majorFlip });
+    refreshPartyBadge();
     playSound("partyJoin");
     await playBeat(el, "card-party-celebrate", T.majorCelebrate);
 }
@@ -961,11 +1002,13 @@ async function onRejected(evt) {
     if (!trash) return;
     if (!el) {
         trash.appendChild(createCard(evt.card));
+        refreshTrashBadge();
         playSound("trashJoin");
         return;
     }
     await playBeat(el, REMOVE_REACTION.weaker.className, REMOVE_REACTION.weaker.duration);
     await flip(el, () => trash.appendChild(el), { duringClass: "card-to-trash", duration: T.importantFlip });
+    refreshTrashBadge();
     playSound("trashJoin");
 }
 

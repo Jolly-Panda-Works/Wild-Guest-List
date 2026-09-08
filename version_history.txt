@@ -222,3 +222,38 @@
 - Mobile Portrait is unaffected: #leftSidebar (including the old
   #gameLog markup) was already display: none there, and #railLogBtn
   opens the same #logModal it always did.
+
+1.37.0
+- Desktop Party/Trash layout reworked: the two big always-visible
+  #partyArea/#trashArea sidebars either side of the Queue are gone —
+  #gameLayout's grid drops from three columns to a single 1fr column.
+- #partyArea/#trashArea now default to display: none everywhere
+  (Desktop included) as a centered, fixed-position popup, toggled by
+  the same .mobile-open class Mobile Portrait already used — no
+  second popup implementation.
+- Party/Trash are reached the same way Mobile already reached them:
+  the door/trash icons flanking the Queue (#queueDoorIcon/
+  #queueTrashIcon, renderQueue() in js/ui/game-ui.js; wired in
+  js/ui/mobile-ui.js's initMobileTabs(), already unconditional).
+  #queuePartyTrashRow is unwrapped via display: contents on Desktop
+  and ordered via `order` — Party before the Queue, Trash after it —
+  so they flank both sides as small icon+label buttons instead of
+  eating into the Queue's own space, rather than stacking above it
+  the way Mobile Portrait does.
+- Each button now carries a live notification badge
+  (#partyIconBadge/#trashIconBadge) showing how many cards have
+  entered that section so far, read from the real DOM contents of
+  #partyCards/#trashCards (never hardcoded): renderParty()/
+  renderTrash() refresh it on every full render, and the Director's
+  mid-turn card-move handlers (onEnteredParty/onRejected/onRemoved)
+  refresh it again right after their own append, so it stays live
+  during an animated turn too.
+- The popup's close (X) button is shown again on Desktop, scoped to
+  just #partyArea/#trashArea; re-clicking the same flanking icon and
+  clicking the popup's own empty background still work as backup
+  close paths, same as Mobile.
+- No gameplay logic changed — purely presentation and access point.
+  Mobile Portrait is unaffected: same elements, same row-above-the-
+  Queue arrangement, same popups.
+- Added tests/desktopPartyTrash.test.mjs (CSS/JS-source regression
+  coverage — no DOM/layout harness exists in this project).

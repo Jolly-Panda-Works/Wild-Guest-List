@@ -739,10 +739,13 @@ body {
 
     display: grid;
 
-    grid-template-columns:
-        clamp(180px, 22vw, 280px)
-        1fr
-        clamp(180px, 22vw, 280px);
+    /* Single column — Party/Trash no longer take up permanent side
+       columns here (see the "PARTY / TRASH" section below): they're
+       now the same popup component Mobile already used, reached via
+       small buttons flanking the Queue instead of a big always-visible
+       sidebar. #otherPlayers/#centerArea simply stack in this one
+       column, same as Mobile Portrait's flex column already did. */
+    grid-template-columns: 1fr;
 
     gap: 12px;
 
@@ -760,23 +763,6 @@ body {
 
     min-height: 0;
 }
-
-/* #gameLayout is a 3-column CSS Grid on desktop/tablet (Party | Center |
-   Trash — see the grid-template-columns rule above). #otherPlayers now
-   sits in the DOM between the mobile-only leaderboard popup and
-   #partyArea (see game.html), so on any layout still using this Grid it
-   needs an explicit column or the browser's auto-placement would shove
-   #partyArea/#centerArea/#trashArea sideways by one track. Pinning
-   #otherPlayers and #centerArea to the same (middle) column stacks the
-   opponents summary directly above the Queue/Hand, while #partyArea and
-   #trashArea keep their existing side columns untouched. Portrait mode
-   overrides #gameLayout to `display:flex` (see the Mobile Portrait
-   layer), where `grid-column` simply has no effect and normal DOM/
-   source order takes over instead. */
-#otherPlayers { grid-column: 2; }
-#partyArea    { grid-column: 1; }
-#centerArea   { grid-column: 2; }
-#trashArea    { grid-column: 3; }
 
 
 /* ==========================================================
@@ -1240,20 +1226,60 @@ body {
 
 /* ==========================================================
    PARTY / TRASH
+   Same popup component everywhere now (Desktop included) — no more
+   permanent always-visible sidebars. Default here is the Desktop
+   treatment: a centered floating card, toggled by the exact same
+   `.mobile-open` class Mobile already used (js/ui/mobile-ui.js's
+   initMobileTabs()), opened from the Party/Trash buttons flanking the
+   Queue (see the "Desktop: Party/Trash flank the Queue" rule further
+   down). Narrower/touch breakpoints below restate their own tuned
+   position/size for phones — same component throughout, just resized
+   per breakpoint, exactly like every other `.modal` popup already does.
 ========================================================== */
 
 #partyArea,
 #trashArea {
 
-    display: flex;
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(420px, 92vw);
+    z-index: 3000;
 
     flex-direction: column;
 
     min-height: 0;
-    max-height: calc(100vh - 120px);
+    max-height: min(78vh, 640px);
     overflow-y: auto;
 
     padding: 16px;
+
+    box-shadow: 0 20px 60px rgba(0,0,0,.6);
+}
+
+#partyArea.mobile-open,
+#trashArea.mobile-open {
+    display: flex;
+}
+
+/* Scroll-lock + dimmed backdrop while a Party/Trash (or Leaderboard)
+   popup is open — same `body.popup-open` class/toggle Mobile already
+   uses; the narrower/touch breakpoints below restate their own tuned
+   backdrop opacity/blur, same as the popup itself. */
+body.popup-open {
+    overflow: hidden;
+}
+
+body.popup-open::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 2999;
 }
 
 
@@ -3084,7 +3110,12 @@ body {
     #leftSidebar { width: 220px; }
 
     #gameLayout {
-        grid-template-columns: clamp(160px, 20vw, 260px) 1fr clamp(160px, 20vw, 260px);
+        /* Single column, same as the base rule (see the "PARTY / TRASH"
+           section) — Party/Trash no longer occupy dedicated side
+           columns here (or anywhere), so there's nothing for the old
+           two-side-column grid to reserve space for. Only re-declared
+           here for the tighter gap Tablet needs; the column count
+           itself just inherits the base 1fr. */
         gap: 14px;
     }
 
@@ -3741,19 +3772,21 @@ body.gameplay-locked #playerHand .card {
 }
 #queueInner { flex: 1; display: flex; justify-content: center; }
 #queueInner #queue { display: flex; gap: clamp(6px, 2vw, 30px); }
-/* Queue flanking icons (Party door / Trash exit) — Mobile Portrait
-   only. `display: none` here (not `visibility: hidden`, which would
-   still reserve their space) is the default for every OTHER viewport,
-   including Desktop; the `@media (pointer: coarse) and (orientation:
-   portrait)` block further down re-enables them for touch+portrait
-   only. #queueWithIcons is a `justify-content: center` flex row with
-   #queueInner (flex: 1) already doing the actual Queue centering, so
-   with these two hidden the row just naturally reflows around the
-   Queue alone — no gap, no extra CSS needed for Desktop specifically.
-   The underlying elements, their click/keyboard wiring (js/ui/
-   mobile-ui.js), and the Party/Trash popups themselves are all
-   untouched — Mobile Portrait still gets exactly the same
-   interaction it always did. */
+/* Queue flanking icons (Party door / Trash exit). `display: none` here
+   (not `visibility: hidden`, which would still reserve their space) is
+   just the shared fallback — every real layout re-enables them:
+   `@media (min-width: 601px) and (pointer: fine)` further down for
+   Desktop (flanking either side of the Queue) and
+   `@media (pointer: coarse) and (orientation: portrait)` for Mobile
+   Portrait (stacked in a row above the Queue). A layout that matches
+   neither (e.g. a touch device in landscape) falls back to this
+   hidden state — #queueWithIcons is a `justify-content: center` flex
+   row with #queueInner (flex: 1) already doing the actual Queue
+   centering, so with the icons hidden the row just naturally reflows
+   around the Queue alone, no extra CSS needed. The underlying
+   elements, their click/keyboard wiring (js/ui/mobile-ui.js), and the
+   Party/Trash popups themselves are shared identically by every
+   layout that does show them. */
 .queue-icon { display: none; font-size: clamp(24px, 4vw, 52px); line-height: 1; flex-shrink: 0; opacity: 0.85; cursor: pointer; }
 
 /* End game — sizing/scroll/footer-pinning comes from the shared
@@ -4088,6 +4121,12 @@ body.gameplay-locked #playerHand .card {
         display: none;
         position: fixed;
         top: 20px; left: 12px; right: 12px; bottom: 20px;
+        /* Resets the Desktop default rule's `transform: translate(-50%,
+           -50%)` (see the base #partyArea/#trashArea rule) — this tier
+           positions via top/left/right/bottom instead, and that
+           inherited transform would otherwise still apply on top of it
+           since transform isn't touched by width/position alone. */
+        transform: none;
         margin: auto 0;
         z-index: 3000;
         background: rgba(10,31,15,0.92);
@@ -5255,6 +5294,126 @@ body.gameplay-locked #playerHand .card {
     .other-deck-back {
         width:  clamp(22px, 2.8vw, 44px);
         height: clamp(30px, 3.9vw, 60px);
+    }
+
+    /* ── Desktop: Party/Trash flank the Queue ──────────────────────
+       Reuses the exact door/trash icon elements Mobile Portrait
+       already built (#queueDoorIcon/#queueTrashIcon inside
+       #queueWithIcons, see renderQueue() in js/ui/game-ui.js) and the
+       same click/keyboard wiring + `.mobile-open` popup toggle
+       (js/ui/mobile-ui.js's initMobileTabs()) — nothing new is built
+       here, the existing component is just made visible and
+       repositioned for a mouse/wide layout instead of Mobile
+       Portrait's "row above the Queue" arrangement.
+
+       #queuePartyTrashRow normally groups both icons together so they
+       can sit as one row above the Queue on Mobile Portrait. On
+       Desktop it's unwrapped via `display: contents` so its two icon
+       children become direct flex items of #queueWithIcons (which is
+       already a flex row — see the base rule above), then `order`
+       places the Party icon before the Queue and the Trash icon after
+       it — flanking both sides instead of stacking together on one. */
+    #queuePartyTrashRow {
+        display: contents;
+    }
+
+    #queueDoorIcon  { order: 1; }
+    #queueInner     { order: 2; flex: 1; }
+    #queueTrashIcon { order: 3; }
+
+    /* The popup's own close (X) button — `.panel-close`/`.mobile-only-
+       btn` are hidden by the base rules above (`display: none`, "shown
+       only on mobile"), since Desktop previously never opened
+       #partyArea/#trashArea as a popup at all. Now that it does, these
+       two need their close button back; re-clicking the same flanking
+       icon and clicking the popup's own empty background (see
+       js/ui/mobile-ui.js's initMobileTabs()) still work as backup
+       close paths, same as Mobile, but a visible X is the expected
+       affordance for a centered Desktop modal. Scoped to just these
+       two panels so Leaderboard's own popup (Desktop-hidden entirely;
+       it uses the sidebar instead) is untouched. */
+    #partyArea .panel-close,
+    #trashArea .panel-close {
+        display: flex;
+    }
+
+    /* Compact icon+label button — same visual language as the
+       Leaderboard/Log/Chat rail buttons and Mobile Portrait's own
+       `.queue-icon` treatment (bordered, filled, icon over label), just
+       sized as a small button flanking the Queue instead of a full-
+       width row above it, per the "shouldn't eat into the Queue's own
+       space" requirement. */
+    .queue-icon {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        position: relative;
+        flex-shrink: 0;
+        width: clamp(56px, 6vw, 76px);
+        padding: 10px 6px;
+        font-size: unset;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: #0d1a0d;
+        color: white;
+        line-height: 1.15;
+        cursor: pointer;
+        box-sizing: border-box;
+        transition: background .15s ease, transform .15s ease;
+    }
+
+    .queue-icon:hover,
+    .queue-icon:focus-visible {
+        background: #132213;
+        transform: translateY(-2px);
+    }
+
+    .queue-icon.active {
+        border-color: var(--accent);
+        background: rgba(189,93,56,.2);
+    }
+
+    .queue-icon-glyph {
+        font-size: clamp(22px, 2.6vw, 32px);
+        line-height: 1;
+    }
+
+    .queue-icon-label {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: .3px;
+        opacity: .85;
+    }
+
+    /* Notification badge — live count of cards that have entered that
+       section so far, read from actual game state (see
+       updateQueueIconBadges()-equivalent calls in renderParty()/
+       renderTrash() and the mid-turn animation handlers, all in
+       js/ui/game-ui.js) rather than hardcoded. `[hidden]` (set by JS
+       whenever the count is 0) drops it entirely instead of showing an
+       empty/zero badge. */
+    .queue-icon-badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 5px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 20px;
+        text-align: center;
+        box-shadow: 0 2px 6px rgba(0,0,0,.4);
+        box-sizing: border-box;
+    }
+
+    .queue-icon-badge[hidden] {
+        display: none;
     }
 }
 
@@ -8240,6 +8399,12 @@ body.gameplay-locked #playerHand .card {
         display: none;
         position: fixed;
         top: 8dvh; left: 4vw; right: 4vw; bottom: 8dvh;
+        /* Resets the Desktop default rule's `transform: translate(-50%,
+           -50%)` (see the base #partyArea/#trashArea rule) — Mobile
+           Portrait positions via top/left/right/bottom instead, and
+           that inherited transform would otherwise still apply on top
+           of it. */
+        transform: none;
         max-height: calc(100dvh - 16dvh);
         margin: auto 0;
         z-index: 3000;
@@ -8381,18 +8546,19 @@ body.gameplay-locked #playerHand .card {
     #queueWithIcons { gap: clamp(4px, 2vw, 10px); flex-wrap: wrap; justify-content: center; }
 
     .queue-icon {
-        /* Re-enable — hidden by default (Desktop and every other
-           viewport) at the base .queue-icon rule above; this is the
-           one place they're meant to render, per this project's
-           Mobile Portrait design (see the base rule's comment for
-           why). Styled to match the Leaderboard/Log/Chat rail
-           buttons (#leaderboardBtn etc. above) — same border, fill,
-           radius, and row layout — so Party/Trash read as the same
-           kind of button rather than a bare icon+caption. */
+        /* Re-enable — hidden by default at the base .queue-icon rule
+           above; this is one of the two places they're meant to
+           render (the other being Desktop's own flanking-the-Queue
+           layout, see the `@media (min-width: 601px) and (pointer:
+           fine)` block). Styled to match the Leaderboard/Log/Chat
+           rail buttons (#leaderboardBtn etc. above) — same border,
+           fill, radius, and row layout — so Party/Trash read as the
+           same kind of button rather than a bare icon+caption. */
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: center;
+        position: relative;
         gap: 6px;
         font-size: unset;
         padding: 8px 6px;
@@ -8414,6 +8580,32 @@ body.gameplay-locked #playerHand .card {
         border-color: var(--accent);
         background: rgba(189,93,56,.2);
         box-shadow: none;
+    }
+
+    /* Same notification badge component as Desktop (see the
+       `@media (min-width: 601px) and (pointer: fine)` block) — live
+       Party/Trash card count, re-styled here only for the smaller
+       Mobile Portrait button size. */
+    .queue-icon-badge {
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 4px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 18px;
+        text-align: center;
+        box-shadow: 0 2px 6px rgba(0,0,0,.4);
+        box-sizing: border-box;
+    }
+
+    .queue-icon-badge[hidden] {
+        display: none;
     }
 
     #handArea {
@@ -8748,18 +8940,22 @@ body.gameplay-locked #playerHand .card {
 }
 
 /* ── Party + Trash as one button row above the Queue ──
-   Mobile Portrait only (desktop keeps its #leftSidebar Party/Trash
-   panels reached another way). js/ui/game-ui.js's renderQueue() now
-   wraps the door icon and trash icon together in
-   #queuePartyTrashRow, placed before #queueInner — so #queueWithIcons
-   only ever has two direct children (the row, then the Queue itself),
-   stacked via flex-direction: column. Same elements, same
-   click/keyboard wiring (js/ui/mobile-ui.js), same popups as before,
-   just grouped into a single row per the gameplay screen's layout
-   spec. Each icon also carries its visible i18n label underneath, in
-   the same icon+label language already used by the Leaderboard/Log/
-   Chat rail buttons (#mobileSideRail), so "Party"/"Trash" read as
-   real buttons rather than bare glyphs. */
+   Mobile Portrait only. Desktop no longer has permanent Party/Trash
+   sidebars either — it flanks the Queue with the same two icons
+   instead (see the "Desktop: Party/Trash flank the Queue" rule in the
+   `@media (min-width: 601px) and (pointer: fine)` block above), just
+   arranged left/right of the Queue rather than stacked in a row above
+   it. js/ui/game-ui.js's renderQueue() wraps the door icon and trash
+   icon together in #queuePartyTrashRow, placed before #queueInner —
+   so #queueWithIcons only ever has two direct children (the row, then
+   the Queue itself), stacked via flex-direction: column here on
+   Mobile Portrait. Same elements, same click/keyboard wiring
+   (js/ui/mobile-ui.js), same popups as before, just grouped into a
+   single row per the gameplay screen's layout spec. Each icon also
+   carries its visible i18n label underneath, in the same icon+label
+   language already used by the Leaderboard/Log/Chat rail buttons
+   (#mobileSideRail), so "Party"/"Trash" read as real buttons rather
+   than bare glyphs. */
 @media (pointer: coarse) and (orientation: portrait) {
     /* Fills #queueArea's full (now flex-grown) height: the Party/Trash
        row keeps its natural size at the top (flex: 0 0 auto below),

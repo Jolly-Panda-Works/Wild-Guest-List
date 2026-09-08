@@ -131,11 +131,16 @@ function getSteps() {
             arrowDir: "down", boxPos: "above",
         },
         {   // 5
-            // Party/Trash no longer have dedicated mobile buttons —
-            // they open from the door/trash icons flanking the Queue
-            // (see #queueWithIcons in renderQueue(), js/ui/game-ui.js).
-            targetId:   mobile ? "queueDoorIcon" : "partyCards",
-            fallbackId: mobile ? "queueTrashIcon" : "trashCards",
+            // Party/Trash no longer have dedicated buttons of their
+            // own on any layout — they open from the door/trash icons
+            // flanking the Queue everywhere now (see #queueWithIcons
+            // in renderQueue(), js/ui/game-ui.js): stacked above the
+            // Queue on Mobile Portrait, to either side of it on
+            // Desktop. #partyCards/#trashCards themselves are hidden
+            // by default (they're the popup content, opened by these
+            // same icons), so they can't be highlighted directly.
+            targetId:   "queueDoorIcon",
+            fallbackId: "queueTrashIcon",
             titleKey: "wt5Title", textKey: "wt5Text",
             arrowDir: mobile ? "down" : "left",
             boxPos:   mobile ? "above" : "right",
