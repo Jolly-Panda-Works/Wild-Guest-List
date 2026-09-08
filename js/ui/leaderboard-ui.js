@@ -1,13 +1,12 @@
 import { t, playerDisplayName } from "../i18n.js";
 import { loadIcons } from "./icon-ui.js";
-import { getRankedPlayers, getPartyScore, RANK_ICONS } from "../game/scoreManager.js";
+import { getRankedPlayers, RANK_ICONS } from "../game/scoreManager.js";
 
 export function renderLeaderboard(gameState) {
 
     const sorted = getRankedPlayers(gameState);
 
     const rowsHTML = sorted.map((p, i) => {
-        const score = getPartyScore(p);
         const count = p.party.length;
         const rankIcon = RANK_ICONS[i];
         const medal = rankIcon ? `<span data-icon="${rankIcon}"></span>` : `#${i + 1}`;

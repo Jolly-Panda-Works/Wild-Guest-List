@@ -31,6 +31,7 @@ function resolveLogText(textKey, params = {}) {
         "logEnteredParty":   () => `${params.card} ${t("logEnteredParty")}`,
         "logSentToTrash":    () => `${params.card} ${t("logSentToTrash")}`,
         "logWon":            () => t("wonGame"),
+        "logDraw":           () => t("drawGame"),
         "logJumped":         () => `${params.card} ${t("logJumped").replace("{n}", params.n)}`,
         "logCantJump":       () => `${params.card} ${t("logCantJump")}`,
         "logStopped":        () => `${params.card} ${t("logStopped").replace("{other}", params.other)}`,

@@ -1,6 +1,6 @@
 {
     "app": {
-        "version": "1.37.9"
+        "version": "1.38.0"
     },
     "icons": {
         "leaderboard": "assets/img/icons/leaderboard.png",
@@ -38,7 +38,6 @@
         "rankBronze": "assets/img/icons/3rd.png",
         "rankFourth": "assets/img/icons/4th.png",
         "partyEmoji": "assets/img/icons/party (2).png",
-        "power": "assets/img/icons/power.png",
         "trashEmoji": "🗑️",
         "waiting": "⏳",
         "trophy": "🏆",

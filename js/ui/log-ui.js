@@ -10,6 +10,7 @@ function resolveLogText(entry) {
         "logEnteredParty":   () => `${entry.params?.card} ${t("logEnteredParty")}`,
         "logSentToTrash":    () => `${entry.params?.card} ${t("logSentToTrash")}`,
         "logWon":            () => t("wonGame"),
+        "logDraw":           () => t("drawGame"),
         "logJumped":         () => `${entry.params?.card} ${t("logJumped").replace("{n}", entry.params?.n)}`,
         "logCantJump":       () => `${entry.params?.card} ${t("logCantJump")}`,
         "logStopped":        () => `${entry.params?.card} ${t("logStopped").replace("{other}", entry.params?.other)}`,

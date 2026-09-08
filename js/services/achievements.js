@@ -439,7 +439,7 @@ export async function notifyQueueEvents(events) {
 
 /**
  * Call once per game from js/game/gameOver.js's finishGame(), AFTER
- * gameState.gameOver/gameState.winner are set — the authoritative game
+ * gameState.gameOver/gameState.outcome are set — the authoritative game
  * result, never evaluated from UI state. `finishGame()` itself is
  * already guarded against running twice (`if (gameState.gameOver) return;`
  * at its top, checked before this is called), so this is inherently
@@ -459,7 +459,9 @@ export async function notifyGameFinished(gameState) {
     // having to auto-play on the human's behalf.
     if (!_session.missedTurn) await unlock("perfect_timing");
 
-    const humanWon = !!humanPlayer && gameState.winner === humanPlayer;
+    const humanWon = !!humanPlayer &&
+        gameState.outcome?.type === "WIN" &&
+        gameState.outcome.winnerId === humanPlayer.id;
 
     if (humanWon) {
         await increment("wild_champion", 1);

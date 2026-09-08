@@ -79,12 +79,15 @@ test("headerHTML is shared by both Desktop (#leaderboardRows) and Mobile (#mobil
     );
 });
 
-test("ranking/score inputs (getRankedPlayers, getPartyScore) are still used unmodified", () => {
-    // Presentation-only change: the data layer calls that decide
-    // ranking and the displayed score must be untouched.
+test("ranking/count inputs (getRankedPlayers) are still used unmodified — no Card Power score exists anymore", () => {
+    // Presentation-only change: the data layer call that decides
+    // ranking and the displayed count must be untouched. getPartyScore
+    // (a dead, unused Card-Power-based score getter) was removed
+    // entirely as part of removing Card Power from the game — see
+    // js/game/matchOutcome.js.
     assert.match(leaderboardJs, /const sorted = getRankedPlayers\(gameState\);/);
-    assert.match(leaderboardJs, /const score = getPartyScore\(p\);/);
     assert.match(leaderboardJs, /const count = p\.party\.length;/);
+    assert.doesNotMatch(leaderboardJs, /getPartyScore/, "getPartyScore (Card Power score) must not exist anymore");
 });
 
 test("CSS: .lb-cards-header right-aligns the header icon above the right-aligned row numbers", () => {

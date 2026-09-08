@@ -398,10 +398,18 @@ The game ends when all players have used their available animals.
 
 Any remaining animals in the queue are resolved.
 
-The player with the largest party wins.
+The player with the most Party cards wins — Party Card Count is the
+*only* victory metric (`js/game/matchOutcome.js`'s
+`determineMatchOutcome()`). If two or more players are tied for the
+highest Party Card Count, the match is a **Draw** between them — there
+is no secondary tie-breaker (no Card Power, no card rarity, no turn
+count, nothing hidden or random) and no Sudden Death round. A tie for
+any place *below* the lead never creates a Draw; only a tie for the
+single highest count does.
 
 The Game Result screen (`#endGameScreen`, `js/ui/endgame-ui.js`) then
-shows Win/Lose and the final Leaderboard (`#finalScores`), with two
+shows Win/Draw/Lose and the final Leaderboard (`#finalScores`), with
+every player explicitly labeled `WINNER`, `DRAW`, or `LOSS`, with two
 primary actions below it:
 
 * **Play Again** — reloads `game.html`, reusing this match's bot
@@ -409,7 +417,7 @@ primary actions below it:
   the same setup starts immediately, with no reconfiguration step.
   This is a full reload, so it's the existing Game Start system
   running again unmodified (see `js/game-main.js`) — transient state
-  (queue/party/trash/turn/ability/winner/game result/achievement
+  (queue/party/trash/turn/ability/match outcome/achievement
   session tracking) is rebuilt fresh; persistent data (Profile,
   Achievements, Settings — all `localStorage`) is untouched.
 * **Return to Home** — navigates to `index.html`, the same real
@@ -611,8 +619,9 @@ WildGuestList/
 │   │   ├── gameOver.js
 │   │   ├── gameState.js
 │   │   ├── help.js         (Card Guide — shared by Home's #helpModal popup and game.html's in-game Help modal)
+│   │   ├── matchOutcome.js  (single authoritative WIN/DRAW resolver — Party Card Count only, no Card Power or any other tie-breaker)
 │   │   ├── queueManager.js
-│   │   ├── scoreManager.js  (party-count/power ranking math — shared by leaderboard-ui.js's Match Standings and game-ui.js's opponent rank badges)
+│   │   ├── scoreManager.js  (party-count ranking math — shared by leaderboard-ui.js's Match Standings and game-ui.js's opponent rank badges)
 │   │   └── turnManager.js
 │   │
 │   ├── services/
@@ -1456,7 +1465,48 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.37.9
+**Current version:** 1.38.0
+
+**Feature — Card Power removed from victory; real Draw outcome added (1.38.0):**
+The match result used to be "highest Party count, ties broken by the
+sum of each party's card Power" (duplicated across
+`js/game/gameOver.js`, `js/ui/endgame-ui.js`, and
+`js/game/scoreManager.js` — see the "Cleanup — Power stat removed from
+Animal Ability Cards (1.36.5)" entry below, which explicitly called out
+this end-of-game score as a separate, at-the-time-unremoved feature).
+That hidden tie-breaker is now gone entirely: **Party Card Count is the
+only metric that decides a match.** A new single authoritative resolver,
+`js/game/matchOutcome.js`'s `determineMatchOutcome()`, returns a
+discriminated union — `{ type: "WIN", winnerId }` when exactly one
+player has the highest Party Card Count, or `{ type: "DRAW", playerIds
+}` when two or more players share it — with **no** secondary numeric
+tie-breaker of any kind (no Power, no card rarity, no turn count, no
+random value) and no Sudden Death round. `gameState.winner` (a single
+Player object) is replaced by `gameState.outcome` (this discriminated
+union); `js/game/gameOver.js`'s `finishGame()` sets it and logs either
+`logWon` or the new `logDraw`. `js/ui/endgame-ui.js`'s final-results
+screen now labels every player `WINNER`, `DRAW`, or `LOSS`
+(`endResultWinner`/`endResultDraw`/`endResultLoss`, replacing the old
+`endPower` score column and its now-unused `power` icon in
+`data/config.json`), and its title/text (`endWinTitle`/`endDrawTitle`/
+`endLoseTitle`, plus matching body text) adapt to whichever of the
+three the human player got. `js/game/scoreManager.js`'s
+`getRankedPlayers()` (the Match Standings / opponent rank-badge
+ranking, shared with `js/ui/leaderboard-ui.js` and `js/ui/game-ui.js`)
+now sorts by Party Card Count alone — its dead, never-displayed
+`getPartyScore()` export was also removed. `js/services/achievements.js`'s
+Wild Champion/Strategist win-checks now read `gameState.outcome.type
+=== "WIN"`, so a Draw correctly never counts as a win. None of this
+touches the unrelated, load-bearing `power` field each card still
+carries (`data/cardInfo.json`) — that's the animal's identity/strength
+ranking the ability system dispatches on (`js/abilities/abilities.js`,
+`js/ai/ai.js`, `js/services/dataLoader.js`) and is unaffected. The
+victory rule reads only `player.id`/`player.party.length`, so it stays
+correct once players can build their own decks (see Roadmap below) —
+nothing depends on a specific card, card count per animal, or fixed
+deck composition. The reward/economy system that will eventually
+consume `WINNER`/`DRAW`/`LOSS` is intentionally out of scope here — no
+coins, gems, XP, or reward UI were added.
 
 **Fixed — "Send Feedback" button not centered in the Feedback popup on Mobile (1.37.8):**
 `#feedbackSubmitBtn`'s `.feedback-modal-footer` (`.modal-content > .modal-footer`)

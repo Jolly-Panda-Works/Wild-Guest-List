@@ -12,5 +12,10 @@ export const gameState = {
     lastAbility: null,
 
     gameOver: false,
-    winner: null
+    // Discriminated union set once by js/game/gameOver.js's finishGame():
+    //   { type: "WIN",  winnerId: string }
+    //   { type: "DRAW", playerIds: string[] }
+    // See js/game/matchOutcome.js — Party Card Count is the sole metric,
+    // with no Card Power (or any other) tie-breaker.
+    outcome: null
 };

@@ -79,7 +79,10 @@ function makeCard(power, owner, uid) {
 }
 
 function makeGameState(players, winner) {
-    return { players: [players.human, players.bot, { id: "p3", type: PLAYER_TYPES.AI }, { id: "p4", type: PLAYER_TYPES.AI }], winner };
+    return {
+        players: [players.human, players.bot, { id: "p3", type: PLAYER_TYPES.AI }, { id: "p4", type: PLAYER_TYPES.AI }],
+        outcome: winner ? { type: "WIN", winnerId: winner.id } : null,
+    };
 }
 
 beforeEach(async () => {
@@ -251,7 +254,7 @@ test("Duel Master: does not unlock in a standard 4-player game (documented limit
 test("Duel Master: unlocks once its config-driven condition is genuinely met (a 2-player win)", async () => {
     const human = { id: "p1", type: PLAYER_TYPES.HUMAN, party: [] };
     const bot   = { id: "p2", type: PLAYER_TYPES.AI, party: [] };
-    const gameState = { players: [human, bot], winner: human };
+    const gameState = { players: [human, bot], outcome: { type: "WIN", winnerId: human.id } };
     await notifyGameFinished(gameState);
     assert.equal(isUnlocked("duel_master"), true, "the achievement itself is real, config-driven logic — it just can't currently occur in this game's fixed 4-player deal");
 });
@@ -263,6 +266,18 @@ test("Wild Champion: needs 10 valid wins; duplicate finishGame-equivalent calls 
         await notifyGameFinished(makeGameState({ human, bot }, human));
     }
     assert.equal(isUnlocked("wild_champion"), true);
+});
+
+test("Wild Champion: a DRAW does not count as a win (Card Power tie-break removed — a shared top Party Card Count is a real Draw, not a win)", async () => {
+    const { human, bot } = makePlayers();
+    for (let i = 0; i < 10; i++) {
+        notifyGameStarted();
+        await notifyGameFinished({
+            players: [human, bot, { id: "p3", type: PLAYER_TYPES.AI }, { id: "p4", type: PLAYER_TYPES.AI }],
+            outcome: { type: "DRAW", playerIds: [human.id, bot.id] },
+        });
+    }
+    assert.equal(isUnlocked("wild_champion"), false, "a draw must never increment win-only progress");
 });
 
 test("Perfect Timing: unlocks when the human never misses a turn; a single timer expiry blocks it for that game", async () => {
