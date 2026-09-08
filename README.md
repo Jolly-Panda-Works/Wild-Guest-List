@@ -1288,24 +1288,34 @@ itself is sized/positioned, both purely presentational:
   an earlier, unqualified rule otherwise still applies underneath a
   later media-scoped rule that doesn't happen to touch that same
   property.
-- **Shaped and sized to match the Pause popup** (1.37.1): the Desktop-
-  only override at the bottom of the `@media (min-width: 601px) and
-  (pointer: fine)` block gives `#partyArea`/`#trashArea` the exact
-  same width basis as `#pauseModal`'s `.modal-content.small-popup`
-  (`width: min(350px, 92vw)`) and the same border/border-radius
-  (`var(--radius-md)`)/background (`rgba(10,31,15,0.82)`)/blur
-  (`blur(18px)`)/box-shadow/padding as `.modal-content`, instead of
-  the base (still-shared-with-`#chatPanel`) `--bg-panel`/`--radius-lg`
-  look. Height is fixed (`height: min(600px, 80vh)`, with the old
-  content-driven `max-height` explicitly cleared) rather than
-  shrinking to whatever's inside, and taller than the old auto-sized
-  version — Party/Trash can hold far more cards over a game than
-  Pause's four fixed actions ever need to size around, so a
-  consistent, roomier box reads better than one that changes height
-  as cards accumulate. Scoped to just this Desktop media block —
-  Mobile's own width/touch-tier popup rules already restate their own
-  background/radius/shadow/box sizing independently, so none of this
-  leaks into them.
+- **Shaped to match the Pause popup, on every layout** (1.37.1,
+  widened to Mobile in 1.37.2): `#partyArea`/`#trashArea` now use the
+  same border/border-radius (`var(--radius-md)`)/background
+  (`rgba(10,31,15,0.82)`)/blur (`blur(18px)`)/box-shadow as
+  `#pauseModal`'s `.modal-content.small-popup`, instead of the base
+  (still-shared-with-`#chatPanel`) `--bg-panel`/`--radius-lg` look —
+  Desktop's version (below) also matches Pause's *width*; the
+  ≤600px-width and touch+portrait tiers keep their own tuned
+  edge-anchored position/size, restyled in place with the same
+  border/background/radius (added as a dedicated `#partyArea,
+  #trashArea` rule right after each tier's existing position rule, so
+  `#mobileLeaderboard` — sharing that position rule but not asked to
+  match Pause — is left alone).
+- **Desktop's popup is also sized to match Pause** (1.37.1): the
+  Desktop-only override at the bottom of the `@media (min-width:
+  601px) and (pointer: fine)` block gives `#partyArea`/`#trashArea`
+  the exact same width basis as `#pauseModal`'s `.modal-content.small-
+  popup` (`width: min(350px, 92vw)`) and the same padding as
+  `.modal-content`, instead of the old `min(420px, 92vw)`. Height is
+  fixed (`height: min(600px, 80vh)`, with the old content-driven
+  `max-height` explicitly cleared) rather than shrinking to whatever's
+  inside, and taller than the old auto-sized version — Party/Trash can
+  hold far more cards over a game than Pause's four fixed actions ever
+  need to size around, so a consistent, roomier box reads better than
+  one that changes height as cards accumulate. This particular
+  width/height override is scoped to just the Desktop media block —
+  Mobile keeps its own tuned position/size, only borrowing Pause's
+  *shape* per the point above, not its dimensions.
 - **Trash sits with extra breathing room from the right edge** of the
   Queue row (`margin-right: clamp(16px, 4vw, 56px)` on
   `#queueTrashIcon`, added alongside the `order` rule) — without it,
@@ -1446,7 +1456,24 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.37.1
+**Current version:** 1.37.2
+
+**Refinement — Party/Trash popup's Pause-matching shape extended to Mobile (1.37.2):**
+1.37.1 gave `#partyArea`/`#trashArea` the Pause popup's shape (border/
+radius/background/blur/shadow) and size (width/height) on Desktop
+only. This follow-up extends just the *shape* — not the size — to
+Mobile too: the ≤600px-width tier and the touch+portrait tier each
+gain a dedicated `#partyArea, #trashArea { border; background;
+border-radius; backdrop-filter; }` rule matching Pause's values,
+layered right after their own existing (untouched) edge-anchored
+position/size rule. Mobile keeps its own tuned position and
+dimensions — only Desktop's popup also matches Pause's width/height
+(from 1.37.1) — and `#mobileLeaderboard`, which shares that position
+rule with Party/Trash on the touch+portrait tier, was deliberately
+left out of the new shape rule; it wasn't asked to match Pause.
+`tests/desktopPartyTrash.test.mjs`'s Mobile-tiers test was rewritten
+to assert this split explicitly (position/size still tier-specific,
+shape now shared with Pause, Leaderboard excluded).
 
 **Refinement — Desktop Party/Trash popup shaped/sized to match Pause, Trash icon given more right-edge spacing (1.37.1):**
 Three follow-up tweaks to the 1.37.0 change below, all presentational:

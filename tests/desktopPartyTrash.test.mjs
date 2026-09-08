@@ -216,16 +216,41 @@ test("Trash icon has extra spacing from the right edge of the Queue row (Party's
     );
 });
 
-test("Mobile's own Party/Trash popup width/touch tiers are untouched by the Desktop shape override", () => {
-    // The ≤600px width tier and the touch+portrait tier both restate
-    // their own background/border-radius/box-shadow already (pre-
-    // existing, not part of this fix) — confirms the Desktop-only
-    // override doesn't leak into them via the cascade.
+test("Mobile's own Party/Trash popup position/size is untouched by the Desktop-only width/height override, but now shares the same Pause shape", () => {
+    // The ≤600px width tier and the touch+portrait tier keep their own
+    // tuned edge-anchored position/size (top/left/right/bottom) —
+    // confirms the Desktop-only width/height override doesn't leak
+    // into them via the cascade.
     const narrowTierMatch = css.match(/#partyArea, #trashArea \{\s*\r?\n\s*display: none;\s*\r?\n\s*position: fixed;\s*\r?\n\s*top: 20px; left: 12px; right: 12px; bottom: 20px;/);
-    assert.ok(narrowTierMatch, "expected the ≤600px-width tier's own #partyArea/#trashArea rule to still exist, untouched");
+    assert.ok(narrowTierMatch, "expected the ≤600px-width tier's own #partyArea/#trashArea position/size rule to still exist, untouched");
 
     const portraitTierMatch = css.match(/#mobileLeaderboard, #partyArea, #trashArea \{\s*\r?\n\s*display: none;\s*\r?\n\s*position: fixed;\s*\r?\n\s*top: 8dvh; left: 4vw; right: 4vw; bottom: 8dvh;/);
-    assert.ok(portraitTierMatch, "expected the touch+portrait tier's own #mobileLeaderboard/#partyArea/#trashArea rule to still exist, untouched");
+    assert.ok(portraitTierMatch, "expected the touch+portrait tier's own #mobileLeaderboard/#partyArea/#trashArea position/size rule to still exist, untouched");
+
+    // Both tiers now also give #partyArea/#trashArea (but not
+    // #mobileLeaderboard, in the portrait tier's case) the same
+    // Pause-matching shape as Desktop.
+    const narrowShapeIdx = css.indexOf("#partyArea, #trashArea {", narrowTierMatch.index);
+    const narrowShape = findDeclBlock(css, "#partyArea, #trashArea {", narrowTierMatch.index);
+    assert.match(narrowShape.block, /border:\s*1px solid var\(--border\)\s*;/, "expected the ≤600px tier's popup to gain the Pause-matching border");
+    assert.match(narrowShape.block, /background:\s*rgba\(10,\s*31,\s*15,\s*0\.82\)\s*;/, "expected the ≤600px tier's popup to use the same background as Pause");
+    assert.match(narrowShape.block, /border-radius:\s*var\(--radius-md\)\s*;/, "expected the ≤600px tier's popup to use the same radius as Pause");
+
+    const portraitShapeIdx = css.indexOf("#partyArea, #trashArea {", portraitTierMatch.index + portraitTierMatch[0].length);
+    assert.ok(portraitShapeIdx !== -1, "expected a dedicated Party/Trash-only shape rule after the touch+portrait tier's shared position rule");
+    const portraitShape = findDeclBlock(css, "#partyArea, #trashArea {", portraitTierMatch.index + portraitTierMatch[0].length);
+    assert.match(portraitShape.block, /border:\s*1px solid var\(--border\)\s*;/, "expected the touch+portrait tier's popup to gain the Pause-matching border");
+    assert.match(portraitShape.block, /background:\s*rgba\(10,\s*31,\s*15,\s*0\.82\)\s*;/, "expected the touch+portrait tier's popup to use the same background as Pause");
+    assert.match(portraitShape.block, /border-radius:\s*var\(--radius-md\)\s*;/, "expected the touch+portrait tier's popup to use the same radius as Pause");
+
+    // #mobileLeaderboard itself must NOT have picked up this shape —
+    // only Party/Trash were asked to match Pause.
+    const mobileLbBlock = css.slice(portraitTierMatch.index, portraitShapeIdx);
+    assert.doesNotMatch(
+        mobileLbBlock,
+        /#mobileLeaderboard\s*\{[^}]*background:\s*rgba\(10,\s*31,\s*15,\s*0\.82\)/,
+        "the Leaderboard popup should not have been restyled to match Pause — only Party/Trash were asked for"
+    );
 });
 
 test("Party/Trash badges are driven by the real party/trash DOM contents, never a hardcoded number", () => {

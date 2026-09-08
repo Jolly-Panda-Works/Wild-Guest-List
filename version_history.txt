@@ -272,3 +272,16 @@
   (min-width: 601px, pointer: fine) media block only — Mobile
   Portrait's own popup sizing/positioning is untouched.
 - Extended tests/desktopPartyTrash.test.mjs with 3 new cases.
+
+1.37.2
+- Party/Trash popup's Pause-matching shape (border/radius/background/
+  blur/shadow) extended to Mobile — the ≤600px-width tier and the
+  touch+portrait tier each gain a dedicated #partyArea, #trashArea
+  rule with the same border/background/radius/blur values as Pause,
+  layered right after their own existing position/size rule.
+- Mobile keeps its own tuned position and dimensions (only Desktop's
+  popup also matches Pause's width/height, from 1.37.1) —
+  #mobileLeaderboard (shares the position rule on the touch+portrait
+  tier) was deliberately left out of the new shape rule.
+- Rewrote the Mobile-tiers test in tests/desktopPartyTrash.test.mjs to
+  assert this split explicitly.

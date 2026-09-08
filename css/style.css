@@ -4120,7 +4120,12 @@ body.gameplay-locked #playerHand .card {
        rule), so in practice this one only reaches a narrow
        *non-touch* desktop window — included for consistency since
        it's the same component and same bug, not because it's one of
-       this fix's required test sizes. */
+       this fix's required test sizes.
+
+       Shape (border/radius/background/blur/shadow) matches the Pause
+       popup here too now (same values as the Desktop-only override
+       in the `@media (min-width: 601px) and (pointer: fine)` block) —
+       position/size stay this tier's own tuned edge-anchored band. */
     #partyArea, #trashArea {
         display: none;
         position: fixed;
@@ -4133,9 +4138,11 @@ body.gameplay-locked #playerHand .card {
         transform: none;
         margin: auto 0;
         z-index: 3000;
-        background: rgba(10,31,15,0.92);
+        border: 1px solid var(--border);
+        background: rgba(10,31,15,0.82);
         backdrop-filter: blur(18px);
-        border-radius: var(--radius-lg);
+        -webkit-backdrop-filter: blur(18px);
+        border-radius: var(--radius-md);
         padding: 16px;
         box-shadow: 0 20px 60px rgba(0,0,0,.6);
         overflow-y: auto;
@@ -8447,6 +8454,21 @@ body.gameplay-locked #playerHand .card {
         z-index: 3000;
         padding: 8px var(--popup-pad-x);
         overflow: hidden;
+    }
+
+    /* Party/Trash only (not Leaderboard) — shape matches the Pause
+       popup here too now, same values as the Desktop-only override
+       in the `@media (min-width: 601px) and (pointer: fine)` block.
+       Position/size above stay this tier's own tuned band; only the
+       border/background/radius (normally the shared, lighter
+       `--bg-panel`/`--radius-lg` panel look from the "PANELS" rule)
+       change here. */
+    #partyArea, #trashArea {
+        border: 1px solid var(--border);
+        background: rgba(10,31,15,0.82);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border-radius: var(--radius-md);
     }
 
     #mobileLeaderboard.mobile-open,
