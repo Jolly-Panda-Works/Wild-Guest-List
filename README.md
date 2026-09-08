@@ -1456,7 +1456,116 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.37.2
+**Current version:** 1.37.4
+
+**Fix — Bot card selection/preview no longer resizes the Bot Section (1.37.4):**
+On Mobile (and, more subtly, Desktop) the Bot Section — `#otherPlayers`
+and its `#topPlayer`/`#leftPlayer`/`#rightPlayer` seats — visibly
+changed size while a Bot selected/previewed/played a card, then
+snapped back afterward, shoving the Queue and Player Hand around in
+the process. The cause traced to `showBotPreviewBadge()`
+(`js/ui/game-ui.js`): the small face-up card it shows next to a Bot's
+seat while that Bot's Ability Preview is up (Section 7 of the brief)
+was styled `position: absolute`, but was still appended as a real DOM
+child of that seat's `.other-player-row` — i.e. still inside the Bot
+Section's own layout subtree. Neither `.other-player-row` nor any of
+its ancestors up to `#otherPlayers` declare their own `position:
+relative`, so the badge had no stable containing block of its own to
+size against; and `#otherPlayers` is exactly the kind of flex context
+(`flex-wrap: wrap` with `width: auto` seats on Mobile Portrait,
+`flex: 1 1 0; min-width: 0` shrinkable equal columns on Desktop) where
+inserting/removing *any* child — including one meant to be taken out
+of visual flow — still triggers a fresh layout pass for that subtree
+and its siblings. That's what let the badge's brief appearance and
+disappearance on every single Bot turn perturb the surrounding Bot
+Section box, rather than any actual change to its own declared size.
+
+Rather than reach for a bigger `min-height` on the Bot Section (which
+would only mask the coupling, not remove it — see this version's
+Task brief), `showBotPreviewBadge()`/`clearBotPreviewBadge()` now
+follow the exact same pattern already used one screen over for the
+human player's own drag preview: `.card-drag-ghost` (see
+`wireHandCardDrag` in the same file) has always been appended to
+`document.body`, entirely outside `#playerHand`'s own DOM subtree, and
+positioned with `transform: translate(...)`. The Bot preview badge now
+does the same — appended to `document.body`, `position: fixed`, with
+its screen position computed fresh from the target seat's live
+`getBoundingClientRect()` (via a new `positionBotPreviewBadge()`
+helper) into two CSS custom properties (`--bpb-x`/`--bpb-y`) the badge's
+`transform` reads, clamped to stay fully inside the viewport at any
+screen size. There is now no DOM relationship whatsoever between the
+badge and the Bot Section, so showing or hiding it structurally cannot
+reflow `#otherPlayers`, the Queue, or the Player Hand — this isn't a
+CSS tuning fix, the coupling that caused it is gone. A `resize`/
+`orientationchange` listener (added while the badge is visible, always
+removed in `clearBotPreviewBadge()`) keeps it glued to the seat if the
+viewport changes mid-preview; nothing is hardcoded to one Mobile
+resolution, so this holds across Mobile portrait at any width and
+Desktop's own flanking-columns layout equally.
+
+Nothing about *when* or *how long* the Bot's preview shows changed —
+`previewThenPlayCard()`/`playCard()` in `js/game/turnManager.js`,
+`BOT_PREVIEW_DISPLAY_DURATION_MS`, and the shared Ability Preview
+system (`js/ui/previewOverlay-ui.js`'s `showQueuePreview()`, used
+identically by the human's drag and the Bot's turn) are all untouched.
+Card selection/execution timing, the Director's animation sequencing,
+and the human player's drag-and-drop are all unaffected — only where
+the Bot's own preview badge lives in the DOM changed.
+
+**Fix — Queue → Party/Trash animation actually flies to the flanking icon instead of the corner (1.37.3):**
+`onEnteredParty`/`onRejected`/`onRemoved` (`js/ui/game-ui.js`) used to
+animate a resolving card with the same `flip()` FLIP primitive used
+for in-queue moves — measure where the element ends up after
+reparenting it, then transition to that real rect. That works for
+in-queue moves because the destination (`#queue`) is always visible,
+but `#partyCards`/`#trashCards` live inside `#partyArea`/`#trashArea`,
+popups that are `display: none` until the player opens them (see §
+Desktop — Party/Trash flank the Queue above). Measuring a
+`display:none` subtree's `getBoundingClientRect()` returns an
+all-zero rect, so the card was actually animating a shrink-to-the-
+top-left-corner rather than a visible trip toward Party/Trash — on
+both Mobile and Desktop, since both hide the popup by default.
+
+Added `flyToTarget()` alongside `flip()` in `js/presentation/flip.js`:
+it still performs the real reparent into `#partyCards`/`#trashCards`
+synchronously (gameplay/DOM state is correct the instant the flight
+starts, same as before — no gameplay logic changed, no new mutation
+path), but instead of chasing the hidden container's rect it measures
+the always-visible `#queueDoorIcon`/`#queueTrashIcon` flanking the
+Queue with a fresh `getBoundingClientRect()` call every time (dynamic,
+never hardcoded screen coordinates) and flies the card's real DOM node
+there with a pure `transform: translate(...) scale(...)` + opacity
+transition down to ~5% scale, fading out as it lands — cheap enough
+(no width/height/left/top interpolation) to run several times back-to-
+back without jank when a full Queue resolves two cards into Party and
+one into Trash in the same turn. `onEnteredParty`/`onRejected`/
+`onRemoved` now call `flyToTarget()` with the matching icon instead of
+`flip()` with the hidden container. Reduced-motion and "element
+already gone" fallbacks are unchanged (same defensive shape as
+`flip()` — never stalls a turn on a presentation failure).
+
+The old post-landing beats (`card-party-celebrate`, `card-in-trash`)
+played on the card element itself, which — same underlying issue — was
+already invisible once the card sat inside the hidden popup. They're
+replaced with a new `.queue-icon-receive` bump (`css/style.css`) played
+on the icon itself right as the flight lands, so there's now a real,
+visible "Party/Trash received it" beat instead of a wasted invisible
+one. Added to the existing `prefers-reduced-motion` suppression list
+alongside the other flourish-only keyframes.
+
+Sequencing, badges, and everything else are unchanged: the Director
+already plays each semantic event (`CARD_ENTERED_PARTY`/
+`CARD_REJECTED`/`CARD_REMOVED`/`CARD_EATEN`) strictly one at a time
+(`director.run()`'s `for...of` loop), so multiple cards resolving out
+of the Queue in one turn already animated in controlled sequence, never
+overlapping — that didn't need to change, only where each flight's
+target came from. `refreshPartyBadge()`/`refreshTrashBadge()` still
+read the real DOM child count of `#partyCards`/`#trashCards` right
+after each flight's reparent, so the badges stay correct throughout.
+Ability Preview and Drag & Drop are untouched — this only affects the
+resolution flight into Party/Trash. Applies identically on Mobile and
+Desktop, since both share the exact same `#queueDoorIcon`/
+`#queueTrashIcon` elements and only differ in their CSS position.
 
 **Refinement — Party/Trash popup's Pause-matching shape extended to Mobile (1.37.2):**
 1.37.1 gave `#partyArea`/`#trashArea` the Pause popup's shape (border/

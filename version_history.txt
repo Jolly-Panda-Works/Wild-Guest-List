@@ -285,3 +285,50 @@
   tier) was deliberately left out of the new shape rule.
 - Rewrote the Mobile-tiers test in tests/desktopPartyTrash.test.mjs to
   assert this split explicitly.
+
+1.37.3
+- Fixed the Queue -> Party/Trash resolution animation: it was flying
+  cards toward #partyCards/#trashCards' real (but display:none-hidden)
+  resting position, which measures as an all-zero rect, so cards
+  visually shrank into the top-left corner instead of toward Party/
+  Trash on both Mobile and Desktop.
+- Added flyToTarget() in js/presentation/flip.js: reparents the card
+  into #partyCards/#trashCards immediately (state stays correct), then
+  flies the real card element toward the always-visible
+  #queueDoorIcon/#queueTrashIcon (measured live via
+  getBoundingClientRect(), never hardcoded) using a transform
+  translate+scale-to-~5% + opacity transition.
+- onEnteredParty/onRejected/onRemoved (js/ui/game-ui.js) now use
+  flyToTarget() targeting the matching icon instead of flip() targeting
+  the hidden container.
+- Replaced the old invisible post-landing beats (card-party-celebrate,
+  card-in-trash) with a new .queue-icon-receive bump played on the
+  icon itself when a flight lands, added to the existing
+  prefers-reduced-motion suppression list.
+- No gameplay logic, event sequencing, badge logic, Ability Preview, or
+  Drag & Drop changed; multiple resolving cards still animate strictly
+  one at a time via the existing Director loop.
+
+1.37.4
+- Fixed the Bot Section (#otherPlayers / #topPlayer / #leftPlayer /
+  #rightPlayer) visibly resizing while a Bot selected/previewed/played
+  a card, shoving the Queue and Player Hand around, then snapping back
+  afterward.
+- Root cause: showBotPreviewBadge()'s small preview card was
+  position:absolute but still a real DOM child of the Bot Section's
+  own .other-player-row subtree (a flex item inside a wrapping/
+  shrinking Bot Section layout on both Mobile and Desktop), so
+  inserting/removing it each Bot turn still triggered a layout pass
+  for that subtree and its siblings.
+- Fix: showBotPreviewBadge()/clearBotPreviewBadge() (js/ui/game-ui.js)
+  now append the badge to document.body and position it with
+  `position: fixed`, mirroring the existing .card-drag-ghost pattern
+  used for the human player's own drag preview. Screen position is
+  computed live from the target seat's getBoundingClientRect() (new
+  positionBotPreviewBadge() helper) via --bpb-x/--bpb-y custom
+  properties, clamped to the viewport, and kept in sync via a
+  resize/orientationchange listener while visible.
+- No DOM relationship remains between the badge and the Bot Section,
+  so it can no longer reflow #otherPlayers, the Queue, or the Player
+  Hand by construction. Bot turn timing, the shared Ability Preview
+  system, and the human player's drag-and-drop are all unchanged.

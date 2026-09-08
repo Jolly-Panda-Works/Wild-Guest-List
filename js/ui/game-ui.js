@@ -2,7 +2,7 @@ import { t, getLang, playerDisplayName } from "../i18n.js";
 import { playCard } from "../game/turnManager.js";
 import { BOT_AVATARS, AI_DIFFICULTY } from "../constants/playerTypes.js";
 import { playSound } from "../services/soundManager.js";
-import { flip, playBeat, wait, isReducedMotion } from "../presentation/flip.js";
+import { flip, flyToTarget, playBeat, wait, isReducedMotion } from "../presentation/flip.js";
 import { director } from "../presentation/director.js";
 import { EVENTS } from "../presentation/events.js";
 import { ANTICIPATION, DEFAULT_ANTICIPATION, REACTION, DEFAULT_REACTION } from "../presentation/abilityPresentations.js";
@@ -458,15 +458,62 @@ function wireHandCardDrag(cardEl, card, gameState, player) {
 
 // ── Ability Preview: Bot ─────────────────────────────────────
 //
-// Shows which card the Bot is about to play, next to its seat, while
-// its Ability Preview is up on the Queue (Section 7 of the brief).
+// Shows which card the Bot is about to play, near its seat, while its
+// Ability Preview is up on the Queue (Section 7 of the brief).
 // Deliberately a standalone floating element rather than reusing/
 // revealing one of renderOtherPlayers()'s own `.card-back` elements —
 // those are wired for the existing "face-down back flies to the queue,
 // then reveals" animation (see cardEnteredQueue above), and swapping
 // one out early for a face-up preview would desync that choreography
 // the moment the Bot's turn actually plays out.
+//
+// Appended to document.body (like the human player's `.card-drag-
+// ghost`, see wireHandCardDrag above) rather than into the Bot's own
+// `.other-player-row` — Bot Section resizing while this badge showed/
+// hid used to be an issue precisely because the badge lived inside
+// that row's DOM subtree; inserting/removing ANY child there (even
+// one styled `position: absolute`) is still a mutation of the Bot
+// Section's own layout tree, which is exactly the coupling Task asked
+// to remove. Living at the body level instead means there is no DOM
+// relationship left between the badge and the Bot Section at all, so
+// showing/hiding it structurally cannot resize or reflow
+// #otherPlayers, the Queue, or the Player Hand — see
+// positionBotPreviewBadge() below for how it still visually tracks the
+// right seat.
 let _botPreviewBadgeEl = null;
+let _botPreviewRepositionHandler = null;
+
+/** Places `badge` (fixed-position, body-level) just above — or, if
+ *  there's no room, just below — `seatEl`'s current on-screen position.
+ *  Reads a fresh getBoundingClientRect() every call rather than caching
+ *  anything, so this is correct at any viewport size or seat layout
+ *  (Mobile portrait at any width, Desktop's flanking columns) without
+ *  hardcoding a screen position for any one resolution. */
+function positionBotPreviewBadge(badge, seatEl) {
+    if (!badge.isConnected || !seatEl.isConnected) return;
+
+    const rect = seatEl.getBoundingClientRect();
+    const badgeWidth = badge.offsetWidth || 70;
+    const badgeHeight = badge.offsetHeight || 100;
+    const margin = 8;
+
+    let x = rect.left + rect.width / 2 - badgeWidth / 2;
+    let y = rect.top - badgeHeight - margin;
+    if (y < margin) {
+        // Not enough room above the seat (small screens, or a seat
+        // already near the top edge) — sit just below it instead.
+        y = rect.bottom + margin;
+    }
+
+    // Clamp inside the viewport so the badge can never render
+    // off-screen, regardless of how narrow/short the viewport is or
+    // how close to an edge the seat sits.
+    x = Math.max(margin, Math.min(x, window.innerWidth - badgeWidth - margin));
+    y = Math.max(margin, Math.min(y, window.innerHeight - badgeHeight - margin));
+
+    badge.style.setProperty("--bpb-x", `${x}px`);
+    badge.style.setProperty("--bpb-y", `${y}px`);
+}
 
 export function showBotPreviewBadge(player, card) {
     clearBotPreviewBadge();
@@ -477,8 +524,20 @@ export function showBotPreviewBadge(player, card) {
     const badge = document.createElement("div");
     badge.className = "bot-preview-badge";
     badge.appendChild(createCard(card));
-    row.appendChild(badge);
+    document.body.appendChild(badge);
     loadIcons(badge);
+
+    positionBotPreviewBadge(badge, row);
+
+    // The Preview shows for a fixed short duration (see
+    // BOT_PREVIEW_DISPLAY_DURATION_MS in turnManager.js) rather than
+    // being driven by pointer movement like the drag ghost, so it
+    // doesn't need continuous per-frame repositioning — but a resize
+    // or orientation flip mid-preview should still move it rather than
+    // leave it stranded at a stale position.
+    _botPreviewRepositionHandler = () => positionBotPreviewBadge(badge, row);
+    window.addEventListener("resize", _botPreviewRepositionHandler);
+    window.addEventListener("orientationchange", _botPreviewRepositionHandler);
 
     // Next frame, so the opacity/transform transition in style.css
     // actually plays instead of snapping straight to visible.
@@ -488,6 +547,11 @@ export function showBotPreviewBadge(player, card) {
 }
 
 export function clearBotPreviewBadge() {
+    if (_botPreviewRepositionHandler) {
+        window.removeEventListener("resize", _botPreviewRepositionHandler);
+        window.removeEventListener("orientationchange", _botPreviewRepositionHandler);
+        _botPreviewRepositionHandler = null;
+    }
     if (_botPreviewBadgeEl) {
         _botPreviewBadgeEl.remove();
         _botPreviewBadgeEl = null;
@@ -776,7 +840,8 @@ const T = {
     majorPause:  420,   // queue-full "let it sink in" pause
     majorBeat:   260,   // card-result-anticipation (0.26s) — pre-party wind-up
     majorFlip:   440,   // travel into Party
-    majorCelebrate: 420 // card-party-celebrate (0.42s) — landing celebration
+    majorCelebrate: 420, // card-party-celebrate (0.42s) — landing celebration
+    iconReceive: 260    // queue-icon-receive (0.26s) — Party/Trash icon "received it" bump
 };
 
 /** Hand → back-of-queue. The one transition that needs a specific source
@@ -926,9 +991,18 @@ async function onRemoved(evt, { reaction, sound }) {
     await playBeat(el, style.className, style.duration);
     const trash = document.getElementById("trashCards");
     if (!trash) return;
-    await flip(el, () => trash.appendChild(el), { duringClass: "card-to-trash", duration: T.importantFlip });
+    // #trashCards lives inside #trashArea, a popup that's `display:none`
+    // until opened (see css/style.css) — flip()'s own "measure the real
+    // resting position" approach would read an all-zero rect there and
+    // make the card appear to snap to the corner. Fly toward the always-
+    // visible Trash icon flanking the Queue instead (see flyToTarget's
+    // doc comment in js/presentation/flip.js); the real reparent into
+    // #trashCards still happens synchronously inside the flight so game
+    // state and DOM never disagree about where the card lives.
+    const icon = document.getElementById("queueTrashIcon");
+    await flyToTarget(el, () => trash.appendChild(el), icon, { duringClass: "card-to-trash", duration: T.importantFlip });
     refreshTrashBadge();
-    await playBeat(el, "card-in-trash", 220); // card-in-trash's own animation is 0.22s
+    await playBeat(icon, "queue-icon-receive", T.iconReceive);
 }
 
 /** In-place-only reaction — nothing moves, no removal, just a beat that
@@ -989,11 +1063,17 @@ async function onEnteredParty(evt) {
         playSound("partyJoin");
         return;
     }
+    // Same reasoning as onRemoved()/onRejected() below: #partyCards lives
+    // inside #partyArea, a popup that's `display:none` until opened, so
+    // flying toward the always-visible Party icon (rather than measuring
+    // the hidden grid's real resting slot) is what makes the card
+    // visibly, dynamically arrive at Party instead of vanishing.
+    const icon = document.getElementById("queueDoorIcon");
     await playBeat(el, "card-result-anticipation", T.majorBeat);
-    await flip(el, () => party.appendChild(el), { duringClass: "card-to-party", duration: T.majorFlip });
+    await flyToTarget(el, () => party.appendChild(el), icon, { duringClass: "card-to-party", duration: T.majorFlip });
     refreshPartyBadge();
     playSound("partyJoin");
-    await playBeat(el, "card-party-celebrate", T.majorCelebrate);
+    await playBeat(icon, "queue-icon-receive", T.iconReceive);
 }
 
 async function onRejected(evt) {
@@ -1006,10 +1086,12 @@ async function onRejected(evt) {
         playSound("trashJoin");
         return;
     }
+    const icon = document.getElementById("queueTrashIcon");
     await playBeat(el, REMOVE_REACTION.weaker.className, REMOVE_REACTION.weaker.duration);
-    await flip(el, () => trash.appendChild(el), { duringClass: "card-to-trash", duration: T.importantFlip });
+    await flyToTarget(el, () => trash.appendChild(el), icon, { duringClass: "card-to-trash", duration: T.importantFlip });
     refreshTrashBadge();
     playSound("trashJoin");
+    await playBeat(icon, "queue-icon-receive", T.iconReceive);
 }
 
 function spawnConfetti(anchorEl) {
