@@ -1481,58 +1481,22 @@ body.popup-open::before {
     overflow: hidden;
 }
 
-/* ── Long-press feedback ──────────────────────────────────
-   Scale + shake "wind-up" + glow + circular progress ring while a card
-   is being held. Purely visual — driven by the .long-press-active class
-   toggled from js/ui/longPress.js the instant a press starts (not once
-   it fires), so the shake plays through the whole hold, not just at the
-   end. The ring's fill duration is set inline via --long-press-duration
-   (see js/ui/game-ui.js) so it always matches the actual timer, with no
-   duplicated number in CSS. Disappears immediately (no transition delay)
-   if the gesture is cancelled, since the class is simply removed. */
-.card.long-press-active {
-    animation: long-press-shake 260ms ease-out both;
-    box-shadow: var(--shadow-card), 0 0 0 3px rgba(189, 93, 56, 0.55);
-    transition: box-shadow 120ms ease-out;
-}
-
-@keyframes long-press-shake {
-    0%   { transform: scale(1)     rotate(0deg); }
-    15%  { transform: scale(1.025) rotate(-1.4deg); }
-    30%  { transform: scale(1.035) rotate(1.4deg); }
-    45%  { transform: scale(1.04)  rotate(-1deg); }
-    60%  { transform: scale(1.04)  rotate(0.7deg); }
-    80%  { transform: scale(1.04)  rotate(-0.3deg); }
-    100% { transform: scale(1.04)  rotate(0deg); }
-}
-
-.card.long-press-active::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 5;
-    pointer-events: none;
-    border-radius: inherit;
-    background: conic-gradient(var(--accent) 0deg, transparent 0deg);
-    opacity: 0.35;
-    animation: long-press-ring var(--long-press-duration, 800ms) linear forwards;
-}
-
-@keyframes long-press-ring {
-    from { background: conic-gradient(var(--accent) 0deg, transparent 0deg); }
-    to   { background: conic-gradient(var(--accent) 360deg, transparent 360deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .card.long-press-active {
-        animation: none;
-        transform: scale(1.02);
-        transition: none;
-    }
-    .card.long-press-active::after {
-        animation: none;
-        opacity: 0.25;
-    }
+/* Drag-from-anywhere safety net (see js/ui/game-ui.js's wireHandCardDrag
+   + createCard()'s draggable="false" on .card-image): browsers natively
+   make <img> elements drag-and-drop-able and turn a press-and-drag over
+   any text node into a text-selection drag, either of which can hijack
+   pointer capture mid-gesture and stop our own pointer-based drag from
+   continuing once it has started — regardless of which part of the card
+   the press began on. -webkit-user-drag covers the (still shipping)
+   WebKit/Blink-prefixed native-image-drag toggle that the HTML
+   `draggable` attribute alone doesn't fully suppress in every browser;
+   user-select stops the card's own text (name/owner badge) from ever
+   becoming a drag-a-text-selection target instead of our drag. Applies
+   to the whole card and everything inside it, not just the image, so no
+   child element anywhere on the card can start a competing native drag. */
+.card, .card * {
+    -webkit-user-drag: none;
+    user-select: none;
 }
 
 .card-owner-badge {
@@ -1795,10 +1759,14 @@ body.popup-open::before {
 }
 
 /* Let the browser keep handling horizontal scroll/pan of the hand strip
-   itself (see the mobile overflow-x:auto rule below); our long-press
-   handler cancels on the same real drag via its own movement threshold,
-   so this doesn't fight that — it just avoids blocking scroll for the
-   fraction of a gesture before our JS threshold check runs. */
+   itself (see the mobile overflow-x:auto rule below); our own
+   drag-to-play gesture (js/ui/game-ui.js's wireHandCardDrag) only turns
+   a press into a drag once it clears DRAG_START_THRESHOLD_PX of pointer
+   movement, so this doesn't fight that — it just avoids blocking native
+   horizontal scroll for the fraction of a gesture before our JS
+   threshold check runs, while any other direction (a real drag toward
+   the Queue) is still delivered to our pointer handlers instead of
+   being reserved for browser scrolling. */
 #playerHand .card {
     touch-action: pan-x;
 }
@@ -3249,14 +3217,10 @@ body.popup-open::before {
 
 /* Input lock: dim the hand while the Director is animating a turn, so
    it visually reads as "not interactive right now". Deliberately does
-   NOT set pointer-events:none any more — that used to also block the
-   hold-to-info long-press gesture (js/ui/longPress.js) any time it
-   wasn't this player's turn (director.isBusy() is true for most of an
-   opponent's turn), even though holding is meant to work regardless of
-   whose turn it is. Actually preventing a card from being PLAYED
-   mid-sequence is already handled in JS — see playThisCard()'s own
-   director.isBusy() / isMyTurn checks in game-ui.js — so this class only
-   needs to carry the visual "locked" look now. */
+   NOT set pointer-events:none — dragging is already blocked in JS (see
+   wireHandCardDrag's canStartDrag()/director.isBusy() check in
+   game-ui.js), so this class only needs to carry the visual "locked"
+   look, not actually gate input itself. */
 body.gameplay-locked #playerHand .card {
     opacity: 0.82;
     filter: saturate(0.85);
@@ -3920,9 +3884,8 @@ body.gameplay-locked #playerHand .card {
 
 /* Party/Trash: hover no longer enlarges the card — these piles are
    read-only history, not playable/selectable, so a hover lift implied
-   an interactivity that wasn't there. Hold-to-show-help (see
-   js/ui/longPress.js) is the only interaction left on these cards, and
-   it already has its own long-press-active visual feedback. */
+   an interactivity that isn't there; these cards have no interaction
+   at all. */
 #partyCards .card:hover, #trashCards .card:hover {
     transform: none;
     box-shadow: var(--shadow-card);
@@ -6712,177 +6675,6 @@ body.gameplay-locked #playerHand .card {
     /* Spotlight still works normally */
 }
 
-
-/* ══════════════════════════════════════════
-   CARD HELP — LONG-PRESS DISCOVERABILITY
-   (js/ui/cardHelpHint.js + affordance badges below)
-══════════════════════════════════════════ */
-
-/* ── Returning-player affordance ──────────────────────────
-   A small "info" badge on each hand card, hidden by default and only
-   faded in on hover (desktop), keyboard focus, or an active press
-   (which also covers touch — see .long-press-active, toggled the
-   moment a press starts, from js/ui/longPress.js). Never shown
-   permanently, never intercepts a tap/click (pointer-events: none). */
-.card-help-affordance {
-    position: absolute;
-    top: 5%;
-    right: 6%;
-    z-index: 4;
-    width: clamp(14px, 2.6cqw, 20px);
-    height: clamp(14px, 2.6cqw, 20px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.55);
-    opacity: 0;
-    transform: scale(0.7);
-    transition: opacity 150ms ease, transform 150ms ease;
-    pointer-events: none;
-}
-
-.card-help-affordance .icon-image {
-    width: 65%;
-    height: 65%;
-    object-fit: contain;
-}
-
-.card:hover .card-help-affordance,
-.card:focus-visible .card-help-affordance,
-.card.long-press-active .card-help-affordance {
-    opacity: 0.95;
-    transform: scale(1);
-}
-
-[dir="rtl"] .card-help-affordance {
-    right: auto;
-    left: 6%;
-}
-
-/* ── First-time hint bubble ────────────────────────────────
-   Positioned with position:fixed and placed via JS from the hand's
-   actual bounding rect (see js/ui/cardHelpHint.js) rather than
-   anchored inside #handArea — #centerArea uses overflow:hidden for
-   its own layout, which would otherwise risk clipping a bubble meant
-   to poke up above the hand. Fixed positioning + a below-modal
-   z-index keeps it clear of both that clipping and any modal that
-   might open. Entirely pointer-events: none — it can never block a
-   tap/click meant for a card underneath/behind it. */
-.card-help-hint {
-    position: fixed;
-    z-index: 9500;
-    transform: translate(-50%, 8px);
-    opacity: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transition: opacity 220ms ease, transform 220ms ease;
-    max-width: min(86vw, 280px);
-}
-
-.card-help-hint.visible {
-    transform: translate(-50%, 0);
-    opacity: 1;
-}
-
-.card-help-hint-bubble {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 14px;
-    background: var(--bg-panel);
-    backdrop-filter: var(--blur);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-panel);
-    text-align: center;
-}
-
-.card-help-hint-text {
-    margin: 0;
-    font-size: clamp(11px, 2.4vw, 13px);
-    color: var(--text-main);
-    line-height: 1.35;
-}
-
-.card-help-hint-arrow {
-    width: 12px;
-    height: 12px;
-    margin-top: -7px;
-    background: var(--bg-panel);
-    border-right: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    transform: rotate(45deg);
-    backdrop-filter: var(--blur);
-}
-
-/* Small self-contained demo: an icon that presses down while a ring
-   fills around it, then releases — the same visual language as the
-   real long-press feedback (see .card.long-press-active), but staged
-   on its own mini widget so the actual hand cards are never touched
-   and the real Help modal is never opened automatically. */
-.card-help-hint-demo {
-    position: relative;
-    width: 34px;
-    height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.card-help-hint-demo-icon {
-    font-size: 18px;
-    line-height: 1;
-    animation: card-help-demo-pulse 1.8s ease-in-out 2;
-}
-
-.card-help-hint-demo-ring {
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    background: conic-gradient(var(--accent) 0deg, transparent 0deg);
-    opacity: 0;
-    animation: card-help-demo-ring 1.8s ease-in-out 2;
-}
-
-@keyframes card-help-demo-pulse {
-    0%   { transform: scale(1); }
-    10%  { transform: scale(0.88); }
-    75%  { transform: scale(0.88); }
-    100% { transform: scale(1); }
-}
-
-@keyframes card-help-demo-ring {
-    0%   { opacity: 0;    background: conic-gradient(var(--accent) 0deg, transparent 0deg); }
-    10%  { opacity: 0.9;  background: conic-gradient(var(--accent) 0deg, transparent 0deg); }
-    75%  { opacity: 0.9;  background: conic-gradient(var(--accent) 360deg, transparent 360deg); }
-    100% { opacity: 0;    background: conic-gradient(var(--accent) 360deg, transparent 360deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .card-help-hint-demo-icon,
-    .card-help-hint-demo-ring {
-        animation: none;
-    }
-    .card-help-hint-demo-ring {
-        opacity: 0.5;
-        background: conic-gradient(var(--accent) 180deg, transparent 180deg);
-    }
-}
-
-/* On the narrow mobile layout #handArea becomes position:fixed at the
-   bottom of the screen (see the existing mobile #handArea rule); the
-   JS-computed position in cardHelpHint.js already re-anchors above
-   whatever the hand's current rect is, so only the bubble's own max
-   width needs a tighter mobile cap here. */
-@media (max-width: 600px) {
-    .card-help-hint {
-        max-width: min(80vw, 240px);
-    }
-}
-
 @media (prefers-reduced-motion: reduce) {
     .other-player-row.current-turn {
         animation: none;
@@ -8820,9 +8612,9 @@ body.gameplay-locked #playerHand .card {
 .preview-overlay {
     position: absolute;
     inset: 0;
-    z-index: 6; /* above .card-help-affordance (z-index 4) and the
-                   long-press ring (z-index 5) — a Preview is the most
-                   important thing on the card while it's showing */
+    z-index: 6; /* above the rest of the card's own layers — a Preview
+                   is the most important thing on the card while it's
+                   showing */
     display: flex;
     flex-direction: column;
     align-items: center;

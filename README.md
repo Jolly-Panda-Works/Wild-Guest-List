@@ -1456,7 +1456,55 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.37.4
+**Current version:** 1.37.5
+
+**Removed — "Hold to Show Hint" (Card Help long-press) (1.37.5):**
+The Card Help discoverability system — holding a card (pointer, touch,
+or keyboard Enter/Space) to open the Card Information modal, plus the
+one-time bubble teaching players about it — has been removed
+completely. Deleted `js/ui/longPress.js` (the reusable long-press
+gesture handler), `js/ui/cardHelpHint.js` (the discoverability hint
+bubble + its `wgl_cardHelpLongPressHintShown` persistence), and
+`js/constants/longPress.js` (its duration/threshold config), along
+with `wireCardHelpLongPress()`, the keyboard hold handler, and the
+`.card-help-affordance` badge in `js/ui/game-ui.js`; `openCardInfoByPower()`/
+`ensureHelpCardsLoaded()` in `js/game/help.js` (only ever called by the
+long-press gesture — Card Information stays fully reachable through
+the existing Help/Card Guide modal grid, unaffected); the
+`dismissCardHelpHint()`/`maybeShowCardHelpHint()` call sites in
+`js/game/turnManager.js` and `js/game-main.js`; the `.long-press-active`
+and `.card-help-hint*`/`.card-help-affordance` CSS (rules + keyframes)
+in `css/style.css`; and the `cardHelpHintText`/`cardHelpHintLabel` i18n
+keys (all 4 locales). The Ability Preview system (`js/abilities/
+previewResolver.js`, `js/ui/previewOverlay-ui.js`) and every other
+existing hint/guidance system (`js/ui/cardGuidance-ui.js`,
+`js/ui/tutorial-ui.js`, `js/ui/walkthrough.js`) are untouched —
+`tests/previewResolver.test.mjs` still passes in full, confirming no
+Ability Preview regression.
+
+**Fix — Desktop drag only worked from a card's top-right corner (1.37.5):**
+`wireHandCardDrag()` (`js/ui/game-ui.js`) has always attached its
+`pointerdown` handler directly to the whole card element with no
+target/area restriction, so architecturally a drag should already
+start from anywhere on the card. The actual cause: `<img
+class="card-image">` — which covers most of a card's visible area —
+is natively drag-and-drop-able by default in every browser, so a
+press-and-drag starting over the image was hijacked by the browser's
+own native image-drag instead of reaching our pointer handlers; only
+the small non-image slivers of the card (e.g. the top-right corner,
+where the now-removed Card Help affordance badge used to sit) were
+ever free of that interference. Fixed by adding `draggable="false"` to
+the `<img>` in `createCard()`, plus a `-webkit-user-drag: none;
+user-select: none;` CSS safety net on `.card` and all of its children
+(also stops the card's own text — name, owner badge — from starting a
+native text-selection drag instead of our drag). No parallel drag
+implementation was introduced; the existing single
+pointer-events-based architecture is unchanged. Mobile's existing
+`touch-action: pan-x` on hand cards (native horizontal hand-scroll
+alongside our own vertical/diagonal pointer-driven drag) was reviewed
+and needed no change; Ability Preview during drag, Queue drop, and
+drag-cancel-doesn't-mutate-state all continue to work exactly as
+before.
 
 **Fix — Bot card selection/preview no longer resizes the Bot Section (1.37.4):**
 On Mobile (and, more subtly, Desktop) the Bot Section — `#otherPlayers`

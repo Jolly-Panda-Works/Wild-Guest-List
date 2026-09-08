@@ -6,11 +6,7 @@ import { flip, flyToTarget, playBeat, wait, isReducedMotion } from "../presentat
 import { director } from "../presentation/director.js";
 import { EVENTS } from "../presentation/events.js";
 import { ANTICIPATION, DEFAULT_ANTICIPATION, REACTION, DEFAULT_REACTION } from "../presentation/abilityPresentations.js";
-import { attachLongPress } from "./longPress.js";
-import { openCardInfoByPower } from "../game/help.js";
-import { LONG_PRESS_DURATION_MS } from "../constants/longPress.js";
 import { TURN_TIMER_SECONDS } from "../constants/turnTimer.js";
-import { dismissCardHelpHintOnSuccess } from "./cardHelpHint.js";
 import { loadIcons } from "./icon-ui.js";
 import { isPaused } from "./pause-ui.js";
 import { getPlayerAvatarId } from "./playerAvatar-ui.js";
@@ -123,10 +119,10 @@ function queueSlotEl(index) {
     return slots[index] || null;
 }
 
-// Long-press handles for the currently-rendered hand cards — torn down
-// at the top of every renderHand() so timers/listeners from the previous
-// render never linger past the re-render that replaces their elements.
-let handLongPressHandles = [];
+// Drag handles for the currently-rendered hand cards — torn down at the
+// top of every renderHand() so listeners from the previous render never
+// linger past the re-render that replaces their elements.
+let handDragHandles = [];
 
 // ── Player's own name + avatar, shown by their deck ─────────
 // Mirrors playerDisplayName()/avatar/rank-badge shown for each bot in
@@ -176,14 +172,16 @@ function renderHand(gameState) {
     // Only tear down handles whose element is still actually sitting in
     // the hand DOM. A card that has since been played and moved (not
     // cloned — same DOM node, see flip.js) into the queue/party/trash by
-    // the Director must keep its long-press wiring; destroying it here
-    // would silently strip hold-to-show-help from every card that ever
-    // left the hand.
-    handLongPressHandles.forEach(h => {
+    // the Director is no longer draggable-from-hand anyway (its handle's
+    // own canStartDrag() check already fails once the card has left
+    // player.hand) — this guard just avoids tearing down a handle still
+    // mid-flight on an element that isn't actually a child of #playerHand
+    // right now.
+    handDragHandles.forEach(h => {
         if (h.el && !hand.contains(h.el)) return;
         h.destroy();
     });
-    handLongPressHandles = [];
+    handDragHandles = [];
 
     hand.innerHTML = "";
 
@@ -196,82 +194,14 @@ function renderHand(gameState) {
 
     player.hand.forEach((card) => {
         const cardEl = createCard(card);
-        // createCard() already wired the long-press-to-Card-Info gesture
-        // and its affordance badge (see wireCardHelpLongPress) — reuse
-        // that exact handle here instead of attaching a second gesture,
-        // so hand cards just layer click-to-play + keyboard on top of it.
-        const longPress = cardEl._helpLongPress;
-        longPress.el = cardEl;
-        handLongPressHandles.push(longPress);
 
-        // Accessible focus target: same info long-press reveals should
-        // also be reachable via keyboard, without changing what Enter/
-        // Space does for card-play (see keydown handler below).
-        cardEl.tabIndex = 0;
-        cardEl.setAttribute("role", "button");
-        const cardName = cardEl.querySelector(".card-name")?.textContent || "";
-        // Short discoverability suffix so keyboard/screen-reader users learn
-        // about the hold-for-info interaction too — the visual hint/affordance
-        // below is never the only way to find out about it.
-        cardEl.setAttribute("aria-label", `${cardName} — ${t("cardHelpHintLabel")}`);
-
-        // Cards are no longer played by clicking/tapping — see
-        // wireHandCardDrag() below for the drag-to-play gesture that
-        // replaces it (Ability Preview system). The long-press-to-
-        // Card-Info gesture above is untouched: that's the "existing
-        // card interaction behavior unrelated to playing cards" the
-        // drag integration must preserve.
+        // Cards are played by dragging — see wireHandCardDrag() below
+        // for the drag-to-play gesture (Ability Preview system).
         const dragHandle = wireHandCardDrag(cardEl, card, gameState, player);
-        handLongPressHandles.push(dragHandle);
-
-        // Keyboard parity for the long-press-to-Card-Info gesture only
-        // (holding Enter/Space for LONG_PRESS_DURATION_MS opens Card
-        // Information, same as holding the card with a pointer does).
-        // Playing a card is drag-only now — there is intentionally no
-        // keyboard equivalent for that yet; see the deliverable notes
-        // for this task on it as a known accessibility gap to revisit.
-        let keyHoldTimer = null;
-        const onKeyDown = e => {
-            if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
-            e.preventDefault();
-            if (e.repeat) return; // ignore OS key-repeat while held
-            keyHoldTimer = setTimeout(() => {
-                dismissCardHelpHintOnSuccess();
-                openCardInfoByPower(card.power);
-            }, LONG_PRESS_DURATION_MS);
-        };
-        const onKeyUp = e => {
-            if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
-            clearTimeout(keyHoldTimer);
-        };
-        cardEl.addEventListener("keydown", onKeyDown);
-        cardEl.addEventListener("keyup", onKeyUp);
-        // Piggyback on the same handles array so a mid-render teardown
-        // also clears any pending key-hold timer, not just pointer state.
-        handLongPressHandles.push({
-            el: cardEl,
-            destroy() {
-                clearTimeout(keyHoldTimer);
-                cardEl.removeEventListener("keydown", onKeyDown);
-                cardEl.removeEventListener("keyup", onKeyUp);
-            },
-        });
+        handDragHandles.push(dragHandle);
 
         hand.appendChild(cardEl);
     });
-
-    // Batch-resolve the "help" icon used by the affordance badges above,
-    // same pattern used elsewhere for dynamically-inserted [data-icon]
-    // elements (see renderOtherPlayers).
-    loadIcons(hand);
-
-    // First-time discoverability hint — no-ops instantly once it has
-    // already been shown/dismissed (see js/ui/cardHelpHint.js). Not
-    // triggered from here: the game-start flow in main.js calls it
-    // explicitly at the right moment (immediately, or after the in-game
-    // walkthrough finishes if one is running) so it can never appear
-    // mid-walkthrough or get missed on a render that happens to run
-    // while the walkthrough is still active.
 }
 
 /** The specific hand-card DOM element at `index`, captured before the
@@ -680,8 +610,17 @@ export function createCard(card) {
     const lang = getLang();
     const displayName = card.translations?.[lang]?.name || card.name;
 
+    // draggable="false": browsers make <img> natively drag-and-drop-able
+    // by default, which hijacks pointer capture the instant a drag
+    // starts over the image (nearly the whole visible card) and fights
+    // our own pointer-based drag-to-play (wireHandCardDrag below) —
+    // without this, a press only reliably turns into our drag from the
+    // small non-image slivers of the card (e.g. the top corners), never
+    // from the image itself. See also the `-webkit-user-drag: none`
+    // safety net on `.card img` in css/style.css for browsers that
+    // still attempt native drag despite this attribute.
     const visual = card.image
-        ? `<img class="card-image" src="${card.image}" alt="${displayName}" />`
+        ? `<img class="card-image" src="${card.image}" alt="${displayName}" draggable="false" />`
         : `<div class="card-emoji">${card.animal}</div>`;
 
     div.innerHTML = `
@@ -692,57 +631,7 @@ export function createCard(card) {
         </div>
     `;
 
-    wireCardHelpLongPress(div, card);
-
     return div;
-}
-
-/**
- * Wires the "hold to open Card Information" gesture onto a card element.
- * Called from createCard() itself, so EVERY face-up card the game ever
- * renders — hand, queue, party, and trash alike — gets it for free,
- * instead of only the player's hand (the original, narrower wiring lived
- * inline in renderHand() below). Opponents' face-down card-backs are
- * never passed through createCard() at all, so there's nothing to hold
- * there — there's no card identity to reveal yet.
- *
- * The returned handle is also stashed on the element itself
- * (`el._helpLongPress`) so a caller that layers extra behavior on top —
- * currently only renderHand(), for click-to-play + keyboard parity —
- * can reuse this exact gesture instead of attaching a second, competing
- * one to the same element.
- */
-function wireCardHelpLongPress(cardEl, card) {
-    // Returning-player affordance: a small info badge that only fades in
-    // on hover/focus/touch, instead of a permanent label/icon on every
-    // card. Reuses the same "help" icon as the Help button
-    // (js/ui/icon-ui.js), so it matches the existing visual language
-    // rather than introducing a new icon. Purely visual — pointer-events
-    // disabled so it can never intercept a tap meant for the card.
-    const affordance = document.createElement("span");
-    affordance.className = "card-help-affordance";
-    affordance.setAttribute("data-icon", "help");
-    affordance.setAttribute("title", t("cardHelpHintLabel"));
-    affordance.setAttribute("aria-hidden", "true");
-    cardEl.appendChild(affordance);
-    // Resolve this specific badge's icon right away — self-contained, so
-    // every call site (queue/party/trash/hand, plus the presentation
-    // layer's own createCard() calls) gets a rendered icon without each
-    // one having to remember to call loadIcons() itself.
-    loadIcons(cardEl);
-
-    const longPress = attachLongPress(cardEl, {
-        // Long-press must not fire while the player doesn't have
-        // control — e.g. mid-animation/AI turn — matching the same
-        // director.isBusy() gate normal play already respects.
-        isDisabled: () => director.isBusy(),
-        onLongPress: () => {
-            dismissCardHelpHintOnSuccess();
-            openCardInfoByPower(card.power);
-        },
-    });
-    cardEl._helpLongPress = longPress;
-    return longPress;
 }
 
 // ── Turn label ────────────────────────────────────────────

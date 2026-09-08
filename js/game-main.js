@@ -27,7 +27,6 @@ import { loadI18n, t, buildLangSelector } from "./i18n.js";
 import { playBackgroundMusic } from "./services/soundManager.js";
 import { initializeTutorial } from "./ui/tutorial-ui.js";
 import { startWalkthrough, shouldShowWalkthrough } from "./ui/walkthrough.js";
-import { maybeShowCardHelpHint } from "./ui/cardHelpHint.js";
 import { initCardColorPicker } from "./ui/cardColor-ui.js";
 import { getProfile } from "./services/profile.js";
 import { notifyGameStarted } from "./services/achievements.js";
@@ -146,14 +145,7 @@ async function startGame() {
 
     // In-game walkthrough (first time only)
     if (shouldShowWalkthrough()) {
-        // Held off during the walkthrough itself (isWalkthroughActive()
-        // guards against that) and shown only once it fully finishes,
-        // right before the player's next real move.
-        startWalkthrough().then(() => {
-            maybeShowCardHelpHint(document.getElementById("playerHand"));
-        });
-    } else {
-        maybeShowCardHelpHint(document.getElementById("playerHand"));
+        startWalkthrough();
     }
 }
 

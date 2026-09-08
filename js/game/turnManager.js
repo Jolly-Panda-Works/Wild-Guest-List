@@ -40,7 +40,6 @@ import {
 from "./queueManager.js";
 
 import { notifyCardPlayed, isWalkthroughActive } from "../ui/walkthrough.js";
-import { dismissCardHelpHint } from "../ui/cardHelpHint.js";
 
 import { getHandCardElement, getOpponentHandBackElement, renderTurnTimer, showBotPreviewBadge, clearBotPreviewBadge }
 from "../ui/game-ui.js";
@@ -253,14 +252,6 @@ export async function playCard(
     // whether this play came from a human click, the AI's own decision,
     // or the timer's own onExpire fallback calling back into here.
     stopTurnTimer();
-
-    // The card-help discoverability hint (js/ui/cardHelpHint.js) only
-    // matters before the player's first-ever play — once they've played
-    // a card, that moment has passed, so dismiss it (and mark it seen
-    // for good) whether or not it happened to be showing.
-    if (player.id === "p1") {
-        dismissCardHelpHint();
-    }
 
     // Capture the DOM element the card is visually leaving BEFORE it's
     // spliced out of the hand array / re-rendered.

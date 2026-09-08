@@ -332,3 +332,41 @@
   so it can no longer reflow #otherPlayers, the Queue, or the Player
   Hand by construction. Bot turn timing, the shared Ability Preview
   system, and the human player's drag-and-drop are all unchanged.
+
+1.37.5
+- Removed the "Hold to Show Hint" feature (Card Help long-press):
+  deleted js/ui/longPress.js, js/ui/cardHelpHint.js, and
+  js/constants/longPress.js; removed wireCardHelpLongPress(), the
+  keyboard Enter/Space hold handler, and the .card-help-affordance
+  badge from js/ui/game-ui.js; removed openCardInfoByPower()/
+  ensureHelpCardsLoaded() from js/game/help.js (Card Information is
+  still reachable via the existing Help/Card Guide modal); removed the
+  dismissCardHelpHint()/maybeShowCardHelpHint() call sites in
+  js/game/turnManager.js and js/game-main.js; removed the
+  .long-press-active and .card-help-hint*/.card-help-affordance CSS
+  (rules + keyframes) from css/style.css; removed the
+  cardHelpHintText/cardHelpHintLabel i18n keys (all 4 locales).
+- Ability Preview (js/abilities/previewResolver.js,
+  js/ui/previewOverlay-ui.js) and every other hint/guidance system
+  (cardGuidance-ui.js, tutorial-ui.js, walkthrough.js) are untouched;
+  tests/previewResolver.test.mjs still passes in full, including the
+  "previewAbility never mutates the real gameState" case.
+- Fixed Desktop drag only starting from a card's top-right corner: the
+  card's <img class="card-image"> is natively drag-and-drop-able by
+  default, which hijacked pointer capture over most of the card's
+  visible area (everywhere the browser's native image-drag could kick
+  in) and fought wireHandCardDrag()'s own pointer-based drag, leaving
+  only the small non-image corners free of the interference. Fixed by
+  adding draggable="false" to the card image in createCard() (js/ui/
+  game-ui.js) plus a `-webkit-user-drag: none; user-select: none;`
+  safety net on .card and its children in css/style.css. No parallel
+  drag implementation was added — the existing single pointer-events
+  architecture (wireHandCardDrag, attached directly to the whole card
+  element) is unchanged.
+- Verified Mobile dragging end-to-end: touch-action: pan-x on hand
+  cards (native horizontal hand-scroll alongside our own vertical/
+  diagonal pointer-driven drag) needed no change; Ability Preview
+  during drag, Queue drop, and drag-cancel-doesn't-mutate-state all
+  continue to work exactly as before removing the long-press listeners
+  that used to share the same card elements.
+- node --test tests/*.test.mjs: 60/60 passing.
