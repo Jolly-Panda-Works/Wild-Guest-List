@@ -1456,7 +1456,29 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.37.7
+**Current version:** 1.37.8
+
+**Fixed — "Send Feedback" button not centered in the Feedback popup on Mobile (1.37.8):**
+`#feedbackSubmitBtn`'s `.feedback-modal-footer` (`.modal-content > .modal-footer`)
+is `display: flex; flex-direction: column`, so the footer's cross axis
+is horizontal. Below the 600px breakpoint, the generic
+`.screen-btn { max-width: 300px; }` mobile rule also applied to this
+button, capping its width below the footer's own available width
+(the feedback popup's `.small-popup` runs up to `min(350px, 92vw)`,
+wider than 300px once its padding is subtracted on most phones).
+Once the button's cross-size stopped resolving to `auto`, flexbox's
+default `align-items: stretch` no longer filled the footer, and with
+no alignment override the button fell back to the flex line's start
+edge — flush-left in English/Turkish, flush-right in Farsi/Arabic —
+instead of sitting centered. Fixed by adding `align-self: center` to
+`.feedback-submit-btn` — pure flexbox alignment on the project's
+existing layout system, no hardcoded margins/left/transform. Centers
+correctly at any popup or viewport width, Mobile and Desktop alike;
+above 300px-wide footers the button still renders at its previous
+full width (just centered instead of pinned to the start edge), so
+the size/padding/font-size fixed in the prior task, and the button's
+`type="submit"`/click→`feedback-ui.js` submit behavior, are
+unchanged.
 
 **Fixed — Win Popup action buttons not equal size (1.37.7):**
 `#endGameScreen`'s `.endgame-actions` row (Return to Home / Play

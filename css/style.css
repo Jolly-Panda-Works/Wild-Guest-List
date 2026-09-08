@@ -6851,6 +6851,27 @@ body.gameplay-locked #playerHand .card {
     width: 100%;
     box-sizing: border-box;
     margin-top: 0;
+    /* .modal-footer is display:flex; flex-direction:column (see the
+       shared modal-footer rules above), so its cross axis is
+       horizontal — align-self here is what actually centers this
+       button. It was missing before: on viewports narrower than
+       600px, the generic `.screen-btn { max-width: 300px; }` mobile
+       rule (below) caps this button below the footer's own width
+       (footer can run wider than 300px, e.g. `.small-popup`'s
+       min(350px, 92vw) minus its padding), which stops `align-items:
+       stretch`'s default fill from applying. With no explicit
+       cross-axis alignment, the button then fell back to the start
+       edge of the flex line — flush-left in LTR, flush-right in
+       fa/ar RTL — instead of sitting centered in the popup. Flexbox
+       centering (not a hardcoded margin/left/transform) keeps this
+       correct at any popup or viewport width, Mobile and Desktop
+       alike, including the ~350px min(350px, 92vw) cap on
+       `.small-popup` this button's popup uses. Purely additive: the
+       button's width/max-width/padding/font-size (its size and
+       click behavior) are unchanged — above 300px-wide footers it
+       still renders at its previous full width, just now centered
+       instead of pinned to the start edge. */
+    align-self: center;
 }
 
 /* ── Random in-game toast ── */
