@@ -8858,6 +8858,22 @@ body.gameplay-locked #playerHand .card {
         flex: 0 0 auto;
         gap: clamp(6px, 2vw, 14px);
         width: 100%;
+        /* This row is the very first thing inside #queueWithIcons (see
+           the DOM comment above), which itself sits directly under
+           #otherPlayers with only #centerArea's 6px column `gap` between
+           them. The Party/Trash notification badges (.queue-icon-badge
+           below) are absolutely positioned at `top: -6px` against their
+           own .queue-icon button, i.e. they poke 6px above THIS row's
+           top edge by design (standard corner-badge treatment, same
+           -6px used on Desktop) — which exactly cancels out that 6px
+           gap, leaving zero clearance between the badge and
+           #otherPlayers above it on every Mobile Portrait
+           width/aspect-ratio. `margin-top` (not a change to #queueArea
+           or #centerArea, which are shared with unrelated siblings like
+           the Hand) reserves headroom for just this row's own badge
+           overflow, restoring real separation without touching anything
+           else's layout. */
+        margin-top: 10px;
     }
 
     #queueInner {

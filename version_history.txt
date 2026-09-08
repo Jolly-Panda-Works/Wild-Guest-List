@@ -370,3 +370,26 @@
   continue to work exactly as before removing the long-press listeners
   that used to share the same card elements.
 - node --test tests/*.test.mjs: 60/60 passing.
+
+1.37.6
+- Fixed the Party/Trash notification badges (#partyIconBadge/
+  #trashIconBadge, .queue-icon-badge) sitting flush against/overlapping
+  the Other Players row on Mobile Portrait. Root cause: the badges are
+  absolutely positioned at top: -6px against their own .queue-icon
+  button (unchanged corner-badge treatment, same as Desktop), which
+  pokes 6px above the Party/Trash row's (#queuePartyTrashRow/
+  .queue-party-trash-row) own top edge; that row is the first child of
+  #queueWithIcons, separated from #otherPlayers above it by only
+  #centerArea's 6px column gap — the 6px overhang exactly canceled the
+  6px gap, leaving zero clearance at every Mobile Portrait width/
+  aspect ratio.
+- Fix: added `margin-top: 10px` to `.queue-party-trash-row` inside the
+  `@media (pointer: coarse) and (orientation: portrait)` block —
+  scoped to the row that owns the badges, not to #queueArea or
+  #centerArea (both shared with the unrelated Hand section below).
+- Badge-to-icon offset/size, live count logic (renderParty()/
+  renderTrash() in js/ui/game-ui.js), and popup open/close/click
+  targets are all unchanged. Desktop (`@media (min-width: 601px) and
+  (pointer: fine)`) rules are untouched.
+- node --test tests/*.test.mjs: 64/64 passing (60 pre-existing + 4 new
+  in tests/queuePartyTrashBadgeSpacing.test.mjs).

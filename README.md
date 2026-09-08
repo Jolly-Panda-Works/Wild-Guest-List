@@ -1456,7 +1456,25 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.37.5
+**Current version:** 1.37.6
+
+**Fixed — Party/Trash notification badge crowding on Mobile Portrait (1.37.6):**
+On Mobile Portrait, the live card-count badges on the Party and Trash
+buttons (`#partyIconBadge`/`#trashIconBadge`, `.queue-icon-badge`) sit
+at `top: -6px` on their own `.queue-icon` button — standard
+corner-badge positioning, unchanged. The Party/Trash button row
+(`#queuePartyTrashRow`/`.queue-party-trash-row`) is the first element
+inside `#queueWithIcons`, directly below the Other Players row with
+only `#centerArea`'s 6px column `gap` between them, so that 6px badge
+overhang exactly canceled the 6px gap and left the badges touching the
+Other Players row above at every Mobile Portrait width/aspect ratio.
+Fixed with a `margin-top: 10px` on `.queue-party-trash-row` itself
+(inside the `@media (pointer: coarse) and (orientation: portrait)`
+block) — scoped to the row that actually owns the badges, not to
+`#queueArea`/`#centerArea` (shared with the unrelated Hand section).
+Badge-to-icon offset, count logic (`renderParty()`/`renderTrash()` in
+`js/ui/game-ui.js`), and popup open/close behavior are all unchanged;
+Desktop (`@media (min-width: 601px) and (pointer: fine)`) is untouched.
 
 **Removed — "Hold to Show Hint" (Card Help long-press) (1.37.5):**
 The Card Help discoverability system — holding a card (pointer, touch,
