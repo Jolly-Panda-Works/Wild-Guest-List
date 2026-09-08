@@ -14,14 +14,13 @@ export function renderLeaderboard(gameState) {
         return `<div class="leaderboard-row" data-player="${p.id}">
             <span class="lb-rank">${medal}</span>
             <span class="lb-name">${playerDisplayName(p)}</span>
-            <span class="lb-cards" title="${t("endParty")}">${count} <span data-icon="partyEmoji"></span></span>
-            <span class="lb-score" title="${t("endPower")}">${score} <span data-icon="power"></span></span>
+            <span class="lb-cards" title="${t("endParty")}">${count}</span>
         </div>`;
     }).join("");
 
     const headerHTML = `<div class="leaderboard-header">
         <span></span><span>${t("endPlayer")}</span>
-        <span>${t("endParty")}</span><span>${t("endPower")}</span>
+        <span class="lb-cards-header"> ${t("endParty")}</span><span data-icon="partyEmoji"></span>
     </div>`;
 
     const desktopRows = document.getElementById("leaderboardRows");

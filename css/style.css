@@ -4998,6 +4998,16 @@ body.gameplay-locked #playerHand .card {
 .lb-cards { color: #86efac; font-weight: 600; text-align: right; }
 .lb-score { color: #fbbf24; font-weight: 700; text-align: right; }
 
+/* Party column header: icon replaces the per-row icon that used to
+   repeat next to every player's count (see renderLeaderboard() in
+   js/ui/leaderboard-ui.js). Right-aligned so the icon sits directly
+   above the right-aligned numbers in .lb-cards below it. */
+.lb-cards-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
 /* ============================================================
    LOG POPUP — shared by desktop (#logBtn) and mobile (#railLogBtn),
    same shell shape as the party/trash popups. Name kept as-is

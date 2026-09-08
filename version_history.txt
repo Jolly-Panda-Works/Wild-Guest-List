@@ -422,3 +422,36 @@
   source-level, consistent with this repo's no-DOM-harness pattern).
 - Bumped app.version 1.37.6 -> 1.37.7.
 - node --test tests/*.test.mjs: 70/70 passing.
+
+1.37.9
+- Leaderboard (Match Standings) Party column: the partyEmoji icon no
+  longer repeats next to every player's Party count in
+  js/ui/leaderboard-ui.js's renderLeaderboard(). It now renders once,
+  in the column's header cell, with each row showing only the plain
+  numeric count.
+- Header markup: the Party header cell is now
+  `<span class="lb-cards-header" title="Party"><span
+  data-icon="partyEmoji"></span></span>` (title attribute keeps the
+  textual label accessible/on hover, matching the existing per-row
+  title="Party"/title="Power" tooltip pattern already used in this
+  table). New .lb-cards-header CSS rule right-aligns the icon so it
+  sits directly above the right-aligned numbers in .lb-cards below
+  it — same alignment relationship the Power column already has
+  between its header and .lb-score.
+- No grid/column changes: the Party icon lives inside the existing
+  40-44px Party track (desktop/mobile-landscape/mobile-portrait) —
+  no 5th grid column was added, so the 4-col leaderboard grid (rank,
+  name, party, power) is unchanged everywhere, including the
+  previously-fixed Mobile Portrait override (see
+  tests/leaderboardRankBadge.test.mjs).
+- Applies to both Desktop (#leaderboardRows) and Mobile
+  (#mobileLeaderboardInline) since both are filled from the same
+  shared headerHTML + rowsHTML strings built once per
+  renderLeaderboard() call.
+- Presentation-only: getRankedPlayers()/getPartyScore()/ranking
+  logic in js/game/scoreManager.js untouched.
+- Added tests/leaderboardPartyHeaderIcon.test.mjs (6 tests,
+  CSS/JS source-level, consistent with this repo's no-DOM-harness
+  pattern).
+- Bumped app.version 1.37.8 -> 1.37.9.
+- node --test tests/*.test.mjs: 76/76 passing.

@@ -1456,7 +1456,7 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.37.8
+**Current version:** 1.37.9
 
 **Fixed — "Send Feedback" button not centered in the Feedback popup on Mobile (1.37.8):**
 `#feedbackSubmitBtn`'s `.feedback-modal-footer` (`.modal-content > .modal-footer`)
