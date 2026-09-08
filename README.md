@@ -1456,7 +1456,34 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.37.6
+**Current version:** 1.37.7
+
+**Fixed — Win Popup action buttons not equal size (1.37.7):**
+`#endGameScreen`'s `.endgame-actions` row (Return to Home / Play
+Again) switched from `display: flex` (`flex: 1 1 160px` per button)
+to `display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));`.
+Flex's default `min-width: auto` let a button's own label win extra
+width over its equal flex-grow share once that label needed more room
+than the other (e.g. `endReturnHome` vs `playAgain`, longer still in
+some locales — see `data/i18n.json`), and if a label ever wrapped it
+also grew that button taller — so the two buttons weren't reliably
+the same size, worst on narrow Mobile widths. Grid's `minmax(0, 1fr)`
+tracks split the row exactly in half regardless of content; each
+`.endgame-actions .screen-btn` also got a fixed `height: 50px` (not
+`min-height`) plus `width: 100%; min-width: 0;`, and its label
+(`.endgame-btn-label`, new span class in `game.html`) now truncates
+with an ellipsis instead of wrapping or overflowing — so no label,
+short or long, in any locale, can change either button's width or
+height. The `@media (max-width: 420px)` rule that used to stack the
+row into a column was removed (the buttons must stay in one row at
+every Mobile width per the requirement); that breakpoint now only
+tightens gap/padding/icon size so both equally-sized buttons keep
+fitting inside the popup without overflowing it. `#returnHomeBtn`/
+`#playAgainBtn` ids, classes, and their click handlers
+(`js/game-main.js`) are unchanged — only sizing/layout changed.
+Desktop is visually unchanged (it already rendered in one row; it
+just now gets guaranteed-equal widths instead of coincidentally equal
+ones).
 
 **Fixed — Party/Trash notification badge crowding on Mobile Portrait (1.37.6):**
 On Mobile Portrait, the live card-count badges on the Party and Trash

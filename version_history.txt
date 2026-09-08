@@ -393,3 +393,32 @@
   (pointer: fine)`) rules are untouched.
 - node --test tests/*.test.mjs: 64/64 passing (60 pre-existing + 4 new
   in tests/queuePartyTrashBadgeSpacing.test.mjs).
+
+1.37.7
+- Fixed Win Popup (#endGameScreen) action buttons (Return to Home /
+  Play Again, .endgame-actions) not being reliably the same size.
+  Root cause: .endgame-actions was display: flex with each
+  .screen-btn at flex: 1 1 160px; flex items default to
+  min-width: auto, so a button whose own label needed more room than
+  its equal flex-grow share (e.g. "Return to Home" vs "Play Again",
+  longer still in some locales — data/i18n.json) could grow wider
+  than its sibling, and a wrapped label could grow it taller too.
+- Fix: .endgame-actions -> display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) — equal tracks
+  regardless of content. .endgame-actions .screen-btn now has a fixed
+  height: 50px (not min-height) plus width: 100%; min-width: 0; so
+  neither dimension can be resized by content. Button labels got a
+  new .endgame-btn-label class (game.html) that truncates with an
+  ellipsis instead of wrapping/overflowing.
+- Removed the @media (max-width: 420px) rule that stacked the row
+  into a column — buttons now stay in one row at every Mobile width;
+  that breakpoint only tightens gap/padding/icon size so the row
+  keeps fitting inside the popup without overflowing.
+- #returnHomeBtn/#playAgainBtn ids/classes and their click handlers
+  in js/game-main.js are unchanged — only sizing/layout changed.
+  Desktop already showed one row; it now gets guaranteed-equal widths
+  instead of coincidentally-equal ones.
+- Added tests/endgameActionButtons.test.mjs (6 tests, CSS/HTML
+  source-level, consistent with this repo's no-DOM-harness pattern).
+- Bumped app.version 1.37.6 -> 1.37.7.
+- node --test tests/*.test.mjs: 70/70 passing.
