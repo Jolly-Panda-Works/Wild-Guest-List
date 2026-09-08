@@ -1227,14 +1227,18 @@ body {
 /* ==========================================================
    PARTY / TRASH
    Same popup component everywhere now (Desktop included) — no more
-   permanent always-visible sidebars. Default here is the Desktop
-   treatment: a centered floating card, toggled by the exact same
-   `.mobile-open` class Mobile already used (js/ui/mobile-ui.js's
-   initMobileTabs()), opened from the Party/Trash buttons flanking the
-   Queue (see the "Desktop: Party/Trash flank the Queue" rule further
-   down). Narrower/touch breakpoints below restate their own tuned
-   position/size for phones — same component throughout, just resized
-   per breakpoint, exactly like every other `.modal` popup already does.
+   permanent always-visible sidebars. Default here is a sane fallback
+   shape (a layout matching none of the width/pointer/orientation
+   tiers below, e.g. a touch tablet in landscape, still gets *some*
+   popup rather than an unstyled one); every real tier restates its
+   own tuned position/size — the `@media (min-width: 601px) and
+   (pointer: fine)` block further down for real Desktop (shaped to
+   match the Pause popup, see that rule's comment), the width/touch
+   tiers below for phones — same component throughout, just resized
+   per breakpoint, exactly like every other `.modal` popup already
+   does. Toggled by the exact same `.mobile-open` class Mobile already
+   used (js/ui/mobile-ui.js's initMobileTabs()), opened from the
+   Party/Trash buttons flanking the Queue.
 ========================================================== */
 
 #partyArea,
@@ -5319,7 +5323,15 @@ body.gameplay-locked #playerHand .card {
 
     #queueDoorIcon  { order: 1; }
     #queueInner     { order: 2; flex: 1; }
-    #queueTrashIcon { order: 3; }
+    #queueTrashIcon {
+        order: 3;
+        /* Extra breathing room from the right edge of the Queue row —
+           without this the Trash icon sits flush against it since
+           #queueWithIcons/#queueInner (flex: 1) otherwise pushes it
+           all the way out. Party keeps its default (symmetric) gap on
+           the left; only Trash needed the wider margin. */
+        margin-right: clamp(16px, 4vw, 56px);
+    }
 
     /* The popup's own close (X) button — `.panel-close`/`.mobile-only-
        btn` are hidden by the base rules above (`display: none`, "shown
@@ -5414,6 +5426,31 @@ body.gameplay-locked #playerHand .card {
 
     .queue-icon-badge[hidden] {
         display: none;
+    }
+
+    /* Party/Trash popup — shaped to match the Pause popup
+       (#pauseModal's `.modal-content.small-popup`, see the "Small
+       popup"/"PAUSE PANEL" rules above): same width basis
+       (`min(350px, 92vw)`, i.e. `.small-popup`'s own width), same
+       border/radius/background/blur/shadow/padding as `.modal-
+       content`. Height is fixed (not shrink-to-fit the way
+       `.modal-content` normally is) and taller than Pause ever needs,
+       since Party/Trash can hold far more cards than Pause's four
+       fixed actions. Scoped to Desktop only — Mobile's popup sizing
+       (the width/touch tiers further down, which restate their own
+       background/radius/shadow already) is untouched. */
+    #partyArea,
+    #trashArea {
+        width: min(350px, 92vw);
+        height: min(600px, 80vh);
+        max-height: none;
+        padding: 24px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: rgba(10,31,15,0.82);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        box-shadow: 0 20px 60px rgba(0,0,0,.6);
     }
 }
 

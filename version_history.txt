@@ -257,3 +257,18 @@
   Queue arrangement, same popups.
 - Added tests/desktopPartyTrash.test.mjs (CSS/JS-source regression
   coverage — no DOM/layout harness exists in this project).
+
+1.37.1
+- Desktop Party/Trash popup (#partyArea/#trashArea) is now shaped like
+  the Pause popup instead of sharing the #chatPanel look: same width
+  (min(350px, 92vw)), border, var(--radius-md) radius,
+  rgba(10,31,15,0.82) background, blur(18px), box-shadow, padding.
+- Popup height is now fixed (min(600px, 80vh)) and larger than
+  before, instead of shrinking to fit however many cards are inside.
+- #queueTrashIcon got its own margin-right so Trash no longer sits
+  flush against the Queue row's right edge; Party's left-side gap is
+  unchanged.
+- All three changes are scoped to the Desktop
+  (min-width: 601px, pointer: fine) media block only — Mobile
+  Portrait's own popup sizing/positioning is untouched.
+- Extended tests/desktopPartyTrash.test.mjs with 3 new cases.

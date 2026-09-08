@@ -178,6 +178,56 @@ test("renderQueue() reuses the existing party/trash icon assets and adds a notif
     );
 });
 
+test("Desktop Party/Trash popup is shaped like the Pause popup: same width basis, same border/radius/background/shadow, fixed and taller height", () => {
+    const desktopMediaIdx = css.indexOf("@media (min-width: 601px) and (pointer: fine) {");
+    assert.ok(desktopMediaIdx !== -1, "expected the existing real-Desktop media scope to exist");
+    const scoped = css.slice(desktopMediaIdx, desktopMediaIdx + 9000);
+
+    const found = findDeclBlock(scoped, "#partyArea,\r\n    #trashArea {", scoped.indexOf("shaped to match the Pause popup"));
+    assert.ok(found, "expected a Desktop-scoped #partyArea/#trashArea popup-shape rule");
+
+    // Same width basis as Pause's .small-popup (min(350px, 92vw)).
+    assert.match(found.block, /width:\s*min\(350px,\s*92vw\)\s*;/, "expected the same width as the Pause popup's .small-popup");
+
+    // Fixed (not shrink-to-fit) and taller than the pre-fix auto-sized version.
+    assert.match(found.block, /height:\s*min\(600px,\s*80vh\)\s*;/, "expected a fixed, larger height instead of a content-driven max-height");
+    assert.match(found.block, /max-height:\s*none\s*;/, "expected max-height to be cleared so the fixed height isn't also capped by the old value");
+
+    // Same shape as Pause's .modal-content.
+    assert.match(found.block, /border:\s*1px solid var\(--border\)\s*;/, "expected the same border as Pause's .modal-content");
+    assert.match(found.block, /border-radius:\s*var\(--radius-md\)\s*;/, "expected the same border-radius as Pause's .modal-content");
+    assert.match(found.block, /background:\s*rgba\(10,\s*31,\s*15,\s*0\.82\)\s*;/, "expected the same background color as Pause's .modal-content");
+    assert.match(found.block, /box-shadow:\s*0 20px 60px rgba\(0,0,0,\.6\)\s*;/, "expected the same box-shadow as Pause's .modal-content");
+});
+
+test("Trash icon has extra spacing from the right edge of the Queue row (Party's left-side gap is unchanged)", () => {
+    const desktopMediaIdx = css.indexOf("@media (min-width: 601px) and (pointer: fine) {");
+    const scoped = css.slice(desktopMediaIdx, desktopMediaIdx + 9000);
+
+    const found = findDeclBlock(scoped, "#queueTrashIcon {");
+    assert.ok(found, "expected a Desktop-scoped #queueTrashIcon rule");
+    assert.match(found.block, /order:\s*3\s*;/, "expected the Trash icon to stay ordered after the Queue");
+    assert.match(found.block, /margin-right:\s*clamp\(/, "expected extra right-side margin on the Trash icon");
+
+    assert.doesNotMatch(
+        scoped.slice(scoped.indexOf("#queueDoorIcon"), scoped.indexOf("#queueDoorIcon") + 60),
+        /margin-right/,
+        "the Party icon's spacing should be unchanged — only Trash needed the extra right margin"
+    );
+});
+
+test("Mobile's own Party/Trash popup width/touch tiers are untouched by the Desktop shape override", () => {
+    // The ≤600px width tier and the touch+portrait tier both restate
+    // their own background/border-radius/box-shadow already (pre-
+    // existing, not part of this fix) — confirms the Desktop-only
+    // override doesn't leak into them via the cascade.
+    const narrowTierMatch = css.match(/#partyArea, #trashArea \{\s*\r?\n\s*display: none;\s*\r?\n\s*position: fixed;\s*\r?\n\s*top: 20px; left: 12px; right: 12px; bottom: 20px;/);
+    assert.ok(narrowTierMatch, "expected the ≤600px-width tier's own #partyArea/#trashArea rule to still exist, untouched");
+
+    const portraitTierMatch = css.match(/#mobileLeaderboard, #partyArea, #trashArea \{\s*\r?\n\s*display: none;\s*\r?\n\s*position: fixed;\s*\r?\n\s*top: 8dvh; left: 4vw; right: 4vw; bottom: 8dvh;/);
+    assert.ok(portraitTierMatch, "expected the touch+portrait tier's own #mobileLeaderboard/#partyArea/#trashArea rule to still exist, untouched");
+});
+
 test("Party/Trash badges are driven by the real party/trash DOM contents, never a hardcoded number", () => {
     assert.match(
         gameUiJs,

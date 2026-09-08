@@ -1280,14 +1280,38 @@ itself is sized/positioned, both purely presentational:
   6vw, 76px)` wide) that reads as a compact button flanking the Queue
   rather than eating into its own space.
 - **The popup itself renders as a centered floating card** on Desktop
-  (`top/left: 50%` + `translate(-50%, -50%)`, `width: min(420px,
-  92vw)`) rather than Mobile's edge-anchored sheet (`top/left/right/
-  bottom` band with `margin: auto 0`) — a better fit for a wide,
-  mouse-driven viewport. The narrower/touch breakpoints each restate
-  their own `transform: none` to cancel the Desktop default's
-  `transform`, since a property set by an earlier, unqualified rule
-  otherwise still applies underneath a later media-scoped rule that
-  doesn't happen to touch that same property.
+  (`top/left: 50%` + `translate(-50%, -50%)`) rather than Mobile's
+  edge-anchored sheet (`top/left/right/bottom` band with `margin: auto
+  0`) — a better fit for a wide, mouse-driven viewport. The narrower/
+  touch breakpoints each restate their own `transform: none` to
+  cancel the Desktop default's `transform`, since a property set by
+  an earlier, unqualified rule otherwise still applies underneath a
+  later media-scoped rule that doesn't happen to touch that same
+  property.
+- **Shaped and sized to match the Pause popup** (1.37.1): the Desktop-
+  only override at the bottom of the `@media (min-width: 601px) and
+  (pointer: fine)` block gives `#partyArea`/`#trashArea` the exact
+  same width basis as `#pauseModal`'s `.modal-content.small-popup`
+  (`width: min(350px, 92vw)`) and the same border/border-radius
+  (`var(--radius-md)`)/background (`rgba(10,31,15,0.82)`)/blur
+  (`blur(18px)`)/box-shadow/padding as `.modal-content`, instead of
+  the base (still-shared-with-`#chatPanel`) `--bg-panel`/`--radius-lg`
+  look. Height is fixed (`height: min(600px, 80vh)`, with the old
+  content-driven `max-height` explicitly cleared) rather than
+  shrinking to whatever's inside, and taller than the old auto-sized
+  version — Party/Trash can hold far more cards over a game than
+  Pause's four fixed actions ever need to size around, so a
+  consistent, roomier box reads better than one that changes height
+  as cards accumulate. Scoped to just this Desktop media block —
+  Mobile's own width/touch-tier popup rules already restate their own
+  background/radius/shadow/box sizing independently, so none of this
+  leaks into them.
+- **Trash sits with extra breathing room from the right edge** of the
+  Queue row (`margin-right: clamp(16px, 4vw, 56px)` on
+  `#queueTrashIcon`, added alongside the `order` rule) — without it,
+  `#queueInner`'s `flex: 1` pushes Trash flush against the row's own
+  right edge. Party's spacing on the left is unchanged; only Trash
+  needed the wider margin.
 - **The popup's close (X) button is shown again**, scoped to just
   `#partyArea`/`#trashArea` (`.panel-close`/`.mobile-only-btn` default
   to `display: none`, "shown only on mobile", since Desktop never
@@ -1422,7 +1446,26 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.37.0
+**Current version:** 1.37.1
+
+**Refinement — Desktop Party/Trash popup shaped/sized to match Pause, Trash icon given more right-edge spacing (1.37.1):**
+Three follow-up tweaks to the 1.37.0 change below, all presentational:
+`#partyArea`/`#trashArea` on Desktop now use the exact same shape as
+the Pause popup (`#pauseModal`'s `.modal-content.small-popup`) instead
+of the panel look they shared with `#chatPanel` — same width basis
+(`min(350px, 92vw)`), border, `var(--radius-md)` radius,
+`rgba(10,31,15,0.82)` background, `blur(18px)`, and box-shadow/padding.
+The popup's height is now fixed (`min(600px, 80vh)`, the old
+content-driven `max-height` removed) and larger than before, rather
+than shrinking to fit however many cards are currently inside. The
+Trash icon flanking the Queue also got its own `margin-right` so it no
+longer sits flush against the row's right edge (Party's left-side
+spacing is unchanged). All three are scoped to the
+`@media (min-width: 601px) and (pointer: fine)` block only — Mobile
+Portrait's own popup sizing/positioning rules already restate their
+own background/radius/shadow independently, so none of this reaches
+them. `tests/desktopPartyTrash.test.mjs` gained three new cases
+covering this.
 
 **Feature — Desktop Party/Trash: permanent sidebars replaced by buttons flanking the Queue, plus live notification-count badges (1.37.0):**
 Desktop no longer shows `#partyArea`/`#trashArea` as the two big
