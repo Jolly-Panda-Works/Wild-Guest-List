@@ -3785,7 +3785,28 @@ body.gameplay-locked #playerHand .card {
     box-shadow: 0 20px 60px rgba(0,0,0,.6);
 }
 #endGameScreen .screen-panel-header { padding-top: 28px; }
-#endGameScreen .screen-panel-footer { border-top: none; background: transparent; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+#endGameScreen .screen-panel-footer {
+    border-top: none;
+    background: transparent;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    /* .endgame-actions (Return to Home / Play Again) keeps its own
+       explicit `width: 100%` (see .endgame-actions above), so it's
+       unaffected by align-items here and still fills the footer edge
+       to edge. #endgameFeedbackBtn has no explicit width — it's a
+       compact pill (see .feedback-link-btn) — so switching this
+       footer to a flex column with align-items: center genuinely
+       centers that pill horizontally, at any popup/viewport width,
+       instead of the previous flush-start placement (see the removed
+       display:flex/justify-content:center that used to sit directly
+       on .endgame-feedback-btn below — that only centered the icon+
+       label *inside* the button's own shrink-to-fit box, which did
+       nothing for the button's actual position in the footer). Real
+       flexbox alignment, not a hardcoded margin/left/transform, so it
+       stays correct through any popup width change. */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 #endGameTitle { font-size: clamp(28px, 7vw, 48px); margin: 0 0 8px; }
 #endGameText  { font-size: clamp(14px, 3vw, 18px); opacity: 0.8; margin: 0 0 4px; }
 
@@ -6764,8 +6785,6 @@ body.gameplay-locked #playerHand .card {
 
 .endgame-feedback-btn {
     margin-top: 10px;
-    display: flex;
-    justify-content: center;
 }
 
 .feedback-modal-content {

@@ -1524,7 +1524,25 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.39.0
+**Current version:** 1.39.1
+
+**Fix — Give/Send Feedback button now genuinely centered in the Reward Popup (1.39.1):**
+The Reward Popup's `#endgameFeedbackBtn` ("Give Feedback") sat flush
+to the left edge of its footer on every viewport — the `display:flex;
+justify-content: center` previously declared directly on the button
+only centered its own icon+label *inside* its own already-content-sized
+box, which had no effect on where that box sat within the footer.
+Fixed at the layout-container level instead: `#endGameScreen
+.screen-panel-footer` is now a flex column with `align-items: center`
+(`css/style.css`), which centers the feedback button — the only
+footer child without an explicit `width: 100%` — through real
+flexbox, not a hardcoded margin/left/transform, so it stays centered
+at any popup or viewport width, Desktop and Mobile alike.
+`.endgame-actions` (Return to Home / Play Again) is unaffected since
+it keeps its own explicit full-width sizing. The button's own
+size/padding/font (`.feedback-link-btn`) and its click behavior are
+completely untouched — only its position within the footer changed.
+CSS-only change; no JS/behavior touched.
 
 **Feature — Development/Test Mode for the Reward Popup (1.39.0):**
 Added a Development-only way to preview the real end-of-match Reward
