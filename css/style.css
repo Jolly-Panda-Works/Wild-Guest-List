@@ -1807,11 +1807,20 @@ body.popup-open::before {
 /* Name + avatar tag above the player's own hand+deck row, matching how
    each opponent shows their avatar and name next to their hand
    (.other-avatar / .player-label in the OTHER PLAYER ROW rules
-   above) — this is the human seat's equivalent. */
+   above) — this is the human seat's equivalent. Centered (align-self:
+   center) so it sits directly above the Hand + Deck row, which
+   #handArea's own `align-items: center` already centers — flex-start
+   here used to pin it to the far-left edge of #handArea's full-width
+   box on wide/Desktop layouts, stranding it far from the (centered)
+   cards beneath it. The two narrower mobile tiers below (≤600px width,
+   and touch+portrait) explicitly re-override this back to flex-start,
+   since their own Hand row is left-starting/scrollable there instead
+   of centered — this base value only governs Desktop and any other
+   layout that doesn't restate it. */
 .player-deck-info {
     display: flex;
     align-items: center;
-    align-self: flex-start;
+    align-self: center;
     gap: 6px;
     max-width: none;
 }
@@ -5504,15 +5513,19 @@ body.gameplay-locked #playerHand .card {
     }
 
     #queueDoorIcon  { order: 1; }
-    #queueInner     { order: 2; flex: 1; }
+    /* flex: 0 1 auto (not 1!) — content-sized, so it never grows to
+       fill #queueWithIcons' full-width box on wide screens. That growth
+       used to shove Party/Trash out to the screen edges while the Queue
+       stayed centered inside its own oversized box. Content-sized keeps
+       the whole [Party][Queue][Trash] cluster compact so #queueWithIcons'
+       justify-content: center centers it as one unit around the Table. */
+    #queueInner     { order: 2; flex: 0 1 auto; }
     #queueTrashIcon {
         order: 3;
-        /* Extra breathing room from the right edge of the Queue row —
-           without this the Trash icon sits flush against it since
-           #queueWithIcons/#queueInner (flex: 1) otherwise pushes it
-           all the way out. Party keeps its default (symmetric) gap on
-           the left; only Trash needed the wider margin. */
-        margin-right: clamp(16px, 4vw, 56px);
+        /* Small extra gap beyond #queueWithIcons' shared gap — not the
+           wide edge-of-screen margin this used to need when #queueInner
+           (flex: 1) pushed it all the way out. */
+        margin-right: clamp(8px, 1vw, 20px);
     }
 
     /* The popup's own close (X) button — `.panel-close`/`.mobile-only-

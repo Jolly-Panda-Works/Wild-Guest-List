@@ -1547,7 +1547,46 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.43.1
+**Current version:** 1.43.3
+
+**Fix — Your own name/avatar no longer strands at the far-left edge, away from your Hand (1.43.3):**
+`.player-deck-info` (the avatar + name tag above your own Hand + Deck
+row, `#playerDeckInfo` in `game.html`) had `align-self: flex-start`.
+`#handArea` (its parent) is `display: flex; flex-direction: column;
+align-items: center`, but stretches to the full width of the game
+board on Desktop — `align-self: flex-start` overrode that centering for
+this one child only, pinning your name/avatar to the far-left edge of
+that full-width box while `#deckStack` (your Hand + Deck) stayed
+centered beneath it via the parent's own `align-items: center`, so the
+two visually read as unrelated. Changed the base `.player-deck-info`
+rule to `align-self: center` so it now sits directly above the
+(already-centered) Hand + Deck row. The two mobile tiers (`max-width:
+600px` and touch+portrait) keep their own `align-self: flex-start`
+override untouched, since their Hand row is left-starting/scrollable
+there instead of centered, and left-aligning the name to match is
+correct in that layout.
+
+**Fix — Desktop Party/Trash icons no longer drift to the screen edges, far from the Queue (1.43.2):**
+`#queueInner` (the actual 5-slot Queue) was `flex: 1` inside
+`#queueWithIcons` even in the Desktop
+(`@media (min-width: 601px) and (pointer: fine)`) override —
+`#queueWithIcons` itself is `width: 100%` of the full game-board width,
+so on a wide viewport `#queueInner` grew to fill nearly all of that row,
+shoving the flanking `#queueDoorIcon`/`#queueTrashIcon` (Party/Trash,
+only `flex-shrink: 0`, never growing) out to the far left/right edges —
+while the Queue slots stayed centered inside their own oversized box, so
+Party and Trash visually read as belonging to the screen edges instead
+of the Queue. Fixed by changing `#queueInner` to `flex: 0 1 auto`
+(content-sized, never grows) at that breakpoint, so the whole
+`[Party icon][Queue][Trash icon]` cluster is only as wide as its own
+content — `#queueWithIcons`' existing `justify-content: center` then
+centers that compact group as one unit around the Game Table at any
+viewport width, with only a small gap between each piece. Also reduced
+`#queueTrashIcon`'s `margin-right` from `clamp(16px, 4vw, 56px)` to
+`clamp(8px, 1vw, 20px)` — the wider value existed only to keep Trash off
+the Queue's right edge back when `#queueInner`'s `flex: 1` pushed it all
+the way out; with the Queue no longer growing, that much spacing just
+reintroduced the same drift on wide screens.
 
 **Fix — Opponent Row no longer stretches full-width on Desktop, and the opponent card-play animation actually flies from the opponent's deck (1.43.1):**
 Two regressions from 1.43.0's Opponent Row rework, both Desktop-only
