@@ -181,10 +181,18 @@ function formatUnlockDate(isoString) {
     }
 }
 
-/** Builds one achievement card's inner markup — shared by both the grid
+/** Builds one achievement row's inner markup — shared by both the list
  *  and the featured/"Recently Unlocked" slot so the two never drift out
- *  of visual sync. Communicates locked/unlocked/progress with icon +
- *  text + a status pill, never color alone (accessibility requirement). */
+ *  of visual sync. Layout is a single horizontal row (image on the
+ *  left; title, optional completion date, description, and an optional
+ *  progress bar stacked on the right — see the Redesign Achievement
+ *  List Layout task), never a table/multi-column grid. Locked/unlocked
+ *  is communicated with the icon badge + border/background treatment +
+ *  presence/absence of a completion date, never color alone
+ *  (accessibility requirement) — the status label itself still lives in
+ *  aria-label for screen readers even though it's no longer shown as a
+ *  separate visible pill (the row layout has no room for one, and the
+ *  date now carries that meaning visually for unlocked achievements). */
 function renderAchievementCard(a, { featured = false } = {}) {
     const { def, unlocked, progress, unlockedAt } = a;
     const title = t(def.titleKey);
@@ -195,36 +203,45 @@ function renderAchievementCard(a, { featured = false } = {}) {
     const isCountType = def.type === "count";
     const progressLine = (isCountType && !unlocked)
         ? `
-            <div class="ach-card-progress">
-                <div class="ach-card-progress-track">
-                    <div class="ach-card-progress-fill" style="width:${Math.min(100, (progress / def.target) * 100)}%"></div>
+            <div class="ach-item-progress">
+                <div class="ach-item-progress-track">
+                    <div class="ach-item-progress-fill" style="width:${Math.min(100, (progress / def.target) * 100)}%"></div>
                 </div>
-                <span class="ach-card-progress-label">${progress} / ${def.target}</span>
+                <span class="ach-item-progress-label">${progress} / ${def.target}</span>
             </div>
         `
         : "";
 
-    const unlockDateLine = (unlocked && unlockedAt)
-        ? `<p class="ach-card-unlockdate">${t("achievementsUnlockedOn").replace("{date}", formatUnlockDate(unlockedAt))}</p>`
+    // Completion date sits on the title row (far right on desktop; wraps
+    // onto its own right-aligned line on narrow widths — see
+    // .ach-item-title-row in css/style.css) and only ever renders for a
+    // completed achievement with real unlock data — never fabricated,
+    // and never shown at all for a locked one.
+    const dateLine = (unlocked && unlockedAt)
+        ? `<span class="ach-item-date">${formatUnlockDate(unlockedAt)}</span>`
         : "";
 
     const ariaParts = [title, desc, statusLabel];
     if (isCountType && !unlocked) ariaParts.push(`${progress} / ${def.target}`);
+    if (unlocked && unlockedAt) ariaParts.push(t("achievementsUnlockedOn").replace("{date}", formatUnlockDate(unlockedAt)));
     const ariaLabel = ariaParts.join(". ");
 
     return `
-        <div class="ach-card${unlocked ? " unlocked" : " locked"}${featured ? " ach-card--featured" : ""}"
+        <div class="ach-item${unlocked ? " unlocked" : " locked"}${featured ? " ach-item--featured" : ""}"
              data-id="${def.id}" data-category="${def.category}" tabindex="0" role="group"
              aria-label="${ariaLabel.replace(/"/g, "&quot;")}">
-            <div class="ach-card-icon-wrap">
-                <span class="ach-card-icon" data-icon="${def.icon}" aria-hidden="true"></span>
-                <span class="ach-card-badge" data-icon="${badgeIcon}" aria-hidden="true"></span>
+            <div class="ach-item-icon-wrap">
+                <span class="ach-item-icon" data-icon="${def.icon}" aria-hidden="true"></span>
+                <span class="ach-item-badge" data-icon="${badgeIcon}" aria-hidden="true"></span>
             </div>
-            <p class="ach-card-title">${title}</p>
-            <p class="ach-card-desc">${desc}</p>
-            ${progressLine}
-            ${unlockDateLine}
-            <span class="ach-card-status">${statusLabel}</span>
+            <div class="ach-item-body">
+                <div class="ach-item-title-row">
+                    <p class="ach-item-title">${title}</p>
+                    ${dateLine}
+                </div>
+                <p class="ach-item-desc">${desc}</p>
+                ${progressLine}
+            </div>
         </div>
     `;
 }
@@ -237,9 +254,9 @@ function applyAchievementFilter() {
     const listEl = document.getElementById("profileAchievementsList");
     if (!listEl) return;
 
-    listEl.querySelectorAll(".ach-card").forEach(card => {
-        const matches = _activeAchCategory === "all" || card.dataset.category === _activeAchCategory;
-        card.classList.toggle("ach-card--filtered-out", !matches);
+    listEl.querySelectorAll(".ach-item").forEach(item => {
+        const matches = _activeAchCategory === "all" || item.dataset.category === _activeAchCategory;
+        item.classList.toggle("ach-item--filtered-out", !matches);
     });
 
     document.querySelectorAll("#achFilters .ach-filter").forEach(btn => {
@@ -252,10 +269,11 @@ function applyAchievementFilter() {
 /** Renders the Achievements section (#profileAchievements) from the real
  *  achievement system (js/services/achievements.js) as a game-quality
  *  Achievement Collection: header summary, an overall-progress bar, an
- *  optional "Recently Unlocked" featured card (only when real unlock
+ *  optional "Recently Unlocked" featured row (only when real unlock
  *  data exists — never fabricated), category filter tabs, and a
- *  responsive card grid. Locked and unlocked achievements both stay
- *  visible (none of the 10 initial achievements are `hidden`), showing
+ *  responsive single-column achievement list (never a table/multi-column
+ *  grid — see renderAchievementCard()). Locked and unlocked achievements
+ *  both stay visible (none of the 10 initial achievements are `hidden`), showing
  *  progress for count-type ones and the unlock date for unlocked ones.
  *  Called on modal open and again whenever achievement state changes
  *  (see subscribeAchievements() in initProfilePage) so progress made

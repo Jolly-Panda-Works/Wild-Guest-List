@@ -8,6 +8,49 @@ This file was consolidated from a changelog that had grown to live inline inside
 
 ---
 
+**Style — Achievements redesigned as a vertical list, not a card grid (1.43.7):**
+The Achievement Collection (Profile → Achievements) previously laid
+achievements out as a responsive multi-column card grid
+(`.ach-grid`/`.ach-card`, `grid-template-columns: repeat(auto-fill,
+minmax(132px, 1fr))`, 2 columns on mobile). Redesigned into a
+single-column vertical list (`.ach-list`/`.ach-item`) so every
+achievement — including the "Recently Unlocked" featured slot, which
+shares the same row markup — is one horizontal row: icon on the left;
+title and (only for completed achievements with a real unlock date)
+the completion date on the same line on the right; description below;
+an optional progress bar below that for in-progress count-type
+achievements. No table/multi-column layout remains at any width.
+- `js/ui/profile-ui.js` — `renderAchievementCard()` now emits the row
+  markup above instead of the old centered card; `applyAchievementFilter()`
+  updated for the renamed classes. No change to achievement unlock
+  logic, progress calculation, persistence, or data models
+  (`js/services/achievements.js` untouched) — this is presentation-only.
+- `css/style.css` — `.ach-grid`/`.ach-card*` replaced with
+  `.ach-list`/`.ach-item*`. The title/date row uses `flex-wrap` so the
+  date stays right-aligned on desktop and gracefully drops to its own
+  right-aligned line on narrow/mobile widths instead of overflowing,
+  including for long titles; `.ach-item-body` uses `min-width: 0` so
+  long titles/descriptions wrap instead of forcing horizontal
+  overflow. Locked vs. unlocked stays visually distinguishable via the
+  existing warm border/background treatment and the icon badge
+  (check vs. lock), same as before; the separate "Unlocked"/"Locked"
+  text pill was dropped from the visible row (redundant with those
+  signals and the date's presence/absence) but the status label is
+  still included in each row's `aria-label` for screen readers.
+- `index.html` — `#profileAchievementsList` now carries `ach-list`
+  instead of `ach-grid`; doc comments updated to describe the list
+  layout instead of a card grid.
+- Verified: `tests/achievements.test.mjs` (pure achievement-logic
+  tests, no DOM) all pass unchanged, confirming achievement logic
+  itself was not touched. Manually verified via a throwaway Playwright
+  screenshot harness (not committed) at desktop (1200px) and mobile
+  portrait (375px) widths, covering a completed achievement with a
+  date, an in-progress count-type achievement with its progress bar, a
+  locked achievement with no progress bar, and a long title/long
+  description case to confirm wrapping with no horizontal overflow.
+
+---
+
 **Fix — Tutorial/Help content audit: drag-to-play, Card Power, and a stale Monkey description (1.43.6):**
 A full audit of the player education system (tutorial slides, in-game
 walkthrough, Card Guide, contextual hints) against the current UI and

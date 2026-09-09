@@ -334,11 +334,15 @@
                          the current game is reflected the moment Profile is
                          reopened. Redesigned into a game-quality Achievement
                          Collection: summary + overall progress bar, an
-                         optional "Recently Unlocked" featured card (only
+                         optional "Recently Unlocked" featured row (only
                          shown when real unlock data exists), category
-                         filter tabs, and a responsive card grid — all still
-                         inside this same Profile popup (see AGENTS.md rule 4
-                         — menu features stay popups, never a separate page). -->
+                         filter tabs, and a responsive single-column
+                         achievement list (image left; title, optional
+                         completion date, description, and optional
+                         progress bar stacked on the right — never a
+                         table/multi-column grid) — all still inside this
+                         same Profile popup (see AGENTS.md rule 4 — menu
+                         features stay popups, never a separate page). -->
                     <div class="profile-achievements" id="profileAchievements">
                         <div class="ach-header">
                             <h4 class="profile-achievements-title">
@@ -382,7 +386,7 @@
                             <button type="button" class="ach-filter" data-category="modesParty" role="tab" aria-selected="false" data-i18n="achievementsCategoryModesParty">Modes</button>
                         </div>
 
-                        <div class="profile-achievements-list ach-grid" id="profileAchievementsList"></div>
+                        <div class="profile-achievements-list ach-list" id="profileAchievementsList"></div>
                     </div>
                 </div>
             </div>

@@ -7316,11 +7316,14 @@ body.gameplay-locked #playerHand .card {
    js/ui/profile-ui.js renderAchievements()/renderAchievementCard())
 
    A game-quality collection UI, not a settings list: header summary +
-   overall progress bar, an optional "Recently Unlocked" featured card,
-   category filter tabs, then a responsive card grid. All colors/radii/
-   shadows reuse the existing design tokens from :root — no parallel
-   token system. Locked/unlocked/progress are always communicated with
-   an icon + text label, never color alone.
+   overall progress bar, an optional "Recently Unlocked" featured row,
+   category filter tabs, then a responsive single-column achievement
+   list — each achievement is one row (image left; title + optional
+   completion date on the first line, description below, optional
+   progress bar below that), never a table/multi-column grid. All
+   colors/radii/shadows reuse the existing design tokens from :root —
+   no parallel token system. Locked/unlocked/progress are always
+   communicated with an icon + text/date, never color alone.
    ══════════════════════════════════════════════════════════ */
 
 .ach-header {
@@ -7408,7 +7411,7 @@ body.gameplay-locked #playerHand .card {
     color: #ffc72c;
 }
 
-.ach-featured-card .ach-card {
+.ach-featured-card .ach-item {
     animation: ach-featured-in 0.4s cubic-bezier(.4,0,.2,1);
 }
 
@@ -7449,76 +7452,80 @@ body.gameplay-locked #playerHand .card {
 }
 
 .ach-filter:focus-visible,
-.ach-card:focus-visible {
+.ach-item:focus-visible {
     outline: 2px solid #ffc72c;
     outline-offset: 2px;
 }
 
-/* ── Card grid ──
-   auto-fill/minmax reflows naturally from a single mobile-portrait
-   column up to several desktop columns with no per-breakpoint rules
-   needed — see the max-width media query below only for a floor on
-   very narrow mobile widths.
+/* ── Achievement list ──
+   A single-column vertical list (one row per achievement) instead of
+   a multi-column card grid — see AGENTS.md-style rationale in
+   js/ui/profile-ui.js renderAchievementItem(). Rows reflow their own
+   internal layout at the mobile breakpoint below; the list itself is
+   always a single column at every width, so there is never a
+   table-like multi-column achievement layout to break out of.
 
-   No independent scrolling/max-height here: `.ach-grid` sits inside
+   No independent scrolling/max-height here: `.ach-list` sits inside
    Profile's `.modal-body` (see index.html #profileAchievementsList),
    which is already the popup's one dedicated scroll container (base
-   `.modal-content > .modal-body` rule above). Giving this grid its
+   `.modal-content > .modal-body` rule above). Giving this list its
    own `overflow-y: auto` + `max-height` made it a second, independent
    scroll container nested inside `.modal-body`'s — the exact same bug
    `#animalGrid` had (see the Card Guide fix note further down this
-   file) — so a swipe starting on an achievement card could scroll a
+   file) — so a swipe starting on an achievement row could scroll a
    tiny fixed-height box instead of the popup, and content past that
-   box's height was unreachable. Letting the grid size to its full
+   box's height was unreachable. Letting the list size to its full
    content height (`overflow: visible`, the default) means Achievements
    contributes to `.modal-body`'s natural height instead, exactly like
    Card Guide's Animal Grid already does. */
-.ach-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
-    gap: 10px;
+.ach-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     padding: 2px;
 }
 
-.ach-card {
+.ach-item {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 4px;
+    align-items: flex-start;
+    gap: 12px;
 
-    padding: 12px 8px 10px;
+    padding: 10px 12px;
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--border);
     transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
-.ach-card:hover {
-    transform: translateY(-2px);
+.ach-item:hover {
+    transform: translateY(-1px);
     box-shadow: var(--shadow-card);
 }
 
-.ach-card--filtered-out {
+.ach-item--filtered-out {
     display: none;
 }
 
 /* Unlocked state — communicated via a stronger icon presentation, a
-   completed badge/status pill, and a subtle warm border/glow, never by
-   color alone (the badge icon + status text carry the meaning). */
-.ach-card.unlocked {
+   warm border/glow, and (see .ach-item-date below) a completion date
+   in place of the empty space a locked row leaves on its title line —
+   never by color alone (the badge icon + date/absence of a date carry
+   the meaning, same as the icon+text pattern used elsewhere in this
+   file). */
+.ach-item.unlocked {
     background: rgba(255, 199, 44, 0.08);
     border-color: rgba(255, 199, 44, 0.4);
 }
 
-.ach-card.locked {
+.ach-item.locked {
     opacity: 0.82;
 }
 
-.ach-card-icon-wrap {
+.ach-item-icon-wrap {
     position: relative;
-    width: 46px;
-    height: 46px;
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -7527,23 +7534,23 @@ body.gameplay-locked #playerHand .card {
     border: 1px solid var(--border);
 }
 
-.ach-card.unlocked .ach-card-icon-wrap {
+.ach-item.unlocked .ach-item-icon-wrap {
     background: rgba(255, 199, 44, 0.15);
     border-color: rgba(255, 199, 44, 0.5);
     box-shadow: 0 0 0 4px rgba(255, 199, 44, 0.08);
 }
 
-.ach-card-icon {
-    font-size: 24px;
+.ach-item-icon {
+    font-size: 22px;
     line-height: 1;
     opacity: .6;
 }
 
-.ach-card.unlocked .ach-card-icon {
+.ach-item.unlocked .ach-item-icon {
     opacity: 1;
 }
 
-.ach-card-badge {
+.ach-item-badge {
     position: absolute;
     bottom: -4px;
     right: -4px;
@@ -7558,118 +7565,137 @@ body.gameplay-locked #playerHand .card {
     border: 1px solid var(--border);
 }
 
-.ach-card.unlocked .ach-card-badge {
+.ach-item.unlocked .ach-item-badge {
     border-color: rgba(74, 222, 128, 0.5);
 }
 
-.ach-card-title {
-    margin: 4px 0 0;
-    font-size: 12.5px;
-    font-weight: 700;
-    color: var(--text-main);
-}
-
-.ach-card.locked .ach-card-title {
-    color: var(--text-muted);
-}
-
-.ach-card-desc {
-    margin: 0;
-    font-size: 10.5px;
-    line-height: 1.3;
-    color: var(--text-muted);
-}
-
-.ach-card-progress {
-    width: 100%;
+/* Right-hand column: title+date row, description, optional progress —
+   `min-width: 0` is what lets the title/description wrap instead of
+   forcing the row (and the popup) wider, since a flex child's default
+   min-width is `auto` (its content's intrinsic width), not 0. */
+.ach-item-body {
+    flex: 1 1 auto;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 2px;
-    margin-top: 2px;
 }
 
-.ach-card-progress-track {
-    width: 100%;
+.ach-item-title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 8px;
+    row-gap: 2px;
+}
+
+.ach-item-title {
+    margin: 0;
+    flex: 1 1 auto;
+    min-width: 120px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-main);
+    overflow-wrap: break-word;
+}
+
+.ach-item.locked .ach-item-title {
+    color: var(--text-muted);
+}
+
+/* Completion date — only ever rendered for unlocked achievements with
+   real unlock data (see renderAchievementItem()); pushed to the far
+   right of the title row on desktop via margin-left: auto, and simply
+   the first thing to wrap onto its own (still right-aligned) line
+   once the row runs out of horizontal room on narrow/mobile widths,
+   via .ach-item-title-row's flex-wrap above — no separate mobile rule
+   needed. */
+.ach-item-date {
+    flex: 0 0 auto;
+    margin-left: auto;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.ach-item-desc {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--text-muted);
+    overflow-wrap: break-word;
+}
+
+.ach-item-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.ach-item-progress-track {
+    flex: 1 1 auto;
     height: 5px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.08);
     overflow: hidden;
 }
 
-.ach-card-progress-fill {
+.ach-item-progress-fill {
     height: 100%;
     border-radius: 999px;
     background: var(--accent);
     transition: width 0.4s cubic-bezier(.4,0,.2,1);
 }
 
-.ach-card-progress-label {
+.ach-item-progress-label {
+    flex: 0 0 auto;
     font-size: 10px;
     font-weight: 700;
     color: #ffc72c;
+    white-space: nowrap;
 }
 
-.ach-card-unlockdate {
-    margin: 2px 0 0;
-    font-size: 9.5px;
-    color: var(--text-muted);
+/* Featured / "Recently Unlocked" variant: same row markup, slightly
+   larger icon and a touch more padding — no duplicate rules needed
+   since it reuses .ach-item directly. */
+.ach-featured-card .ach-item {
+    padding: 14px 14px;
 }
 
-.ach-card-status {
-    margin-top: 4px;
-    font-size: 9.5px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--text-muted);
+.ach-featured-card .ach-item-icon-wrap {
+    width: 52px;
+    height: 52px;
 }
 
-.ach-card.unlocked .ach-card-status {
-    background: rgba(74, 222, 128, 0.18);
-    color: #4ade80;
-}
-
-/* Featured card variant: same card, slightly larger/centered, no
-   duplicate rules needed since it reuses .ach-card directly. */
-.ach-featured-card .ach-card {
-    max-width: 220px;
-    margin: 0 auto;
-    padding: 16px 12px 12px;
-}
-
-.ach-featured-card .ach-card-icon-wrap {
-    width: 56px;
-    height: 56px;
-}
-
-.ach-featured-card .ach-card-icon {
-    font-size: 28px;
+.ach-featured-card .ach-item-icon {
+    font-size: 26px;
 }
 
 @media (prefers-reduced-motion: reduce) {
     .ach-progress-fill,
-    .ach-card-progress-fill,
-    .ach-card,
+    .ach-item-progress-fill,
+    .ach-item,
     .ach-filter {
         transition: none;
     }
-    .ach-featured-card .ach-card {
+    .ach-featured-card .ach-item {
         animation: none;
     }
 }
 
 /* ── Mobile portrait (the game is portrait-only — see
-   js/ui/orientation-ui.js) — keep the grid to two columns and trim
-   vertical paddings so the whole Achievements section stays reachable
-   within a narrow viewport without introducing horizontal overflow;
-   .modal-content's own mobile rule already goes full-width as a
-   bottom sheet below 600px. ── */
+   js/ui/orientation-ui.js) — trim row padding/gaps and let the
+   title/date row's existing flex-wrap (see .ach-item-title-row above)
+   drop the date onto its own right-aligned line when a long title
+   and the date can no longer share one line, so nothing overflows
+   horizontally; .modal-content's own mobile rule already goes
+   full-width as a bottom sheet below 600px. ── */
 @media (max-width: 700px) {
-    .ach-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .ach-card { padding: 10px 6px 8px; }
+    .ach-item { padding: 8px 10px; gap: 10px; }
+    .ach-item-icon-wrap { width: 38px; height: 38px; }
+    .ach-item-icon { font-size: 19px; }
     .ach-filters { gap: 5px; }
     .ach-filter { padding: 4px 10px; font-size: 11px; }
 }
