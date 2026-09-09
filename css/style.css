@@ -1430,18 +1430,32 @@ body.popup-open::before {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 4px;
     padding: 3% 7%;
     box-sizing: border-box;
     flex-shrink: 0;
 }
 
 .card-info .help-card-name {
+    flex: 1 1 auto;
+    min-width: 0;
     font-size: clamp(7px, 10cqw, 11px);
     font-weight: 600;
     color: #fff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+/* Same read-only Card Gameplay Attribute readout as .card-power,
+   scaled for the Card Guide grid tile (.card-info). */
+.card-info .help-card-power {
+    flex-shrink: 0;
+    font-size: clamp(7px, 10cqw, 11px);
+    font-weight: 700;
+    color: #fff;
+    opacity: 0.85;
     line-height: 1.2;
 }
 
@@ -1543,21 +1557,39 @@ body.popup-open::before {
     width: 100%;
     background: rgba(0,0,0,0.38);
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
+    gap: 4px;
     padding: 3% 7%;
     box-sizing: border-box;
     flex-shrink: 0;
 }
 
 .card-name {
+    /* flex: 1 + min-width: 0 lets the name shrink/ellipsize instead of
+       pushing .card-power out of the footer once both share the row. */
+    flex: 1 1 auto;
+    min-width: 0;
     font-size: clamp(7px, 10cqw, 11px);
     font-weight: 600;
     color: #fff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    text-align: center;
+    text-align: left;
+    line-height: 1.2;
+}
+
+/* Card Gameplay Attribute, not a Victory Metric — see
+   js/game/matchOutcome.js. Purely a readout of card.power next to the
+   Animal name (createCard() in js/ui/game-ui.js); never written back
+   into any score/ranking calculation. */
+.card-power {
+    flex-shrink: 0;
+    font-size: clamp(7px, 10cqw, 11px);
+    font-weight: 700;
+    color: #fff;
+    opacity: 0.85;
     line-height: 1.2;
 }
 
@@ -2554,6 +2586,24 @@ body.popup-open::before {
     font-size: 26px;
 
     color: #ffffff;
+}
+
+/* Power readout next to the Animal name in the Card Guide's card
+   detail popup (js/game/help.js openCardInfo()) — same read-only
+   Card Gameplay Attribute as .card-power/.help-card-power, just
+   styled as a small pill to sit inline with the larger h2 name. */
+.power-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.12);
+    color: var(--accent);
+    font-size: 15px;
+    font-weight: 700;
+    vertical-align: middle;
 }
 
 .help-divider,
@@ -6318,7 +6368,10 @@ body.gameplay-locked #playerHand .card {
 .slot-number,
 .lb-cards,
 .lb-score,
-.party-count {
+.party-count,
+.card-power,
+.help-card-power,
+.power-badge {
     direction: ltr;
     unicode-bidi: isolate;
 }

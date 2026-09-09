@@ -1,5 +1,6 @@
 import { t, getLang } from "../i18n.js";
 import { loadIcons } from "../ui/icon-ui.js";
+import { loadCardData } from "../services/dataLoader.js";
 let helpCards = null;
 
 /** Opens the Card Guide (the existing Help modal's animal grid) and
@@ -61,8 +62,13 @@ export function initHelp() {
 
 async function loadHelpCards() {
     if (!helpCards) {
-        const res = await fetch("./data/cardInfo.json");
-        helpCards = await res.json();
+        // Same authoritative Card data source gameplay uses
+        // (js/services/dataLoader.js, backed by data/cardInfo.json),
+        // instead of a second, independent fetch of the same file —
+        // one loader, one cache, so Card Guide and gameplay can never
+        // drift apart on a card's Power (or any other field).
+        const { CARD_INFO } = await loadCardData();
+        helpCards = CARD_INFO;
     }
     renderHelpCards(helpCards);
 }
@@ -90,6 +96,7 @@ function renderHelpCards(cards) {
             ${visual}
             <div class="help-card-footer">
                 <div class="help-card-name">${name}</div>
+                <div class="help-card-power">${card.power}</div>
             </div>
         `;
 
@@ -118,7 +125,7 @@ function openCardInfo(card) {
     document.getElementById("cardModalContent").innerHTML = `
         <div class="help-card-detail">
             ${visual}
-            <h2>${name}</h2>
+            <h2>${name} <span class="power-badge">${card.power}</span></h2>
 
             <h3>${t("howItWorks")}</h3>
             <p class="desc-text">${description}</p>

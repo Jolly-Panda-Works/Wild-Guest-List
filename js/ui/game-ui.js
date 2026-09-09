@@ -623,11 +623,21 @@ export function createCard(card) {
         ? `<img class="card-image" src="${card.image}" alt="${displayName}" draggable="false" />`
         : `<div class="card-emoji">${card.animal}</div>`;
 
+    // Power is a Card Gameplay Attribute (comparisons, ability
+    // targeting, queue sorting — see js/abilities/abilities.js,
+    // js/ai/ai.js), displayed here purely as a readout next to the
+    // Animal name. It is never used for Victory/scoring — that stays
+    // Party Card Count only (js/game/matchOutcome.js).
+    const powerBadge = card.power != null
+        ? `<div class="card-power">${card.power}</div>`
+        : "";
+
     div.innerHTML = `
         <div class="card-owner-badge">${playerDisplayName(card.owner)}</div>
         <div class="card-visual">${visual}</div>
         <div class="card-footer">
             <div class="card-name">${displayName}</div>
+            ${powerBadge}
         </div>
     `;
 

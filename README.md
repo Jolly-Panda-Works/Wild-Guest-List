@@ -1547,7 +1547,46 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.41.1
+**Current version:** 1.42.0
+
+**Feature — Card Power restored to the Animal Cards on the table and the Card Guide (1.42.0):**
+`Power` (the numeric gameplay stat behind ability dispatch, queue
+sorting, ability targeting, and AI evaluation — `data/cardInfo.json`,
+`js/abilities/abilities.js`, `js/ai/ai.js`) is visible again next to
+the Animal name on every in-play card. `createCard()`
+(`js/ui/game-ui.js`, the single factory used for Hand/Queue/Party/
+Trash/drag-ghost/preview cards alike) now renders a `.card-power`
+readout in the card footer beside `.card-name`, reversing the 1.30.12
+cleanup that removed it from the card face. The Card Guide
+(`js/game/help.js`) shows the same value in both its grid tiles
+(`.help-card-power`) and its card-detail popup (`.power-badge` next
+to the `<h2>` name), reversing 1.36.5's removal there.
+
+Both surfaces read `card.power` straight from the one authoritative
+loader, `js/services/dataLoader.js`'s `loadCardData()` — the Card
+Guide previously ran its own independent `fetch("./data/cardInfo.json")`
+and now goes through that same cached loader instead, so gameplay and
+the Card Guide can never disagree on a card's Power, and there is no
+second copy of the card data anywhere. Nothing about this touches
+Victory: **Party Card Count remains the sole Victory Metric**
+(`js/game/matchOutcome.js`) — Power is displayed purely as a Card
+Gameplay Attribute readout and plays no part in Win/Draw/Loss,
+scoring, or leaderboard ranking, which were already fully decoupled
+from Power back in 1.38.0 and stay that way (see
+`tests/matchOutcome.test.mjs`'s "no Power dependency" case). The
+in-turn ability-guidance chip (`js/ui/cardGuidance-ui.js`) and the
+tutorial's ability-examples mock-up (`js/ui/tutorial-ui.js`) are
+unchanged — out of scope for this pass.
+
+CSS-only changes support the new layout: `.card-footer`/
+`.help-card-footer` switch from `justify-content: center` to
+`justify-content: space-between` (with a small `gap`) now that each
+holds two children, `.card-name`/`.help-card-name` gain
+`flex: 1 1 auto; min-width: 0` so a long Animal name still ellipsizes
+instead of pushing Power out of the footer, and `.card-power`/
+`.help-card-power`/`.power-badge` join the existing "numbers always
+LTR" selector list so the digit never reverses under the Persian/
+Arabic RTL layout.
 
 **Style — Reward Popup action buttons now visually match the Pause Popup, via shared-component reuse (1.41.1):**
 The Reward Popup (`#endGameScreen`, `js/ui/endgame-ui.js` — the screen
