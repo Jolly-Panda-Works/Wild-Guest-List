@@ -3390,6 +3390,19 @@ body.gameplay-locked #playerHand .card {
 }
 .card-joins-line { animation: cardJoinsLine 0.24s cubic-bezier(.4,0,.2,1); }
 
+/* Opponent deck → queue: the temporary flying ghost card's in-transit
+   feel (slight lift + rotation + scale), layered on top of the FLIP
+   position transition applied by js/presentation/flip.js. Duration must
+   match T.minorFlip in js/ui/game-ui.js (340ms) exactly — see that file's
+   note on why duringClass animations and their JS-side timer must agree. */
+@keyframes cardFlyingFromDeck {
+    0%   { transform: translateY(0) rotate(0deg) scale(1); box-shadow: 0 5px 12px rgba(0,0,0,.4); }
+    35%  { transform: translateY(-16px) rotate(-6deg) scale(1.08); box-shadow: 0 20px 30px rgba(0,0,0,.55); }
+    70%  { transform: translateY(-6px) rotate(4deg) scale(1.05); box-shadow: 0 14px 24px rgba(0,0,0,.5); }
+    100% { transform: translateY(0) rotate(0deg) scale(1); box-shadow: 0 5px 12px rgba(0,0,0,.4); }
+}
+.card-flying-from-deck { animation: cardFlyingFromDeck 0.34s ease-in-out; }
+
 /* Opponent card-back → real card reveal flip. */
 @keyframes cardReveal {
     0%   { transform: rotateY(90deg) scale(0.92); opacity: 0.4; }
@@ -3716,7 +3729,7 @@ body.gameplay-locked #playerHand .card {
     .card-anticipate-rush, .card-anticipate-push, .card-anticipate-bite,
     .card-anticipate-jump, .card-anticipate-reverse, .card-anticipate-sort,
     .card-anticipate-hop, .card-anticipate-generic, .card-hopped-over,
-    .card-monkey-group, .queue-icon-receive {
+    .card-monkey-group, .queue-icon-receive, .card-flying-from-deck {
         animation: none !important;
     }
     .card.queue-dimmed { transition: none; }
@@ -5270,7 +5283,8 @@ body.gameplay-locked #playerHand .card {
 }
 
 /* ============================================================
-   OTHER PLAYER ROW — avatar left, hand center, deck right
+   OTHER PLAYER ROW — avatar left, Name Badge + Deck Card Count
+   stacked together on the right (see .other-player-stack below)
 ============================================================ */
 
 .other-player-row {
@@ -5310,12 +5324,18 @@ body.gameplay-locked #playerHand .card {
     100% { box-shadow: 0 0 0 0 transparent; }
 }
 
-.other-player-left {
+/* The Name Badge + Deck Card Count column, sitting to the right of the
+   avatar — this is what turns "avatar, name, deck" from three loose
+   pieces spread across the row into one intentional Avatar | Name+Deck
+   block (see the opponent component layout brief). */
+.other-player-stack {
     display: flex;
-    align-items: center;
-    gap: 5px;
-    flex-shrink: 0;
-    min-width: 60px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 3px;
+    flex-shrink: 1;
+    min-width: 0;
 }
 
 .other-avatar {
@@ -5325,6 +5345,24 @@ body.gameplay-locked #playerHand .card {
 }
 
 .other-player-right { flex-shrink: 0; }
+
+/* Name Badge — a compact chip rather than bare text, so the opponent's
+   name reads as its own distinct piece of information from the Deck
+   Card Count sitting directly underneath it. */
+.other-player-row .player-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-bottom: 0;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.08);
+    color: var(--text-main, #fff);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+    max-width: 100%;
+}
 
 .other-hand {
     display: flex;
@@ -5353,7 +5391,7 @@ body.gameplay-locked #playerHand .card {
         margin-bottom: 3px;
     }
     .other-avatar { font-size: 16px; }
-    .other-player-left { min-width: 50px; gap: 3px; }
+    .other-player-stack { gap: 2px; }
 }
 
 /* ── Desktop: Other Players side by side in one row ──────────
@@ -5383,27 +5421,25 @@ body.gameplay-locked #playerHand .card {
         gap: clamp(8px, 1.6vw, 24px);
     }
 
-    /* Equal-width columns that CAN shrink (unlike the previous
-       column stack, where each div just took its own full content
-       width) — `min-width: 0` is what lets the name-truncation chain
-       below actually engage instead of the row overflowing at
-       narrower Desktop/Tablet widths. */
+    /* Content-sized (not equal-width flex-growers): a slot takes only
+       the width its own avatar/name/deck need, so the row sizes to
+       however many opponents there are instead of stretching to fill
+       the viewport with 1–2 of them. Can still shrink (not grow) if
+       genuinely tight with 3 opponents — see name-truncation below. */
     .other-player-slot {
-        flex: 1 1 0;
+        flex: 0 1 auto;
         min-width: 0;
+        max-width: 220px;
     }
 
-    /* Three columns now share the width one used to have alone, so
-       the row's own chrome (padding/gaps) and its two fixed-size
-       pieces (avatar, deck) are trimmed down to leave room for all
-       three side by side without overflowing — same compaction
-       already applied for Mobile's own narrower tiers (see
-       .other-deck-back's mobile overrides above), just tuned for
-       three-abreast instead of stacked. */
+    /* Three columns share the width one used to have alone, so the
+       row's chrome and fixed-size pieces (avatar, deck) are trimmed to
+       fit all three side by side. */
     .other-player-row {
         gap: 4px;
         padding: 3px 4px;
         border-left-width: 2px;
+        width: auto;
     }
 
     /* If a column ever gets tight, the player's NAME gives way first
@@ -5415,15 +5451,17 @@ body.gameplay-locked #playerHand .card {
        every flex level between here and .player-name-text, the
        standard fix for text-overflow being ignored inside a flex
        row. */
-    .other-player-left {
+    .other-player-stack {
         flex-shrink: 1;
         min-width: 0;
         gap: 2px;
     }
 
-    .player-label {
+    .other-player-row .player-label {
         min-width: 0;
         gap: 2px;
+        padding: 1px 6px;
+        font-size: 11px;
     }
 
     .player-name-text {

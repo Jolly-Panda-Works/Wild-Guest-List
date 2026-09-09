@@ -212,12 +212,17 @@ export function getHandCardElement(index) {
     return hand?.children[index] || null;
 }
 
-/** Any one face-down card-back belonging to an opponent — opponents'
- *  hands are anonymous placeholders, so a specific card has no DOM
- *  identity until it's revealed at the queue; any back will do as the
- *  flight source. */
+/** The opponent's compact deck box in the Other Players row
+ *  (`.other-deck-back`, built by renderOtherPlayers() below) — opponents'
+ *  hands are anonymous placeholders with no per-card DOM identity, so the
+ *  single shared deck box is used as the flight ORIGIN (its on-screen
+ *  position, captured via getBoundingClientRect() in cardEnteredQueue)
+ *  rather than a specific card element. The deck box itself is never
+ *  moved/removed — cardEnteredQueue flies a temporary ghost card from
+ *  this position instead, since the real box stays on screen showing the
+ *  opponent's live remaining count. */
 export function getOpponentHandBackElement(player) {
-    return document.querySelector(`.card-back[data-player="${player.id}"]`);
+    return document.querySelector(`.other-deck-back[data-player="${player.id}"]`);
 }
 
 // ── Ability Preview: player drag-to-play ────────────────────
@@ -523,29 +528,32 @@ async function renderOtherPlayers(gameState) {
             ? `<span class="player-rank-badge" data-icon="${rankIcon}" aria-hidden="true"></span>`
             : "";
 
-        // Compact summary row: avatar + name + a single face-down deck
-        // labelled with this player's TOTAL remaining cards — hand +
-        // draw pile combined — rather than either count on its own.
-        // Deliberately no per-card hand preview here; this row sits
-        // above Party/Trash as a quick-glance opponent summary, not a
-        // detailed hand view (see game.html for its position).
+        // Compact summary block: an avatar on the left, with the
+        // player's Name Badge and their Deck Card Count (a single
+        // face-down deck labelled with this player's TOTAL remaining
+        // cards — hand + draw pile combined, never a score) stacked
+        // together on the right — Avatar | Name Badge / 🃏 Count, per
+        // the opponent component layout brief. Deliberately no per-card
+        // hand preview here; this row sits above Party/Trash as a
+        // quick-glance opponent summary, not a detailed hand view (see
+        // game.html for its position).
         const totalCardsLeft = player.hand.length + player.deck.length;
         box.innerHTML = `
             <div class="other-player-row${isCurrentTurn ? " current-turn" : ""}"
                 data-player="${player.id}"
                 style="--bot-color:${avatar.color}">
 
-                <div class="other-player-left">
-                    <div class="other-avatar">
-                        <span data-icon="bot-${diff}"></span>
-                    </div>
-
-                    <div class="player-label">${rankBadge}<span class="player-name-text">${playerDisplayName(player)}</span></div>
+                <div class="other-avatar">
+                    <span data-icon="bot-${diff}"></span>
                 </div>
 
-                <div class="other-player-right">
-                    <div class="deck-back other-deck-back" data-player="${player.id}">
-                        <span class="other-deck-count" aria-label="${t("handCountLabel")}">${totalCardsLeft}</span>
+                <div class="other-player-stack">
+                    <div class="player-label">${rankBadge}<span class="player-name-text">${playerDisplayName(player)}</span></div>
+
+                    <div class="other-player-right">
+                        <div class="deck-back other-deck-back" data-player="${player.id}">
+                            <span class="other-deck-count" aria-label="${t("handCountLabel")}">${totalCardsLeft}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -798,9 +806,45 @@ async function cardEnteredQueue(card, sourceEl, toIndex) {
         return;
     }
 
-    if (sourceEl.classList.contains("card-back")) {
-        // Opponent's hand is anonymous — fly the face-down back to the
-        // slot, then reveal the real card in its place.
+    if (sourceEl.classList.contains("other-deck-back")) {
+        // Opponent's deck box is a persistent per-opponent UI element
+        // (it keeps showing that player's live remaining count) — it can
+        // never be the thing that flies away. Instead, capture its
+        // CURRENT on-screen position (never a hard-coded coordinate — see
+        // getOpponentHandBackElement above) and fly a temporary face-down
+        // ghost card from there into the queue slot, exactly like the
+        // human hand's own flight below, then swap in the real revealed
+        // card and discard the ghost.
+        const originRect = sourceEl.getBoundingClientRect();
+        const ownerId = sourceEl.dataset.player || card.owner?.id || "";
+
+        const ghost = document.createElement("div");
+        ghost.className = "card-back flying-opponent-card";
+        if (ownerId) ghost.dataset.player = ownerId;
+        ghost.style.position = "fixed";
+        ghost.style.margin = "0";
+        ghost.style.left = `${originRect.left}px`;
+        ghost.style.top = `${originRect.top}px`;
+        ghost.style.width = `${originRect.width}px`;
+        ghost.style.height = `${originRect.height}px`;
+        ghost.style.zIndex = "500";
+        ghost.style.pointerEvents = "none";
+        document.body.appendChild(ghost);
+
+        await flip(ghost, () => slot.appendChild(ghost), {
+            duration: T.minorFlip,
+            duringClass: "card-flying-from-deck",
+        });
+
+        const real = createCard(card);
+        real.classList.add("card-reveal");
+        ghost.replaceWith(real);
+        setTimeout(() => real.classList.remove("card-reveal"), 260);
+        await playBeat(real, "card-joins-line", T.minorBeat);
+    } else if (sourceEl.classList.contains("card-back")) {
+        // Legacy path (per-card face-down back, not currently produced by
+        // renderOtherPlayers()) — kept for any other caller that still
+        // hands cardEnteredQueue a real `.card-back` node directly.
         await flip(sourceEl, () => slot.appendChild(sourceEl), { duration: T.minorFlip });
         const real = createCard(card);
         real.classList.add("card-reveal");

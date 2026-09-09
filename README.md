@@ -1547,7 +1547,45 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.43.0
+**Current version:** 1.43.1
+
+**Fix — Opponent Row no longer stretches full-width on Desktop, and the opponent card-play animation actually flies from the opponent's deck (1.43.1):**
+Two regressions from 1.43.0's Opponent Row rework, both Desktop-only
+(`@media (min-width: 601px) and (pointer: fine)` in `css/style.css`):
+- **Full-width stretch.** `.other-player-slot { flex: 1 1 0; }` made
+  each opponent's slot grow to equally share the *entire* row's width —
+  with only 1 or 2 opponents seated, the row stretched across almost
+  the whole viewport instead of staying a compact, centered group.
+  Changed to `flex: 0 1 auto` (content-sized, can shrink but never
+  grows) with a `max-width: 220px` cap, and `.other-player-row`'s
+  `width: 100%` is overridden to `width: auto` at this breakpoint —
+  `#otherPlayers`'s existing `justify-content: center` still centers
+  the now-compact row relative to the Game Table.
+- **Card-play animation had no real origin.** `getOpponentHandBackElement()`
+  queried `.card-back[data-player="…"]`, a class `renderOtherPlayers()`
+  hasn't produced since the 1.43.0 rework (it builds `.other-deck-back`
+  instead) — the selector never matched, so every opponent play silently
+  fell through to `cardEnteredQueue()`'s no-source-element fallback (the
+  card just popped into the queue slot with no flight). Fixed by pointing
+  the selector at `.other-deck-back[data-player="…"]` and teaching
+  `cardEnteredQueue()` (`js/ui/game-ui.js`) to fly a temporary face-down
+  ghost card from that element's live `getBoundingClientRect()` position
+  — never a hard-coded coordinate — into the queue slot via the existing
+  `flip()` FLIP primitive, then swap in the real revealed card and
+  discard the ghost. The opponent's own deck box is never itself moved or
+  removed (it stays on screen showing that player's live remaining
+  count); a new `card-flying-from-deck` keyframe (lift + slight rotation
+  + shadow, timed to match `flip()`'s duration) gives the ghost's transit
+  some weight, reusing the existing `card-reveal`/`card-joins-line`
+  keyframes for the reveal-and-settle at the queue end.
+
+Also restructured each opponent's compact block from a flat
+`avatar — name — deck` row into `Avatar | Name Badge` over `🃏 Deck
+Count` (new `.other-player-stack` column to the right of the avatar,
+replacing the old `.other-player-left`/`.other-player-right` split),
+and gave the name its own pill/chip styling (`.other-player-row
+.player-label`) so it reads as a distinct Name Badge rather than bare
+text sitting next to the deck count.
 
 **Feature — Game page layout finalized: Round removed, Game State reworked, Standings/Chat become popups, Opponents always one row (1.43.0):**
 The Game page (`game.html`) now matches the finalized layout spec:
