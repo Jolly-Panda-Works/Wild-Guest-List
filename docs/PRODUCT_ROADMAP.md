@@ -3,6 +3,11 @@
 Covers: phased roadmap, prioritization, implementation task breakdown, acceptance criteria, testing strategy, observability, and the executive summary.
 Companion documents: `PROJECT_AUDIT.md`, `ARCHITECTURE_PLAN.md`, `ECONOMY_PLAN.md`, `UI_UX_PLAN.md`
 
+> **Forward-looking roadmap, not a record of what's shipped.** Check
+> `CHANGELOG.md` and `ARCHITECTURE.md` for current state — some phases
+> or items below may already be complete, superseded, or reprioritized
+> since this was written.
+
 Priority: **P0** critical / blocking · **P1** high · **P2** medium · **P3** low
 Effort: **S** small (part of a day) · **M** medium (a few days) · **L** large (1–2 weeks) · **XL** (multi-week, likely needs sub-tasks)
 

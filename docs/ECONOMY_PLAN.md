@@ -3,6 +3,12 @@
 Covers: Store & purchasable items, payments (Iranian + international), coin economy, ads/Remove-Ads, daily bot quota, game-end rewards, and the quest system.
 Companion documents: `PROJECT_AUDIT.md`, `ARCHITECTURE_PLAN.md` (data model referenced throughout), `PRODUCT_ROADMAP.md`
 
+> **Forward-looking plan — none of this is implemented yet.** Today the
+> Home currency pills (Coins/Gems) are a persisted-but-static `0`/`0`
+> display with no earn/spend/reward logic behind them (see
+> `ARCHITECTURE.md` and `README.md` § Features for what actually
+> exists). Nothing here should be read as current behavior.
+
 **Non-negotiable rule threaded through this entire document, per the audit's security findings: the client requests, the server decides. Coins, entitlements, quest completion, and rewards are never computed or trusted from client input.**
 
 ---

@@ -4,6 +4,17 @@
 **Scope:** Full inspection of the existing codebase, prior to any feature work.
 **Companion documents:** `ARCHITECTURE_PLAN.md`, `ECONOMY_PLAN.md`, `UI_UX_PLAN.md`, `PRODUCT_ROADMAP.md`
 
+> **Status note (added by a later documentation audit):** this is a
+> point-in-time snapshot from `app.version` era 2026-08-09 and has not
+> been kept current since — the app has shipped many releases past it
+> (see `CHANGELOG.md`), and some specific claims below are now stale
+> (e.g. `js/game/scoreManager.js` is described as an empty/dead file
+> here; it is now a real, implemented module — see `ARCHITECTURE.md`
+> §§ 2, 9). It has been left as an unedited historical record rather
+> than rewritten, since that's its stated purpose. **For the current
+> state of the codebase, see [`ARCHITECTURE.md`](ARCHITECTURE.md)
+> instead of this file.**
+
 ---
 
 ## 1. Current Architecture

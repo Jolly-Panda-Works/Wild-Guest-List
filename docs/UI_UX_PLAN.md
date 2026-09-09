@@ -3,6 +3,13 @@
 Covers: per-screen UI/UX review (current problem → recommendation → reason → priority) and design system recommendation.
 Companion documents: `PROJECT_AUDIT.md`, `ARCHITECTURE_PLAN.md`, `PRODUCT_ROADMAP.md`
 
+> **Point-in-time review, not current state.** Written against the
+> `PROJECT_AUDIT.md` snapshot; many "current problem" items below may
+> already be addressed by later releases (see `CHANGELOG.md`) or
+> superseded by `ARCHITECTURE.md` § 13's Responsive Design summary.
+> Verify against the current code/CHANGELOG before treating any item
+> here as still outstanding.
+
 Priority key: **P0** critical / blocks target vision · **P1** high value · **P2** medium · **P3** polish
 
 ---

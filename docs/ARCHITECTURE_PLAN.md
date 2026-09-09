@@ -3,6 +3,14 @@
 Covers: target architecture, domain boundaries, data model, JSON/configuration architecture, and migration strategy.
 Companion documents: `PROJECT_AUDIT.md` (current state), `ECONOMY_PLAN.md`, `UI_UX_PLAN.md`, `PRODUCT_ROADMAP.md`
 
+> **This is a forward-looking target/migration plan, not a description
+> of the current codebase.** For the current, as-implemented
+> architecture (verified against the code), see
+> [`ARCHITECTURE.md`](ARCHITECTURE.md). This file and `PROJECT_AUDIT.md`
+> (which it was written against) predate several subsequent releases —
+> treat anything here as a proposal to evaluate, not as documentation
+> of what exists today.
+
 ---
 
 ## 1. Guiding Principles
