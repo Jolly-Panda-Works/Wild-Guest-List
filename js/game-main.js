@@ -33,6 +33,7 @@ import { notifyGameStarted } from "./services/achievements.js";
 import { initAchievementNotifications } from "./ui/achievementNotification-ui.js";
 import { initOrientationGate, onOrientationBlocked, onOrientationUnblocked } from "./ui/orientation-ui.js";
 import { pauseTurnTimer, resumeTurnTimer, isPaused } from "./game/turnTimer.js";
+import { initRewardPopupDevTrigger } from "./dev/rewardPopupDevTrigger.js";
 
 // Wired synchronously, first thing, before any of this page's own
 // top-level awaits below — the gate must be able to block gameplay
@@ -181,6 +182,10 @@ document.getElementById("returnHomeBtn")?.addEventListener("click", () => {
 });
 
 initAchievementNotifications();
+
+// Development/Test Mode only — see js/dev/rewardPopupDevTrigger.js.
+// A genuine no-op in Production (no listener, no global exposed).
+initRewardPopupDevTrigger();
 
 await startGame();
 playBackgroundMusic();

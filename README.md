@@ -614,6 +614,9 @@ WildGuestList/
 │   │   ├── preview.js      (Ability Preview / drag-to-play timing & thresholds)
 │   │   └── rank.js         (shared rank-medal icon list, read by scoreManager.js)
 │   │
+│   ├── dev/
+│   │   └── rewardPopupDevTrigger.js  (Development-only: preview the real Reward Popup without finishing a match — see § Development/Test Mode. Gated by js/services/devEnv.js; a genuine no-op in Production)
+│   │
 │   ├── game/
 │   │   ├── deck.js
 │   │   ├── gameOver.js
@@ -628,6 +631,7 @@ WildGuestList/
 │   │   ├── achievements.js  (the achievement system — progress/persistence/unlocking)
 │   │   ├── assetPreloader.js  (preloads/decodes every game image on the Startup screen — see § Startup / Loading Screen)
 │   │   ├── dataLoader.js
+│   │   ├── devEnv.js     (runtime Development-vs-Production detection — no bundler/NODE_ENV in this project, so this reads the page's actual hostname/protocol instead)
 │   │   ├── logger.js
 │   │   ├── profile.js   (the one authoritative player profile)
 │   │   └── soundManager.js
@@ -1420,6 +1424,61 @@ This makes the project lightweight and easy to deploy.
 8. Deploy
 ```
 
+### Development/Test Mode — previewing the Reward Popup
+
+The Reward Popup is the end-of-match results screen (`#endGameScreen`,
+`js/ui/endgame-ui.js`'s `showEndGame()`) — normally only reachable by
+actually finishing a 12-card match. In Development, it can be opened
+directly instead, without playing a full game:
+
+| Trigger | Scenario |
+|---|---|
+| `Ctrl+Alt+R` | You **WINNER** |
+| `Ctrl+Alt+D` | You **DRAW** (tied for the lead) |
+| `Ctrl+Alt+L` | You **LOSS** |
+| `Ctrl+Alt+O` | You **LOSS**, while two other players **DRAW** for the lead |
+| `Escape` | Dismiss the test popup (only the one just opened this way) without reloading |
+
+If a keyboard combo conflicts with your OS/browser, the same four
+scenarios are also available from the browser console:
+
+```js
+__wglRewardPopupTest.win();
+__wglRewardPopupTest.draw();
+__wglRewardPopupTest.loss();
+__wglRewardPopupTest.lossToDraw();
+__wglRewardPopupTest.close();
+```
+
+This opens the exact same `showEndGame()` component/state flow a real
+match end uses — never a separate mock popup — with a throwaway,
+predictable test snapshot (fixed Party Card Counts, run through the
+same `determineMatchOutcome()` resolver a real match uses, see
+`js/game/matchOutcome.js`). It never touches the real, live
+`gameState` (`js/game/gameState.js`) and deliberately skips
+`js/game/gameOver.js`'s `finishGame()`/achievement persistence, so it
+cannot corrupt an in-progress match or move real, saved
+achievement/profile progress.
+
+**Development-only, by design:** the trigger (`js/dev/rewardPopupDevTrigger.js`)
+is gated behind `js/services/devEnv.js`'s `isDevEnvironment()`, which
+checks the page's actual runtime origin (`localhost` / `127.0.0.1` /
+`0.0.0.0` / `::1` / a `file:` URL) rather than a hardcoded flag —
+this project has no bundler/build step (see § Running Locally /
+Deployment above), so there's no `NODE_ENV` to read and nothing a
+build could strip; this is the equivalent check for a zero-build
+static app. On a real deployment (GitHub Pages, Netlify, Vercel, or
+any real domain) that check is always `false`, so `initRewardPopupDevTrigger()`
+becomes a total no-op: no keyboard listener is registered, no
+`window.__wglRewardPopupTest` is exposed, and no trigger of any kind
+exists in the shipped UI. See `tests/devEnv.test.mjs` and
+`tests/rewardPopupDevTrigger.test.mjs` for automated coverage of both
+the scenario data and this Production safety gate.
+
+To remove this feature entirely: delete `js/dev/` and the one
+`import`/`initRewardPopupDevTrigger()` call pair in `js/game-main.js`.
+Nothing else in the codebase depends on it.
+
 ---
 
 ## 🗺️ Roadmap
@@ -1465,7 +1524,33 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.38.0
+**Current version:** 1.39.0
+
+**Feature — Development/Test Mode for the Reward Popup (1.39.0):**
+Added a Development-only way to preview the real end-of-match Reward
+Popup (`#endGameScreen`, `js/ui/endgame-ui.js`'s `showEndGame()`)
+without playing a full 12-card match — see § Development/Test Mode
+above for the full trigger list
+(`Ctrl+Alt+R`/`D`/`L`/`O` and `window.__wglRewardPopupTest`). New
+files: `js/services/devEnv.js` (runtime Development-vs-Production
+detection — this project has no bundler/`NODE_ENV`, so it reads the
+page's actual hostname/protocol instead of a hardcoded flag) and
+`js/dev/rewardPopupDevTrigger.js` (the trigger itself, wired into
+`js/game-main.js` with a single import + init call). It opens the
+exact same `showEndGame()` component/state flow a real match end
+uses — never a mock popup — with a throwaway, predictable test
+snapshot whose outcome is computed through the same
+`determineMatchOutcome()` resolver a real match uses
+(`js/game/matchOutcome.js`), so the popup's WINNER/DRAW/LOSS labels
+are never hand-authored. It never touches the real, live `gameState`
+and deliberately bypasses `js/game/gameOver.js`'s `finishGame()`/
+achievement persistence, so it cannot corrupt an in-progress match or
+move real, saved achievement/profile progress. On a real deployment
+(any real domain — see § Deployment) `isDevEnvironment()` always
+returns `false`, so the whole feature becomes a genuine no-op: no
+keyboard listener, no console global, no trigger of any kind exists in
+Production. Covered by `tests/devEnv.test.mjs` and
+`tests/rewardPopupDevTrigger.test.mjs`.
 
 **Feature — Card Power removed from victory; real Draw outcome added (1.38.0):**
 The match result used to be "highest Party count, ties broken by the
