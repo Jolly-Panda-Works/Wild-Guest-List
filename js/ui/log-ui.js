@@ -42,10 +42,10 @@ export function renderLog(gameState) {
 
     // #logEntries (a permanent desktop-only sidebar container) no
     // longer exists — Log's only presentation surface now is the
-    // #logModal popup (opened from either #logBtn next to Pause on
-    // desktop, or #railLogBtn on mobile), backed by #mobileLogContent
-    // below. gameState.logs itself, and everything that appends to
-    // it, is untouched.
+    // #logModal popup, opened from #railLogBtn in the universal
+    // Utility Buttons row (#mobileSideRail, every layout now), backed
+    // by #mobileLogContent below. gameState.logs itself, and
+    // everything that appends to it, is untouched.
     const mobile = document.getElementById("mobileLogContent");
     if (mobile) {
         mobile.innerHTML = buildHTML();

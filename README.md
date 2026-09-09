@@ -1547,7 +1547,45 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.42.0
+**Current version:** 1.43.0
+
+**Feature — Game page layout finalized: Round removed, Game State reworked, Standings/Chat become popups, Opponents always one row (1.43.0):**
+The Game page (`game.html`) now matches the finalized layout spec:
+- **Round removed entirely.** `#roundInfo` and its divider are gone from
+  the markup, and `renderCurrentTurn()` (`js/ui/game-ui.js`) no longer
+  computes or displays it. No secondary game-state value replaced it.
+- **Game State** (`#gameState`) now shows only whose turn it is and the
+  remaining turn timer — a display-only element (`pointer-events: none`
+  in CSS, in addition to having no click handler) that can never open a
+  popup. It shows a per-seat icon (the `⭐ yourTurn` icon for the human
+  player, the same per-difficulty bot icon used in the Opponent Row for
+  bots) next to text like "YOUR TURN" / "BOT 2'S TURN" (new
+  `gameStateYourTurn`/`gameStateOpponentTurn` i18n keys), plus a thin
+  timer-progress fill bar tinted with the same safe→danger color the
+  timer number already used.
+- **Utility Buttons** (Standings / Game Log / Chat) sit above Game
+  State on every layout now, not just Mobile Portrait — this reuses the
+  existing rail buttons (`#leaderboardBtn`/`#railLogBtn`/`#railChatBtn`,
+  `#mobileSideRail`) rather than adding new ones. The header's old
+  `#logBtn` next to Pause was removed as a redundant second entry point.
+- **Standings and Chat are real popups on every layout**, including
+  Desktop. The old permanent `#leftSidebar` (an always-visible
+  Leaderboard panel plus a "Coming Soon" Chat panel) is gone;
+  `#mobileLeaderboard` and `#chatPanel` now use the same `.mobile-open`
+  popup toggle Party/Trash already used (`js/ui/mobile-ui.js`'s
+  `initMobileTabs()`), shaped to match the Pause popup on Desktop. Chat
+  itself is still unimplemented — its content remains the "Coming Soon"
+  placeholder — only how it's reached changed.
+- **Opponents are always exactly one horizontal row** above the Game
+  Table, never a per-side layout, never beside You. `renderOtherPlayers()`
+  now renders a flat, dynamic list of `.other-player-slot` elements
+  directly into `#otherPlayers` (replacing the old fixed
+  `#topPlayer`/`#leftPlayer`/`#rightPlayer` trio), and `#otherPlayers`'s
+  own base CSS rule sets `display: flex; flex-direction: row` so this
+  holds at every breakpoint (a couple of narrower, non-touch tiers had
+  previously stacked them into a column).
+- Party/Trash's existing popup-flanking-the-Queue behavior (introduced
+  in 1.42.x) is unchanged.
 
 **Feature — Card Power restored to the Animal Cards on the table and the Card Guide (1.42.0):**
 `Power` (the numeric gameplay stat behind ability dispatch, queue

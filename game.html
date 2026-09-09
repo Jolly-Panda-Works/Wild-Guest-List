@@ -32,31 +32,6 @@
 
         <div id="pageLayout">
 
-            <!-- LEFT SIDEBAR (desktop only) -->
-            <div id="leftSidebar">
-
-                <div id="leaderboard">
-                    <h3><span data-icon="leaderboard"></span> <span data-i18n="matchStandings">Match Standings</span></h3>
-                    <div id="leaderboardRows"></div>
-                </div>
-
-                <!-- Game Log used to live here as its own permanent
-                     sidebar panel (#gameLog/#logEntries). It's now
-                     reached via the #logBtn header button next to
-                     Pause (see #topRight below), which opens the same
-                     #logModal popup Mobile already used — freeing this
-                     space up for Chat. Log's state/rendering
-                     (js/ui/log-ui.js's renderLog()) is unchanged; it
-                     still writes into #mobileLogContent (shared by
-                     both entry points), it just no longer also writes
-                     into a desktop-only #logEntries element. -->
-                <div id="chatPanel">
-                    <h3><span data-icon="chat"></span> <span data-i18n="chat">Chat</span></h3>
-                    <div class="comingSoon" data-i18n="comingSoon">Coming Soon</div>
-                </div>
-
-            </div>
-
             <!-- GAME COLUMN -->
             <div id="gameColumn">
 
@@ -64,16 +39,14 @@
                 <div id="topBar">
                     <div id="topBarContent">
 
-                        <div id="topLeft">
-                            <div class="turn-label" id="turnPlayer">Turn: You</div>
-                            <div class="turn-divider"></div>
-                            <div class="round-label">
-                                <span id="roundInfo">Round: 1</span>
-                                <span class="round-timer-sep" aria-hidden="true">|</span>
-                                <span class="turn-timer-icon" data-icon="timer" aria-hidden="true"></span>
-                                <span class="turn-timer-label" id="turnTimer">10</span>
-                            </div>
-                        </div>
+                        <!-- #topLeft is now an empty spacer: Turn + Timer
+                             moved out of the header into #gameState
+                             (see #gameLayout below), per the Final Game UI
+                             Layout brief — kept here (empty) only so
+                             #topBarContent's 3-column grid still centers
+                             the logo in #topCenter against #topRight's
+                             width, same as before. -->
+                        <div id="topLeft"></div>
 
                         <div id="topCenter">
                             <picture>
@@ -86,9 +59,11 @@
                             <button id="pauseBtn" class="top-btn" data-title="Pause" data-title-key="btnPause">
                                 <span data-icon="pause"></span>
                             </button>
-                            <button id="logBtn" class="top-btn" data-title="Log" data-title-key="btnLog">
-                                <span data-icon="gameLog"></span>
-                            </button>
+                            <!-- #logBtn removed: Game Log is now reached via
+                                 the universal Utility Buttons row's
+                                 #railLogBtn (see #mobileSideRail below),
+                                 which opens the same #logModal popup — no
+                                 second entry point kept in the header. -->
                             <button id="helpBtn" class="top-btn" data-title="Help" data-title-key="btnHelp">
                                 <span data-icon="help"></span>
                             </button>
@@ -103,40 +78,60 @@
                 <!-- GAME BOARD -->
                 <div id="gameLayout">
 
-                    <!-- Mobile side rail — compact buttons kept out of
-                         the main gameplay flow, laid out as a row on
-                         Portrait (see css/style.css's portrait layer).
-                         Order: Leaderboard → Log → Chat.
-
-                         Party/Trash are deliberately NOT rail buttons —
-                         they open from the door/trash icons flanking
-                         the Queue itself (#queueWithIcons, built in
-                         renderQueue() — js/ui/game-ui.js; wired in
-                         js/ui/mobile-ui.js's initMobileTabs()). The old
-                         #mobileTabs/#partyTab/#trashTab markup below is
-                         kept only because js/ui/walkthrough.js's
-                         width-based (<=600px) mobile-portrait tier and
-                         the older width-based mobile CSS still use it;
-                         it plays no part in the Portrait rail and is
-                         hidden there (falls back to its base
-                         `display: none`). -->
+                    <!-- Utility Buttons — Standings / Game Log / Chat.
+                         Reuses the exact rail buttons Mobile Portrait
+                         already built (#leaderboardBtn/#railLogBtn/
+                         #railChatBtn) and their existing popup wiring
+                         (js/ui/mobile-ui.js), just made universal
+                         (every layout, not only Portrait) and moved
+                         above Game State, per the Final Game UI Layout
+                         brief. These are real buttons; Standings/Log
+                         open the same popups they always did
+                         (#mobileLeaderboard, #logModal), Chat now opens
+                         #chatPanel the same way (see below) instead of
+                         the old "Coming Soon" toast. -->
                     <div id="mobileSideRail">
-                        <button id="leaderboardBtn"><span data-icon="leaderboard"></span> <span data-i18n="matchStandings">Leaderboard</span></button>
-                        <button id="railLogBtn"><span data-icon="gameLog"></span> <span data-i18n="btnLog">Log</span></button>
+                        <button id="leaderboardBtn"><span data-icon="leaderboard"></span> <span data-i18n="standingsBtn">Standings</span></button>
+                        <button id="railLogBtn"><span data-icon="gameLog"></span> <span data-i18n="btnLog">Game Log</span></button>
                         <button id="railChatBtn"><span data-icon="chat"></span> <span data-i18n="chat">Chat</span></button>
-                        <div id="mobileTabs">
-                            <button id="partyTab"><span data-icon="party"></span> <span data-i18n="partyPanel">Party</span></button>
-                            <button id="trashTab"><span data-icon="trash"></span> <span data-i18n="trashPanel">Trash</span></button>
+                    </div>
+
+                    <!-- #mobileTabs/#partyTab/#trashTab: dead legacy
+                         markup, kept (moved out of #mobileSideRail, not
+                         deleted) only because js/ui/walkthrough.js's
+                         older width-based mobile-portrait tier and some
+                         legacy width-based mobile CSS still reference
+                         it. It plays no part in the Utility Buttons row
+                         and stays hidden everywhere via its own base
+                         `display: none` rule. -->
+                    <div id="mobileTabs">
+                        <button id="partyTab"><span data-icon="party"></span> <span data-i18n="partyPanel">Party</span></button>
+                        <button id="trashTab"><span data-icon="trash"></span> <span data-i18n="trashPanel">Trash</span></button>
+                    </div>
+
+                    <!-- Game State — display-only: whose turn + the
+                         remaining turn timer. No Round, no other info.
+                         Not a button, opens nothing. See renderCurrentTurn()/
+                         renderTurnTimer() in js/ui/game-ui.js. -->
+                    <div id="gameState" role="status" aria-live="polite">
+                        <span id="turnStateIcon" class="game-state-icon" data-icon="yourTurn" aria-hidden="true"></span>
+                        <span class="turn-label" id="turnPlayer">Your Turn</span>
+                        <span class="game-state-divider" aria-hidden="true"></span>
+                        <span class="turn-timer-icon" data-icon="timer" aria-hidden="true"></span>
+                        <span class="turn-timer-label" id="turnTimer">10</span>
+                        <div class="game-state-timer-track" aria-hidden="true">
+                            <div id="gameStateTimerFill" class="game-state-timer-fill"></div>
                         </div>
                     </div>
 
                     <!-- Mobile leaderboard — hidden until #leaderboardBtn
                          is tapped (see .mobile-open in css/style.css and
-                         the toggle wiring in js/ui/mobile-ui.js).
-                         #mobileLeaderboardInline is filled by the same
-                         renderLeaderboard() call that fills the desktop
-                         sidebar's #leaderboardRows — see
-                         js/ui/leaderboard-ui.js. -->
+                         the toggle wiring in js/ui/mobile-ui.js). Now the
+                         ONLY Standings surface (the old always-visible
+                         desktop #leaderboard sidebar panel was removed —
+                         Standings is a popup on every layout now).
+                         #mobileLeaderboardInline is filled by
+                         js/ui/leaderboard-ui.js's renderLeaderboard(). -->
                     <div id="mobileLeaderboard">
                         <div class="panel-header">
                             <h3>
@@ -147,16 +142,32 @@
                         <div id="mobileLeaderboardInline"></div>
                     </div>
 
-                    <!-- Opponent players — compact summary (avatar, name,
-                         deck) shown ABOVE the Party/Trash controls, per the
-                         layout brief: Logo → Turn/Round/Timer + Help/Pause/
-                         Guide → Standings/Log/Chat → Opponents → Party/Trash
-                         → Queue → Player Hand. -->
-                    <div id="otherPlayers">
-                        <div id="topPlayer"></div>
-                        <div id="leftPlayer"></div>
-                        <div id="rightPlayer"></div>
+                    <!-- Chat popup — reuses the same tap-to-open
+                         `.mobile-open` popup pattern as Standings/Party/
+                         Trash (js/ui/mobile-ui.js's initMobileTabs()),
+                         opened by #railChatBtn above. Chat itself is
+                         still a future feature (no real messaging
+                         exists yet), so its content stays the existing
+                         "Coming Soon" placeholder — only how it's
+                         reached changed (a real popup instead of a
+                         toast), per the Final Game UI Layout brief. -->
+                    <div id="chatPanel">
+                        <div class="panel-header">
+                            <h3>
+                                <span data-icon="chat"></span> <span data-i18n="chat">Chat</span>
+                            </h3>
+                            <button class="panel-close mobile-only-btn icon-btn close"><span data-icon="close"></span></button>
+                        </div>
+                        <div class="comingSoon" data-i18n="comingSoon">Coming Soon</div>
                     </div>
+
+                    <!-- Opponent players — ALWAYS one horizontal row
+                         above the Game Table (never beside YOU, never a
+                         per-side layout). Populated dynamically by
+                         renderOtherPlayers() in js/ui/game-ui.js with
+                         one `.other-player-slot` per non-You player
+                         (1–3, since the game seats at most 4 total). -->
+                    <div id="otherPlayers"></div>
 
                     <!-- Party area -->
                     <div id="partyArea">

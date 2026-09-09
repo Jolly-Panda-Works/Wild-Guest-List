@@ -489,15 +489,19 @@ export function clearBotPreviewBadge() {
 }
 
 // ── Other players — deck-back style with avatar & deck count ──
+// Always rendered as a flat list of up to 3 `.other-player-slot`
+// elements directly inside #otherPlayers — a single row (see
+// css/style.css's #otherPlayers rules), never a per-side layout. The
+// game seats at most 4 players total, so there are always 1–3 of
+// these regardless of Bot/Human mix; opponents are never positioned
+// differently based on type.
 async function renderOtherPlayers(gameState) {
-    const top   = document.getElementById("topPlayer");
-    const left  = document.getElementById("leftPlayer");
-    const right = document.getElementById("rightPlayer");
-    [top, left, right].forEach(el => { if(el) el.innerHTML = ""; });
+    const container = document.getElementById("otherPlayers");
+    if (!container) return;
+    container.innerHTML = "";
 
-    const others       = gameState.players.filter(p => p.id !== "p1");
-    const positions    = [top, left, right];
-    const currentId    = gameState.players[gameState.currentPlayer]?.id;
+    const others    = gameState.players.filter(p => p.id !== "p1");
+    const currentId = gameState.players[gameState.currentPlayer]?.id;
 
     // Rank badges reuse the exact same standings math as the Match
     // Standings/Leaderboard popup (js/game/scoreManager.js), computed
@@ -505,9 +509,10 @@ async function renderOtherPlayers(gameState) {
     // with the popup's.
     const rankIndexes = getPlayerRankIndexes(gameState);
 
-    others.forEach((player, i) => {
-        const box = positions[i];
-        if (!box) return;
+    others.forEach(player => {
+        const box = document.createElement("div");
+        box.className = "other-player-slot";
+        container.appendChild(box);
 
         const diff   = player.difficulty || AI_DIFFICULTY.EASY;
         const avatar = BOT_AVATARS[diff] || BOT_AVATARS.easy;
@@ -645,12 +650,30 @@ export function createCard(card) {
 }
 
 // ── Turn label ────────────────────────────────────────────
+// Game State (#gameState in game.html) shows ONLY whose turn it is —
+// no Round, nothing else. The icon mirrors the identity icon already
+// used elsewhere for this seat (the "yourTurn" star for the human
+// player, the same per-difficulty bot-* icon renderOtherPlayers()
+// uses for opponents), so it stays consistent with the rest of the
+// game's existing visual language rather than inventing a new one.
 function renderCurrentTurn(gameState) {
     const player = gameState.players[gameState.currentPlayer];
-    const turnEl  = document.getElementById("turnPlayer");
-    const roundEl = document.getElementById("roundInfo");
-    if (turnEl)  turnEl.textContent  = `${t("topTurn")}: ${playerDisplayName(player)}`;
-    if (roundEl) roundEl.textContent = `${t("topRound")}: ${gameState.round}`;
+    const turnEl = document.getElementById("turnPlayer");
+    const iconEl = document.getElementById("turnStateIcon");
+    if (!player) return;
+
+    const isYou = player.id === "p1";
+
+    if (turnEl) {
+        turnEl.textContent = isYou
+            ? t("gameStateYourTurn")
+            : t("gameStateOpponentTurn").replace("{name}", playerDisplayName(player).toUpperCase());
+    }
+
+    if (iconEl) {
+        const diff = player.difficulty || AI_DIFFICULTY.EASY;
+        iconEl.dataset.icon = isYou ? "yourTurn" : `bot-${diff}`;
+    }
 }
 
 // ── Turn timer ────────────────────────────────────────────
@@ -676,8 +699,19 @@ export function renderTurnTimer(secondsLeft) {
     const fraction = Math.max(0, Math.min(1, secondsLeft / TURN_TIMER_SECONDS));
     const t = 1 - fraction; // 0 = full time left, 1 = out of time
     const [r, g, b] = TURN_TIMER_SAFE_RGB.map((c, i) => lerpChannel(c, TURN_TIMER_DANGER_RGB[i], t));
-    el.style.color = `rgb(${r}, ${g}, ${b})`;
+    const color = `rgb(${r}, ${g}, ${b})`;
+    el.style.color = color;
     el.classList.toggle("turn-timer-critical", secondsLeft <= 3);
+
+    // Subtle visual timer progression: a thin fill bar under Game State
+    // that shrinks from 100% to 0% as the turn runs out, tinted with
+    // the exact same safe→danger color the number itself is using, so
+    // the timer clearly reads as a timer (not a coin/score/badge).
+    const fillEl = document.getElementById("gameStateTimerFill");
+    if (fillEl) {
+        fillEl.style.width = `${fraction * 100}%`;
+        fillEl.style.background = color;
+    }
 
     // Once the clock drops under 3 seconds, echo that urgency with a
     // screen-wide red flash on top of the label's own pulse/color shift.

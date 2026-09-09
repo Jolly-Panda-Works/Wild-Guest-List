@@ -122,7 +122,12 @@ function getSteps() {
             arrowDir: "down", boxPos: "above",
         },
         {   // 3
-            targetId: "topPlayer", fallbackId: "leftPlayer",
+            // #otherPlayers is now a single always-present container
+            // (renderOtherPlayers() in js/ui/game-ui.js appends 1–3
+            // `.other-player-slot` rows into it directly) — no more
+            // separate #topPlayer/#leftPlayer/#rightPlayer ids to fall
+            // back between.
+            targetId: "otherPlayers",
             titleKey: "wt3Title", textKey: "wt3Text",
             arrowDir: "up", boxPos: "below",
         },
@@ -146,19 +151,14 @@ function getSteps() {
             boxPos:   mobile ? "above" : "right",
         },
         {   // 6
-            // mobileLeaderboard is now a tap-to-open popup (hidden by
-            // default — see css/style.css's Portrait layer and
-            // js/ui/mobile-ui.js), so it can't be highlighted directly
-            // while closed. Target the always-visible button instead,
-            // same reasoning as step 5 targeting mobileTabs rather than
-            // the also-hidden partyCards/trashCards.
-            // Desktop's fallback used to be the permanent #logEntries
-            // sidebar panel; Log is now reached via the #logBtn header
-            // button next to Pause instead (see game.html's #topRight
-            // and #logModal), which fits this step's "Leaderboard &
-            // Log" copy just as well.
-            targetId:   mobile ? "leaderboardBtn" : "leaderboardRows",
-            fallbackId: mobile ? null : "logBtn",
+            // #mobileLeaderboard is a tap-to-open popup (hidden by
+            // default — see css/style.css and js/ui/mobile-ui.js), so
+            // it can't be highlighted directly while closed. Target the
+            // always-visible Utility Buttons row instead — Standings
+            // (#leaderboardBtn) and Game Log (#railLogBtn) now live in
+            // the same universal row on every layout, not just Mobile.
+            targetId:   "leaderboardBtn",
+            fallbackId: "railLogBtn",
             titleKey: "wt6Title", textKey: "wt6Text",
             arrowDir: mobile ? "up" : "left",
             boxPos:   mobile ? "below" : "right",

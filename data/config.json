@@ -1,6 +1,6 @@
 {
     "app": {
-        "version": "1.42.0"
+        "version": "1.43.0"
     },
     "icons": {
         "leaderboard": "assets/img/icons/leaderboard.png",
@@ -86,7 +86,7 @@
         "queueFull": "",
         "partyJoin": "",
         "trashJoin": "",
-        "yourTurn": "",
+        "yourTurn": "⭐",
         "win": "",
         "lose": "",
         "background": "assets/sound/background.mp3",

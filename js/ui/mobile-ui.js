@@ -1,32 +1,14 @@
 import { openModal } from "./modal-ui.js";
-import { showWarning } from "./game-ui.js";
-import { t } from "../i18n.js";
 
 export function initMobileUI() {
 
     initInfoPopups();
 
-    // Desktop Header's Log button (#topRight, next to Pause) — Log no
-    // longer sits as a permanent #leftSidebar panel, it opens the same
-    // #logModal popup Mobile already uses. (This lookup was a no-op
-    // for a while after #logBtn was first removed from the header in
-    // 1.30.7 — it's a real entry point again now.)
-    document.getElementById("logBtn")?.addEventListener("click", () => {
-        openModal("logModal");
-    });
-
-    // Mobile rail Log entry — same logModal the desktop header's Log
-    // button opens. The entry point for Log on Mobile Portrait (see
-    // css/style.css's `#mobileSideRail`).
+    // Universal Utility Buttons row's Game Log entry (#mobileSideRail,
+    // shown on every layout now, not just Mobile Portrait) — opens the
+    // same #logModal popup every entry point to Log has always used.
     document.getElementById("railLogBtn")?.addEventListener("click", () => {
         openModal("logModal");
-    });
-
-    // Chat is a future feature — the rail button just surfaces the
-    // same "Coming Soon" messaging already used elsewhere (e.g. Online
-    // Play in js/game-modes-main.js), no real chat is implemented.
-    document.getElementById("railChatBtn")?.addEventListener("click", () => {
-        showWarning(t("comingSoonTitle"));
     });
 
     document.querySelectorAll(".closeModal").forEach(btn => {
@@ -39,6 +21,7 @@ export function initMobileUI() {
 export function initMobileTabs() {
 
     const leaderboardBtn = document.getElementById("leaderboardBtn");
+    const chatBtn         = document.getElementById("railChatBtn");
     // Party/Trash now open from the door/trash icons that flank the
     // Queue itself (#queueWithIcons, built in renderQueue() —
     // js/ui/game-ui.js) rather than dedicated rail buttons — see the
@@ -50,23 +33,31 @@ export function initMobileTabs() {
     const leaderboard = document.getElementById("mobileLeaderboard");
     const party    = document.getElementById("partyArea");
     const trash    = document.getElementById("trashArea");
+    const chat     = document.getElementById("chatPanel");
 
     function closePanels() {
         leaderboard?.classList.remove("mobile-open");
         party?.classList.remove("mobile-open");
         trash?.classList.remove("mobile-open");
+        chat?.classList.remove("mobile-open");
         document.body.classList.remove("popup-open");
         leaderboardBtn?.classList.remove("active");
         doorIcon?.classList.remove("active");
         trashIcon?.classList.remove("active");
+        chatBtn?.classList.remove("active");
     }
 
-    // Leaderboard / Party / Trash share one open-panel-at-a-time group:
-    // opening one always closes the others.
+    // Leaderboard / Party / Trash / Chat share one open-panel-at-a-time
+    // group: opening one always closes the others. Chat reuses the
+    // exact same popup toggle every other panel in this group already
+    // uses — it's a real "opens its existing popup" entry point now,
+    // not a toast (its content is still the existing "Coming Soon"
+    // placeholder — Chat itself remains unimplemented).
     [
         { btn: leaderboardBtn, panel: leaderboard },
         { btn: doorIcon, panel: party },
         { btn: trashIcon, panel: trash },
+        { btn: chatBtn, panel: chat },
     ].forEach(({ btn, panel }) => {
         const toggle = () => {
             const isOpen = panel?.classList.contains("mobile-open");
@@ -91,7 +82,7 @@ export function initMobileTabs() {
         }
     });
 
-    [leaderboard, party, trash].forEach(panel => {
+    [leaderboard, party, trash, chat].forEach(panel => {
         panel?.addEventListener("click", e => {
             if (e.target === panel) closePanels();
         });

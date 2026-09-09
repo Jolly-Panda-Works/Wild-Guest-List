@@ -697,7 +697,12 @@ body {
 
     display: grid;
 
-    grid-template-columns: 260px 1fr;
+    /* Single column — #leftSidebar (the old permanent Leaderboard/Chat
+       panel) no longer exists: Standings and Chat are both popups now
+       (same `.mobile-open` component Party/Trash already used), opened
+       from the Utility Buttons row instead of living in a permanent
+       side column. */
+    grid-template-columns: 1fr;
 
     gap: 20px;
 
@@ -706,20 +711,6 @@ body {
     min-height: 100vh;
 
     box-sizing: border-box;
-}
-
-
-#leftSidebar {
-
-    width: 260px;
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 12px;
-
-    height: calc(100vh - 20px);
 }
 
 
@@ -1084,24 +1075,6 @@ body {
 /* ==========================================================
    LEADERBOARD
 ========================================================== */
-
-#leaderboard {
-
-    width: 100%;
-
-    padding: 12px;
-
-    background: var(--bg-panel);
-
-    backdrop-filter: var(--blur);
-
-    border-radius: var(--radius-lg);
-
-    box-sizing: border-box;
-
-    box-shadow: var(--shadow-panel);
-}
-
 
 /*
   Kept separate from .glass-panel because the leaderboard
@@ -1957,13 +1930,23 @@ body.popup-open::before {
 
 #otherPlayers {
 
+    /* Always ONE horizontal row above the Game Table — every player
+       who isn't You (1–3 of them, since the game seats at most 4
+       total), never a per-side layout, never beside You. Every
+       breakpoint below only retunes sizing/gap for this same
+       row — none of them switch it to a column. */
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
 
-    flex-direction:column;
+    justify-content: center;
 
-    align-items:center;
+    align-items: center;
 
-    gap:20px;
+    gap: 12px;
 
+    width: 100%;
+    box-sizing: border-box;
 
 }
 
@@ -2883,41 +2866,53 @@ body.popup-open::before {
 
 /* ==========================================================
    CHAT
-   Game Log used to share this sidebar with Chat as its own
-   fixed-height panel (#gameLog, height: 260px, flex: 1). It now
-   lives in a header popup instead (#logModal, opened via #logBtn
-   next to Pause — see game.html's #topRight and
-   js/ui/mobile-ui.js), so all the vertical space it used to take
-   up in #leftSidebar now goes to Chat: #chatPanel grows to fill
-   the sidebar (flex: 1) instead of sitting at a fixed 140px.
+   Chat is still a future feature — no real messaging exists yet, so
+   its content stays the same "Coming Soon" placeholder it always
+   showed. What changed: it's now reached the same way Standings/
+   Party/Trash are — a real tap-to-open popup (#railChatBtn in the
+   universal Utility Buttons row toggles `.mobile-open` on it, see
+   js/ui/mobile-ui.js) — instead of living in the old permanent
+   #leftSidebar panel. Shape mirrors #partyArea/#trashArea, declared
+   separately here so as not to disturb those elements' own (tested)
+   rule blocks.
 ========================================================== */
 
 
 #chatPanel {
 
-
-    width: 100%;
-
-
-    flex: 1;
-
-    min-height: 0;
-
-
-    padding: 12px;
-
-
-    display: flex;
-
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(420px, 92vw);
+    z-index: 3000;
 
     flex-direction: column;
+
+    min-height: 0;
+    max-height: min(78vh, 640px);
+    overflow-y: auto;
+
+    padding: 16px;
+
+    box-shadow: 0 20px 60px rgba(0,0,0,.6);
+}
+
+#chatPanel.mobile-open {
+    display: flex;
+}
+
+#chatPanel h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    text-align: center;
+    color: var(--text-main);
+    letter-spacing: 1px;
 }
 
 
-/* Coming Soon placeholder — centered in whatever room #chatPanel
-   now has, instead of sitting left-aligned right under the
-   heading like it did in the old, much shorter fixed-height
-   panel. */
+/* Coming Soon placeholder — centered in whatever room the popup has. */
 .comingSoon {
 
     flex: 1;
@@ -3069,16 +3064,126 @@ body.popup-open::before {
     display: none;
 }
 
-/* New elements (see the Portrait layout layer near the end of this
-   file) — hidden by default same as #mobileTabs/#mobileLeaderboard
-   above, and only shown inside the
-   `(pointer: coarse) and (orientation: portrait)` layer. Without
-   this base rule they'd render with default button/div display on
-   Desktop and any other non-mobile context, since neither element
-   existed before this file's other mobile-only rules were written. */
-#leaderboardBtn, #railLogBtn, #railChatBtn, #mobileSideRail {
+/* Universal Utility Buttons row (Standings / Game Log / Chat) — shown
+   on every layout now (Desktop included), not just mobile/portrait.
+   The `(pointer: coarse) and (orientation: portrait)` layer near the
+   end of this file restates its own more specific sizing (bigger tap
+   targets, full-width row) for touch phones — this is just the
+   sane default every other layout uses as-is. */
+#mobileSideRail {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 auto 8px;
+}
 
-    display: none;
+#leaderboardBtn, #railLogBtn, #railChatBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: #0d1a0d;
+    color: var(--text-main, #fff);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .3px;
+    line-height: 1.15;
+    box-sizing: border-box;
+    transition: background .15s ease, transform .15s ease, border-color .15s ease;
+}
+
+#leaderboardBtn [data-icon], #railLogBtn [data-icon], #railChatBtn [data-icon] {
+    font-size: 16px;
+}
+
+#leaderboardBtn:hover, #railLogBtn:hover, #railChatBtn:hover {
+    background: #132213;
+    transform: translateY(-1px);
+}
+
+#leaderboardBtn:focus-visible, #railLogBtn:focus-visible, #railChatBtn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+#leaderboardBtn:active, #railLogBtn:active, #railChatBtn:active {
+    transform: translateY(0);
+    background: rgba(189,93,56,.15);
+}
+
+#leaderboardBtn:disabled, #railLogBtn:disabled, #railChatBtn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#leaderboardBtn.active, #railChatBtn.active {
+    border-color: var(--accent);
+    background: rgba(189,93,56,.2);
+}
+
+/* ==========================================================
+   GAME STATE — whose turn + remaining turn timer. Display-only:
+   never a button, never opens anything (pointer-events disabled
+   here enforces that at the CSS layer too).
+========================================================== */
+#gameState {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0 auto 10px;
+    padding: 10px 20px;
+    max-width: min(520px, 92vw);
+    background: var(--bg-panel);
+    backdrop-filter: var(--blur);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-panel);
+    text-align: center;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.game-state-icon {
+    display: inline-flex;
+    align-items: center;
+    font-size: clamp(18px, 2.6vw, 26px);
+    line-height: 1;
+}
+
+.game-state-divider {
+    width: 1px;
+    align-self: stretch;
+    background: rgba(255,255,255,.2);
+}
+
+.game-state-timer-track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: rgba(255,255,255,.12);
+}
+
+.game-state-timer-fill {
+    height: 100%;
+    width: 100%;
+    background: var(--text-main, #fff);
+    transition: width 1s linear, background-color .3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .game-state-timer-fill { transition: background-color .3s ease; }
 }
 
 /* ==========================================================
@@ -3124,12 +3229,9 @@ body.popup-open::before {
 @media (max-width: 1024px) and (min-width: 601px) {
 
     #pageLayout {
-        grid-template-columns: 220px 1fr;
         gap: 12px;
         padding: 8px;
     }
-
-    #leftSidebar { width: 220px; }
 
     #gameLayout {
         /* Single column, same as the base rule (see the "PARTY / TRASH"
@@ -3178,8 +3280,11 @@ body.popup-open::before {
    GLOBAL — mobile-only elements hidden on desktop
 ============================================================ */
 
-/* mobile leaderboard: only shown inside the ≤600px block */
+/* Standings/Chat popups: hidden until `.mobile-open` is toggled on
+   them (js/ui/mobile-ui.js's initMobileTabs()) — same popup component
+   Party/Trash use, on every layout, not just narrow/mobile ones. */
 #mobileLeaderboard { display: none; }
+#chatPanel { display: none; }
 
 /* mobile-only buttons hidden on desktop */
 .mobile-only-btn { display: none; }
@@ -3936,12 +4041,8 @@ body.gameplay-locked #playerHand .card {
     /* ── Show mobile-only buttons ── */
     .mobile-only-btn { display: flex; }
 
-    /* ── Hide leaderboard button (inline version used) ── */
-    #leaderboardBtn  { display: none !important; }
-
     /* ── Layout ── */
     #pageLayout    { display: block; padding: 0; }
-    #leftSidebar   { display: none; }
     #gameColumn    { display: flex; flex-direction: column; min-height: 100dvh; }
 
     /* ── Top bar: logo top-center, left=turn/round, right=buttons ── */
@@ -4005,8 +4106,11 @@ body.gameplay-locked #playerHand .card {
         padding-bottom: 120px;
     }
 
-    /* ── ORDER: leaderboard → otherPlayers → tabs → queue → hand ── */
+    /* ── ORDER: utilities → gameState → leaderboard → otherPlayers → tabs → queue → hand ── */
+    #mobileSideRail    { order: -2; }
+    #gameState         { order: -1; }
     #mobileLeaderboard { order: 0; }
+    #chatPanel         { order: 0; }
     #otherPlayers      { order: 1; }
     #mobileTabs        { order: 2; }
     #centerArea        { order: 3; }
@@ -4043,17 +4147,17 @@ body.gameplay-locked #playerHand .card {
         border-bottom: 1px solid rgba(255,255,255,0.05);
     }
 
-    /* ── Other players ── */
+    /* ── Other players: one row, always ── */
     #otherPlayers {
-        display: flex; flex-direction: column;
-        align-items: center; gap: 4px;
+        display: flex; flex-direction: row; flex-wrap: wrap;
+        align-items: center; justify-content: center; gap: 4px;
         padding: 0 12px; margin-bottom: 4px;
     }
 
-    #topPlayer, #leftPlayer, #rightPlayer {
+    .other-player-slot {
         display: flex; flex-direction: row;
         align-items: center; gap: 8px;
-        width: 100%;
+        flex: 1 1 0; min-width: 0;
     }
 
     #sidePlayers {
@@ -4158,6 +4262,28 @@ body.gameplay-locked #playerHand .card {
         overflow-y: auto;
     }
     #partyArea.mobile-open, #trashArea.mobile-open {
+        display: flex; flex-direction: column;
+    }
+
+    /* Standings/Chat get the same edge-anchored band + shape here,
+       declared as their own rule (not merged into the block above) so
+       as not to disturb that block's exact tested text. */
+    #mobileLeaderboard, #chatPanel {
+        position: fixed;
+        top: 20px; left: 12px; right: 12px; bottom: 20px;
+        transform: none;
+        margin: auto 0;
+        z-index: 3000;
+        border: 1px solid var(--border);
+        background: rgba(10,31,15,0.82);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.6);
+        overflow-y: auto;
+    }
+    #mobileLeaderboard.mobile-open, #chatPanel.mobile-open {
         display: flex; flex-direction: column;
     }
     body.popup-open { overflow: hidden; }
@@ -5081,13 +5207,13 @@ body.gameplay-locked #playerHand .card {
 
     /* leaderboard order above mobileTabs */
     #gameLayout { display: flex; flex-direction: column; }
+    #mobileSideRail     { order: -2; }
+    #gameState          { order: -1; }
     #mobileLeaderboard { order: 0; }
+    #chatPanel          { order: 0; }
     #mobileTabs         { order: 1; padding: 6px 12px 4px; }
     #otherPlayers       { order: 2; }
     #centerArea         { order: 3; }
-
-    /* log, leaderboard btn hidden */
-    #leaderboardBtn { display: none !important; }
 
     /* leaderboard row smaller on mobile */
     .leaderboard-header,
@@ -5214,11 +5340,6 @@ body.gameplay-locked #playerHand .card {
     height: clamp(28px, 4vw, 60px);
 }
 
-/* ── leftSidebar also constrained ── */
-#leftSidebar {
-    overflow-y: auto;
-}
-
 /* ── centerArea fills remaining space ── */
 #centerArea {
     overflow: hidden;
@@ -5236,14 +5357,10 @@ body.gameplay-locked #playerHand .card {
 }
 
 /* ── Desktop: Other Players side by side in one row ──────────
-   #otherPlayers previously had no `display` set outside the two
-   Mobile-only overrides above/below (plain ≤600px, and the touch+
-   portrait gameplay layer further down) — its base rule (see the
-   OTHER PLAYER HANDS section near the top of this file) only set
-   flex-direction/align-items/gap with no actual `display: flex`, so
-   on Desktop it rendered as `display: block` and #topPlayer/
-   #leftPlayer/#rightPlayer (three plain divs) simply stacked one
-   above another instead of appearing beside each other.
+   #otherPlayers's base rule (see the OTHER PLAYER HANDS section near
+   the top of this file) now sets `display: flex; flex-direction: row`
+   itself, so opponents are already a single row by default. This
+   block just retunes gap/stretch for real Desktop specifically.
 
    Scoped to `(pointer: fine)` — the same fine/coarse-pointer split
    the Orientation Gate itself uses (js/ui/orientation-ui.js) to
@@ -5271,7 +5388,7 @@ body.gameplay-locked #playerHand .card {
        width) — `min-width: 0` is what lets the name-truncation chain
        below actually engage instead of the row overflowing at
        narrower Desktop/Tablet widths. */
-    #topPlayer, #leftPlayer, #rightPlayer {
+    .other-player-slot {
         flex: 1 1 0;
         min-width: 0;
     }
@@ -5362,17 +5479,19 @@ body.gameplay-locked #playerHand .card {
 
     /* The popup's own close (X) button — `.panel-close`/`.mobile-only-
        btn` are hidden by the base rules above (`display: none`, "shown
-       only on mobile"), since Desktop previously never opened
-       #partyArea/#trashArea as a popup at all. Now that it does, these
-       two need their close button back; re-clicking the same flanking
-       icon and clicking the popup's own empty background (see
+       only on mobile"), since Desktop previously never opened any of
+       these as a popup at all (Party/Trash didn't exist as Desktop
+       popups, and Standings/Chat lived in the permanent #leftSidebar
+       instead). Now that all four do, they need their close button
+       back; re-clicking the same flanking icon/rail button and
+       clicking the popup's own empty background (see
        js/ui/mobile-ui.js's initMobileTabs()) still work as backup
        close paths, same as Mobile, but a visible X is the expected
-       affordance for a centered Desktop modal. Scoped to just these
-       two panels so Leaderboard's own popup (Desktop-hidden entirely;
-       it uses the sidebar instead) is untouched. */
+       affordance for a centered Desktop modal. */
     #partyArea .panel-close,
-    #trashArea .panel-close {
+    #trashArea .panel-close,
+    #mobileLeaderboard .panel-close,
+    #chatPanel .panel-close {
         display: flex;
     }
 
@@ -5478,6 +5597,41 @@ body.gameplay-locked #playerHand .card {
         backdrop-filter: blur(18px);
         -webkit-backdrop-filter: blur(18px);
         box-shadow: 0 20px 60px rgba(0,0,0,.6);
+    }
+
+    /* Standings (#mobileLeaderboard) and Chat (#chatPanel) are real
+       Desktop popups too now — the old always-visible #leftSidebar
+       (Leaderboard permanently shown, Chat as a "Coming Soon" panel)
+       is gone. Same centered-popup mechanics as Party/Trash (declared
+       separately so as not to disturb that block's own tested text);
+       height is content-sized (`max-height`, not a fixed `height`)
+       since a short standings table or the Chat placeholder don't need
+       Party/Trash's much taller fixed card-grid height. */
+    #mobileLeaderboard,
+    #chatPanel {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 3000;
+        flex-direction: column;
+        min-height: 0;
+        overflow-y: auto;
+
+        width: min(350px, 92vw);
+        max-height: min(600px, 80vh);
+        padding: 24px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: rgba(10,31,15,0.82);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        box-shadow: 0 20px 60px rgba(0,0,0,.6);
+    }
+
+    #mobileLeaderboard.mobile-open,
+    #chatPanel.mobile-open {
+        display: flex;
     }
 }
 
@@ -8345,10 +8499,11 @@ body.gameplay-locked #playerHand .card {
        the width for a second column. */
     .mobile-only-btn { display: flex; }
 
-    /* Same override as the old landscape layer: at the narrowest
-       tested widths this still needs to win over the older
-       `@media (max-width: 600px)` `#leaderboardBtn { display: none }`
-       rule (see that rule's own comment) via source order + specificity. */
+    /* Kept `!important` even though the old max-width:600px
+       `#leaderboardBtn { display: none }` rule this originally had to
+       beat no longer exists (Standings/Log/Chat are visible on every
+       layout now) — harmless belt-and-suspenders against any future
+       narrow-width override. */
     #leaderboardBtn { display: flex !important; }
 
     #pageLayout {
@@ -8358,8 +8513,6 @@ body.gameplay-locked #playerHand .card {
         min-height: 0;
         overflow: hidden;
     }
-
-    #leftSidebar { display: none; }
 
     #gameColumn {
         display: flex;
@@ -8542,6 +8695,35 @@ body.gameplay-locked #playerHand .card {
         flex-direction: column;
     }
 
+    /* Chat — same tap-to-open popup mechanics as Standings/Party/Trash
+       above, declared as its own rule (not merged into that shared
+       selector) so as not to disturb its exact tested text. Same band
+       position as Standings, same Pause-matching shape as Party/Trash
+       (Chat's content is a single centered "Coming Soon" line, so
+       either look reads fine — reusing Party/Trash's border/background
+       keeps every popup in this group visually consistent). */
+    #chatPanel {
+        display: none;
+        position: fixed;
+        top: 8dvh; left: 4vw; right: 4vw; bottom: 8dvh;
+        transform: none;
+        max-height: calc(100dvh - 16dvh);
+        margin: auto 0;
+        z-index: 3000;
+        padding: 8px var(--popup-pad-x);
+        overflow: hidden;
+        border: 1px solid var(--border);
+        background: rgba(10,31,15,0.82);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border-radius: var(--radius-md);
+    }
+
+    #chatPanel.mobile-open {
+        display: flex;
+        flex-direction: column;
+    }
+
     body.popup-open { overflow: hidden; }
 
     /* Full-screen dimmed backdrop behind the Leaderboard/Party/Trash
@@ -8557,7 +8739,7 @@ body.gameplay-locked #playerHand .card {
     }
 
     #mobileLeaderboard .panel-header h3,
-    #partyArea h3, #trashArea h3 { margin-bottom: 6px; font-size: 14px; }
+    #partyArea h3, #trashArea h3, #chatPanel h3 { margin-bottom: 6px; font-size: 14px; }
 
     #mobileLeaderboardInline { overflow: hidden; }
 
@@ -8620,7 +8802,7 @@ body.gameplay-locked #playerHand .card {
         margin: 0;
     }
 
-    #topPlayer, #leftPlayer, #rightPlayer {
+    .other-player-slot {
         flex-direction: row;
         gap: 4px;
         width: auto;
@@ -8979,8 +9161,8 @@ body.gameplay-locked #playerHand .card {
 
    `position: fixed` + body-level DOM placement (same pattern already
    used for the human player's drag ghost, `.card-drag-ghost` below) —
-   deliberately NOT a descendant of #topPlayer/#leftPlayer/#rightPlayer
-   (the Bot Section). Being a sibling of the board entirely, rather
+   deliberately NOT a descendant of any `.other-player-slot` (the Bot
+   Section). Being a sibling of the board entirely, rather
    than a child positioned absolutely *within* a Bot Section row, means
    its insertion/removal can never trigger a reflow of that row, its
    #otherPlayers container, or anything else on the board — there is no
