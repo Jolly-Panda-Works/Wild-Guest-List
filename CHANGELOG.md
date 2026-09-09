@@ -8,6 +8,58 @@ This file was consolidated from a changelog that had grown to live inline inside
 
 ---
 
+**Fix — Tutorial/Help content audit: drag-to-play, Card Power, and a stale Monkey description (1.43.6):**
+A full audit of the player education system (tutorial slides, in-game
+walkthrough, Card Guide, contextual hints) against the current UI and
+implementation turned up several places where content described an
+older version of the game:
+- `wt7Text` (in-game walkthrough step 7, `data/i18n.json`, all 4
+  languages) told players to "tap the card to play it." Playing is
+  drag-only now (`js/ui/game-ui.js`'s `wireHandCardDrag()` —
+  `// a plain tap — playing is drag-only now`); this was the one step
+  the walkthrough blocks on (`waitForCardPlay`), so it could strand a
+  new player. Reworded to describe the drag-to-Queue gesture and the
+  live Ability Preview, in all 4 languages.
+- Tutorial slide 3 (`data/tutorial.json`, `tutSlide3Text`/`tutSlide3Title`
+  keys in `data/i18n.json`) was vague ("choose one animal card...
+  placed at the back of the queue") and never mentioned dragging or
+  the Ability Preview. Updated, all 4 languages.
+- Tutorial slide 4 never mentioned Card Power, even though it's a
+  restored, visible per-card attribute (`tests/cardPowerDisplay.test.mjs`)
+  that several abilities key off of. Added one sentence introducing it
+  — explicitly as a gameplay-interaction attribute, not a victory
+  metric (victory is Party Card Count only — `js/game/matchOutcome.js`
+  has no Power tie-breaker and no Sudden Death, confirmed unchanged).
+  All 4 languages.
+- `cardHelpHintText` had no entry in `data/i18n.json` at all, so the
+  "hold a card" hint (`js/ui/cardHelpHint.js`) rendered the literal
+  key string instead of real text. Added the missing string. While
+  investigating this, found the hint (and the long-press gesture it's
+  built on, `js/ui/longPress.js`) is never actually wired up anywhere
+  in `game-ui.js` — logged as a new finding in `docs/ARCHITECTURE.md`
+  § 14 rather than fixed here, since wiring a new gesture into
+  `game-ui.js` is a UI-behavior change beyond tutorial/help-content
+  scope.
+- `data/cardInfo.json`'s Monkey `description`/`example` (Card Guide
+  content) said the ability "removes all Crocodiles and Hippos and
+  moves them to the front" — the implementation sends them to Trash,
+  not the front. This mismatch was already flagged in
+  `docs/ANIMAL_ABILITIES.md`'s Monkey entry; fixed the flavor text to
+  match, in all 4 languages, and updated that doc's note plus
+  `docs/ARCHITECTURE.md` § 14 item 2 to mark it resolved.
+- Removed a `"video"` field on the last tutorial slide
+  (`data/tutorial.json`) that pointed at an unrelated YouTube video
+  instead of real gameplay footage, rather than leave misleading
+  tutorial content in place.
+
+Everything else audited — the Queue-resolves-at-5 explanation, the
+12-cards-per-player match structure, WINNER/DRAW/LOSS wording, the
+walkthrough's dynamic queue-resolution step, and the Card Guide's
+Power badge — already matched the current implementation and was left
+unchanged.
+
+---
+
 **Fix — Bot's Queue Ability Preview now appears AFTER its card is visible, not before (1.43.5):**
 `previewThenPlayCard()` (`js/game/turnManager.js`) used to show the
 Queue Ability Preview (arrows/icons on cards already in the Queue —

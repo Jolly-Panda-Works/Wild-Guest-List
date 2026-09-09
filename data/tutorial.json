@@ -39,7 +39,7 @@
         },
         {
             "title": "Play An Animal",
-            "text": "On your turn, choose one animal card.\n\nThe selected card is placed at the back of the queue.\n\nA smart move can completely change the outcome of the game.",
+            "text": "On your turn, drag one animal card from your Hand up into the Queue.\n\nWhile you drag, a live preview shows what the card's ability will do before you release it.\n\nA smart move can completely change the outcome of the game.",
             "image": "",
             "diagram": {
                 "type": "queue-add",
@@ -68,7 +68,7 @@
         },
         {
             "title": "Special Animal Powers",
-            "text": "Every animal has its own unique ability.\n\nSome animals move forward, some remove others, and some completely change the queue.\n\nLearning their powers is the key to victory.",
+            "text": "Every animal has its own unique ability.\n\nSome animals move forward, some remove others, and some completely change the queue.\n\nEach card also shows a Power number — some abilities compare Power to decide who moves or gets removed.\n\nLearning what each animal can do is the key to victory.",
             "image": "",
             "diagram": {
                 "type": "ability-examples",
@@ -163,7 +163,6 @@
                     }
                 ]
             },
-            "video": "https://www.youtube.com/embed/dQw4w9WgXcQ",
             "title_key": "tutSlide6Title",
             "text_key": "tutSlide6Text"
         }

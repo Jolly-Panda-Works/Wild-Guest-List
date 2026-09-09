@@ -29,25 +29,25 @@
         "power": 2,
         "name": "Monkey",
         "emoji": "🐒",
-        "description": "Group Effect. If this is the second Monkey in the queue, it triggers a global effect that removes all Crocodiles and Hippos and moves them to the front.",
-        "example": "Hippo > Lion > Monkey > Crocodile > Monkey\nHippo > Crocodile > Lion > Monkey > Monkey",
+        "description": "Group Effect. Always moves itself to the back of the queue. If this is the second Monkey in the queue, it also sends every Crocodile and Hippo currently in the queue to the Trash.",
+        "example": "Hippo > Lion > Crocodile > Monkey (2nd Monkey played)\nLion > Monkey (Hippo and Crocodile go to Trash)",
         "image": "assets/img/cards/02-monkey.png",
         "id": 2,
         "translations": {
             "fa": {
                 "name": "میمون",
-                "description": "اثر گروهی. اگر این دومین میمون در صف باشد، اثر کلی اعمال می‌شود و همه تمساح‌ها و اسب‌آبی‌ها حذف و به جلو منتقل می‌شوند.",
-                "example": "اسب‌آبی > شیر > میمون > تمساح > میمون\nاسب‌آبی > تمساح > شیر > میمون > میمون"
+                "description": "اثر گروهی. همیشه خودش را به انتهای صف منتقل می‌کند. اگر این دومین میمون در صف باشد، همه تمساح‌ها و اسب‌آبی‌های موجود در صف را نیز به سطل زباله می‌فرستد.",
+                "example": "اسب‌آبی > شیر > تمساح > میمون (دومین میمون)\nشیر > میمون (اسب‌آبی و تمساح به زباله می‌روند)"
             },
             "ar": {
                 "name": "قرد",
-                "description": "تأثير جماعي. إذا كان هذا القرد الثاني في الصف، يُطلق تأثيراً يزيل جميع التماسيح وأفراس النهر ويضعهم في المقدمة.",
-                "example": "فرس النهر > الأسد > قرد > تمساح > قرد\nفرس النهر > تمساح > الأسد > قرد > قرد"
+                "description": "تأثير جماعي. ينتقل دائماً إلى نهاية الصف. إذا كان هذا القرد الثاني في الصف، يرسل أيضاً كل تمساح وفرس نهر موجود في الصف إلى المهملات.",
+                "example": "فرس النهر > الأسد > تمساح > قرد (القرد الثاني)\nالأسد > قرد (فرس النهر والتمساح يذهبان إلى المهملات)"
             },
             "tr": {
                 "name": "Maymun",
-                "description": "Grup Etkisi. Sıradaki ikinci Maymunsa, tüm Timsahları ve Su Aygırlarını kaldıran ve öne taşıyan genel bir etki tetiklenir.",
-                "example": "Su Aygırı > Aslan > Maymun > Timsah > Maymun\nSu Aygırı > Timsah > Aslan > Maymun > Maymun"
+                "description": "Grup Etkisi. Her zaman kendisini sıranın sonuna taşır. Sıradaki ikinci Maymunsa, sıradaki tüm Timsahları ve Su Aygırlarını da çöpe gönderir.",
+                "example": "Su Aygırı > Aslan > Timsah > Maymun (2. Maymun)\nAslan > Maymun (Su Aygırı ve Timsah çöpe gider)"
             }
         }
     },
