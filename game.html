@@ -510,12 +510,22 @@
             </div>
         </div>
 
-        <!-- End Game — same Header / Scrollable Content / Fixed Footer
+        <!-- Reward Popup (#endGameScreen) — shown at the end of every
+             match. Same Header / Scrollable Content / Fixed Footer
              architecture as Choose Bot Difficulty (see
-             css/style.css .screen-content--panel): Return to Home and
+             css/style.css .screen-content--panel): Home and
              Play Again live in the footer so a long final-scores list
              (more players, longer names/translations) can never push
-             them below the viewport with no way to reach them. -->
+             them below the viewport with no way to reach them.
+
+             Home / Play Again reuse the Pause Popup's exact
+             button implementation (.pause-actions/.pause-action/
+             .pause-action-icon.top-btn/.pause-action-label — see the
+             note on the footer below), so the Reward Popup's actions
+             are visually identical to the Pause Popup's in size,
+             shape, typography, icon treatment, spacing, and hover/
+             active state — see README.md § Version for the change
+             that unified them. -->
         <div id="endGameScreen" class="screen-overlay hidden">
             <div class="screen-content screen-content--panel">
                 <div class="screen-panel-header">
@@ -526,14 +536,27 @@
                     <div id="finalScores"></div>
                 </div>
                 <div class="screen-panel-footer">
-                    <div class="endgame-actions">
-                        <button id="returnHomeBtn" type="button" class="screen-btn endgame-btn-secondary">
-                            <span class="endgame-btn-icon" data-icon="home"></span>
-                            <span class="endgame-btn-label" data-i18n="endReturnHome">Return to Home</span>
+                    <!-- Reward Popup primary actions — reuses the Pause
+                         Popup's exact shared button implementation
+                         (.pause-actions / .pause-action /
+                         .pause-action-icon.top-btn /
+                         .pause-action-label — see css/style.css
+                         "PAUSE PANEL"), not a separate duplicated
+                         button style. Same ids/click wiring as
+                         before (js/game-main.js) — only presentation
+                         changed. ".endgame-actions" stays as a second
+                         class purely as a layout hook for Reward
+                         Popup-specific footer spacing — it carries no
+                         button visuals of its own anymore (those all
+                         moved to .pause-action). -->
+                    <div class="pause-actions endgame-actions">
+                        <button id="returnHomeBtn" type="button" class="pause-action">
+                            <span class="pause-action-icon top-btn" data-icon="home"></span>
+                            <span class="pause-action-label" data-i18n="endReturnHome">Home</span>
                         </button>
-                        <button id="playAgainBtn" type="button" class="screen-btn endgame-btn-primary">
-                            <span class="endgame-btn-icon" data-icon="pauseRestart"></span>
-                            <span class="endgame-btn-label" data-i18n="playAgain">Play Again</span>
+                        <button id="playAgainBtn" type="button" class="pause-action">
+                            <span class="pause-action-icon top-btn" data-icon="pauseRestart"></span>
+                            <span class="pause-action-label" data-i18n="playAgain">Play Again</span>
                         </button>
                     </div>
                     <button id="endgameFeedbackBtn" type="button" class="feedback-link-btn endgame-feedback-btn">

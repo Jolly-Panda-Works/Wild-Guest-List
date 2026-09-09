@@ -1,48 +1,34 @@
 // ══════════════════════════════════════════════════════════
-// Win Popup (#endGameScreen) action buttons — equal size,
-// single-row regression tests
+// Reward Popup (#endGameScreen) action buttons — visual parity
+// with the Pause Popup, via shared-component reuse
 // (tests/endgameActionButtons.test.mjs)
 //
-// Bug: Return to Home / Play Again in the Win Popup's
-// `.endgame-actions` row (game.html, styled in css/style.css) were
-// not reliably the same size. `.endgame-actions` was `display: flex`
-// and each `.screen-btn` was `flex: 1 1 160px` — with equal
-// flex-grow this only produces equal widths as long as neither
-// button's own content needs more than its equal share. Flex items
-// default to `min-width: auto`, which resolves to the content's own
-// min-content width, so once one label needed more room than the
-// other (e.g. "Return to Home" vs "Play Again" in English, or
-// "العودة إلى الرئيسية" vs "العب مجدداً" in Arabic — see
-// data/i18n.json), that button could grow wider (or, if it wrapped
-// to two lines, taller) than its sibling — exactly the "buttons
-// aren't the same size" bug, worst at narrow Mobile widths. A
-// `@media (max-width: 420px)` rule also stacked the row into a
-// column, which also contradicts "buttons must stay in one row".
+// The screen shown at the end of every match is referred to
+// throughout the docs/codebase as the "Reward Popup"
+// (#endGameScreen, game.html).
 //
-// Fix:
-//   1. `.endgame-actions` -> `display: grid;
-//      grid-template-columns: repeat(2, minmax(0, 1fr));` — grid
-//      tracks split the row exactly in half regardless of content;
-//      `minmax(0, 1fr)` (not bare `1fr`) is what stops a track's
-//      automatic content-based minimum from ever winning.
-//   2. Each `.endgame-actions .screen-btn` gets a fixed `height`
-//      (not `min-height`) and `width: 100%; min-width: 0;` so
-//      neither dimension can be pushed around by content.
-//   3. The label span (`.endgame-btn-label`, new in game.html)
-//      truncates with an ellipsis (`overflow: hidden; text-overflow:
-//      ellipsis; white-space: nowrap;`) instead of wrapping or
-//      overflowing, so a long translation can never change the
-//      button's size.
-//   4. The `@media (max-width: 420px)` column-stack override was
-//      removed; a same-media-query rule now only tightens
-//      gap/padding/icon size so the row still fits without
-//      overflowing the popup, per the "must stay one row, must not
-//      overflow" requirements.
+// Task: the Reward Popup's Return to Home / Play Again buttons must
+// be visually identical to the Pause Popup's actions (size, height,
+// width, border/radius, typography, icon alignment, spacing,
+// hover/active state) — reusing the Pause Popup's existing shared
+// button implementation rather than duplicating similar-looking CSS
+// under a second set of class names.
+//
+// Fix: the Reward Popup's two buttons now use the exact same classes
+// as the Pause Popup's actions — `.pause-action` (button),
+// `.pause-action-icon.top-btn` (icon), `.pause-action-label` (label)
+// — inside a `.pause-actions` row, instead of the old
+// `.screen-btn`/`.endgame-btn-primary`/`.endgame-btn-secondary`
+// pattern. No new button-visual CSS was added for the Reward Popup;
+// `.endgame-actions` (still present as a second class on the row)
+// is kept purely as a page-scoped layout hook, and carries no
+// button styling of its own. Button ids, `type="button"`, and click
+// wiring (js/game-main.js) are unchanged — only presentation moved.
 //
 // This project has no DOM/layout test harness (see tests/README.md),
-// so — consistent with the pattern used for the other CSS-only fixes
-// in this codebase — this test asserts the fix at the CSS/HTML
-// source level.
+// so — consistent with the pattern used for other CSS-only fixes in
+// this codebase — this test asserts the fix at the CSS/HTML source
+// level.
 //
 // Run with:  node --test tests/endgameActionButtons.test.mjs
 // (from the project root.)
@@ -77,118 +63,80 @@ function findDeclBlock(source, selectorSubstr, fromIndex = 0) {
     return { block: source.slice(openIdx + 1, closeIdx), endIndex: closeIdx };
 }
 
-test("game.html: Return to Home and Play Again are both still real buttons inside .endgame-actions with unchanged ids/click targets", () => {
+test("game.html: the Reward Popup still has exactly two action buttons, same ids/click targets, inside a .pause-actions row", () => {
     assert.match(
         gameHtml,
-        /<div class="endgame-actions">/,
-        "expected the .endgame-actions row to still exist"
+        /<div class="pause-actions endgame-actions">/,
+        "expected the Reward Popup's actions row to reuse .pause-actions (Pause Popup's shared row) alongside the .endgame-actions layout hook"
     );
     assert.match(
         gameHtml,
-        /<button id="returnHomeBtn" type="button" class="screen-btn endgame-btn-secondary">/,
-        "returnHomeBtn's id/type/class must be unchanged so its click wiring in js/ui/*.js keeps working"
+        /<button id="returnHomeBtn" type="button" class="pause-action">/,
+        "returnHomeBtn's id/type must be unchanged so its click wiring in js/game-main.js keeps working, and it must reuse .pause-action — not a duplicated button style"
     );
     assert.match(
         gameHtml,
-        /<button id="playAgainBtn" type="button" class="screen-btn endgame-btn-primary">/,
-        "playAgainBtn's id/type/class must be unchanged so its click wiring in js/ui/*.js keeps working"
+        /<button id="playAgainBtn" type="button" class="pause-action">/,
+        "playAgainBtn's id/type must be unchanged so its click wiring in js/game-main.js keeps working, and it must reuse .pause-action — not a duplicated button style"
     );
 });
 
-test("game.html: both action button labels use .endgame-btn-label for consistent truncation", () => {
-    const labelRe = /<span class="endgame-btn-label" data-i18n="(endReturnHome|playAgain)">/g;
-    const matches = [...gameHtml.matchAll(labelRe)].map((m) => m[1]);
+test("game.html: both Reward Popup buttons reuse the Pause Popup's exact icon/label markup", () => {
+    const endGameIdx = gameHtml.indexOf('id="endGameScreen"');
+    assert.ok(endGameIdx !== -1, "expected an #endGameScreen element to exist");
+    const nextSectionIdx = gameHtml.indexOf('id="tutorialModal"', endGameIdx);
+    const endGameSection = gameHtml.slice(endGameIdx, nextSectionIdx === -1 ? undefined : nextSectionIdx);
+
+    const iconRe = /<span class="pause-action-icon top-btn" data-icon="(home|pauseRestart)"><\/span>/g;
+    const icons = [...endGameSection.matchAll(iconRe)].map((m) => m[1]);
     assert.deepEqual(
-        matches.sort(),
+        icons.sort(),
+        ["home", "pauseRestart"].sort(),
+        "expected both Reward Popup icons to use .pause-action-icon.top-btn — the same icon-box implementation as the Pause Popup's actions"
+    );
+
+    const labelRe = /<span class="pause-action-label" data-i18n="(endReturnHome|playAgain)">/g;
+    const labels = [...endGameSection.matchAll(labelRe)].map((m) => m[1]);
+    assert.deepEqual(
+        labels.sort(),
         ["endReturnHome", "playAgain"].sort(),
-        "expected both endReturnHome and playAgain labels to carry .endgame-btn-label"
+        "expected both endReturnHome and playAgain labels to carry .pause-action-label — the same label implementation as the Pause Popup's actions"
     );
 });
 
-test(".endgame-actions is a two-column grid with content-independent equal tracks", () => {
-    const found = findDeclBlock(css, ".endgame-actions {");
-    assert.ok(found, "expected an .endgame-actions rule to exist");
-
-    assert.match(
-        found.block,
-        /display:\s*grid\s*;/,
-        "expected .endgame-actions to use CSS Grid, not flex (flex's default min-width:auto is what let a longer label win extra width)"
-    );
-    assert.match(
-        found.block,
-        /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)\s*;/,
-        "expected exactly two equal minmax(0, 1fr) tracks, so content can never expand one column past its equal share"
-    );
-});
-
-test(".endgame-actions .screen-btn has a fixed height and full-width/min-width:0 so content can't resize it", () => {
-    const found = findDeclBlock(css, ".endgame-actions .screen-btn {");
-    assert.ok(found, "expected an .endgame-actions .screen-btn rule to exist");
-
-    assert.match(
-        found.block,
-        /height:\s*50px\s*;/,
-        "expected a fixed (not min-) height so a wrapped/taller label can't grow the button"
-    );
+test("game.html: the Reward Popup defines no separate/duplicated button-visual classes", () => {
     assert.doesNotMatch(
-        found.block,
-        /min-height/,
-        "height must be a hard fixed value, not min-height, or content could still push the button taller"
-    );
-    assert.match(
-        found.block,
-        /width:\s*100%\s*;/,
-        "expected the button to fill its equal grid column"
-    );
-    assert.match(
-        found.block,
-        /min-width:\s*0\s*;/,
-        "expected min-width: 0 so the button's own content min-content width can never override the equal grid column width"
-    );
-    assert.match(
-        found.block,
-        /box-sizing:\s*border-box\s*;/,
-        "border-box keeps padding/border from pushing the rendered size past the fixed height/100% width"
+        gameHtml,
+        /endgame-btn-(primary|secondary|icon|label)/,
+        "the old endgame-btn-* duplicated button-styling classes must be gone from game.html — the Reward Popup now reuses .pause-action instead"
     );
 });
 
-test(".endgame-btn-label truncates instead of wrapping or growing the button", () => {
-    const found = findDeclBlock(css, ".endgame-btn-label {");
-    assert.ok(found, "expected an .endgame-btn-label rule to exist");
-
-    assert.match(found.block, /overflow:\s*hidden\s*;/);
-    assert.match(found.block, /text-overflow:\s*ellipsis\s*;/);
-    assert.match(found.block, /white-space:\s*nowrap\s*;/);
+test("css/style.css: no separate endgame-btn-* button-visual rules remain (styling comes only from the shared .pause-action implementation)", () => {
+    assert.doesNotMatch(
+        css,
+        /\.endgame-btn-(primary|secondary|icon|label)\s*\{/,
+        "expected the old duplicated .endgame-btn-* button-visual rules to be removed — Reward Popup buttons must get their look only from .pause-action/.pause-action-icon/.pause-action-label"
+    );
 });
 
-test("very narrow Mobile (max-width: 420px) keeps the action buttons in one row instead of stacking", () => {
-    const narrowMediaRe = /@media \(max-width: 420px\)\s*\{/g;
-    let match;
-    let sawEndgameActionsRule = false;
-    let sawColumnStack = false;
+test(".pause-action / .pause-action-icon.top-btn / .pause-action-label — the single shared button implementation both popups render through — still exist with their defining properties", () => {
+    const actionsFound = findDeclBlock(css, ".pause-actions {");
+    assert.ok(actionsFound, "expected a .pause-actions row rule to exist");
+    assert.match(actionsFound.block, /display:\s*flex\s*;/, "expected the shared actions row to stay a flex row");
+    assert.match(actionsFound.block, /justify-content:\s*center\s*;/, "expected the shared actions row to stay centered");
 
-    while ((match = narrowMediaRe.exec(css)) !== null) {
-        const openIdx = css.indexOf("{", match.index);
-        let depth = 1;
-        let i = openIdx + 1;
-        while (depth > 0 && i < css.length) {
-            if (css[i] === "{") depth++;
-            else if (css[i] === "}") depth--;
-            i++;
-        }
-        const block = css.slice(match.index, i);
-        if (block.includes(".endgame-actions")) {
-            sawEndgameActionsRule = true;
-            if (/\.endgame-actions\s*\{[^}]*flex-direction:\s*column/.test(block)) {
-                sawColumnStack = true;
-            }
-        }
-    }
+    const actionFound = findDeclBlock(css, ".pause-action {");
+    assert.ok(actionFound, "expected a .pause-action rule to exist");
+    assert.match(actionFound.block, /flex-direction:\s*column\s*;/, "expected the shared button to keep its icon-over-label column layout");
+    assert.match(actionFound.block, /background:\s*none\s*;/, "expected the shared button to keep its transparent background");
+    assert.match(actionFound.block, /border:\s*none\s*;/, "expected the shared button to keep its borderless style");
 
-    assert.ok(sawEndgameActionsRule, "expected a max-width: 420px rule touching .endgame-actions (spacing tune-down)");
-    assert.equal(
-        sawColumnStack,
-        false,
-        "the narrow-width rule must not stack .endgame-actions into a column — the buttons must stay in one row at every Mobile width"
-    );
+    const iconFound = findDeclBlock(css, ".pause-action-icon.top-btn {");
+    assert.ok(iconFound, "expected the shared icon box to reuse .top-btn sizing (see #topRight .top-btn)");
+
+    const labelFound = findDeclBlock(css, ".pause-action-label {");
+    assert.ok(labelFound, "expected a .pause-action-label rule to exist");
+    assert.match(labelFound.block, /font-size:\s*13px\s*;/, "expected the shared label typography to be unchanged");
+    assert.match(labelFound.block, /font-weight:\s*600\s*;/, "expected the shared label typography to be unchanged");
 });

@@ -3789,14 +3789,15 @@ body.gameplay-locked #playerHand .card {
     border-top: none;
     background: transparent;
     padding-bottom: max(20px, env(safe-area-inset-bottom));
-    /* .endgame-actions (Return to Home / Play Again) keeps its own
-       explicit `width: 100%` (see .endgame-actions above), so it's
-       unaffected by align-items here and still fills the footer edge
-       to edge. #endgameFeedbackBtn has no explicit width — it's a
-       compact pill (see .feedback-link-btn) — so switching this
-       footer to a flex column with align-items: center genuinely
-       centers that pill horizontally, at any popup/viewport width,
-       instead of the previous flush-start placement (see the removed
+    /* .pause-actions (Return to Home / Play Again — reusing the Pause
+       Popup's shared button implementation, see "PAUSE PANEL" above)
+       centers its own row via `justify-content: center`, so it's
+       unaffected by align-items here. #endgameFeedbackBtn has no
+       explicit width — it's a compact pill (see .feedback-link-btn)
+       — so switching this footer to a flex column with
+       align-items: center genuinely centers that pill horizontally,
+       at any popup/viewport width, instead of the previous
+       flush-start placement (see the removed
        display:flex/justify-content:center that used to sit directly
        on .endgame-feedback-btn below — that only centered the icon+
        label *inside* the button's own shrink-to-fit box, which did
@@ -3838,95 +3839,16 @@ body.gameplay-locked #playerHand .card {
 .party-count { color: #86efac; font-weight: 600; }
 
 /* End game — primary actions (Play Again / Return to Home).
-   Two buttons with clear visual hierarchy: Play Again is the filled,
-   higher-emphasis primary action; Return to Home is the outlined
-   secondary action. Always one horizontal row, Desktop through the
-   narrowest Mobile width — never stacked — with both buttons forced
-   to the exact same width/height regardless of label length.
-
-   CSS Grid (not flex) is what makes the equal sizing actually hold:
-   a flex item's default `min-width: auto` lets its own text's
-   min-content width win over an equal `flex: 1 1 <basis>` share
-   once a label (e.g. "Return to Home" vs "Play Again", or longer
-   translations — see data/i18n.json's endReturnHome/playAgain across
-   locales) needs more room than that basis, which is exactly what
-   let one button grow wider/taller than the other. Grid's
-   `repeat(2, minmax(0, 1fr))` tracks split the row exactly in half
-   no matter what either button contains — `minmax(0, ...)` is the
-   part that stops content from ever expanding a track past its
-   equal share, the grid equivalent of the flex fix. Each button then
-   gets a fixed `height` (not `min-height`) so neither text length
-   nor icon can change it, and `.endgame-btn-label` clips with an
-   ellipsis instead of wrapping (which would grow the button taller)
-   or overflowing the popup at very narrow widths. */
+   These reuse the Pause Panel's exact shared button implementation
+   (.pause-actions / .pause-action / .pause-action-icon.top-btn /
+   .pause-action-label, defined above under "PAUSE PANEL") — same
+   size, shape, typography, icon treatment, spacing, and hover/active
+   states as the Pause Popup, per docs/UI_UX_PLAN.md. No separate
+   Reward Popup button styling is defined here anymore; ".endgame-actions"
+   (kept alongside ".pause-actions" in game.html) is purely a layout
+   hook for Reward-Popup-specific footer spacing, not a button style. */
 .endgame-actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    width: 100%;
-    gap: 12px;
     margin-top: 0;
-}
-
-.endgame-actions .screen-btn {
-    margin-top: 0;
-    width: 100%;
-    min-width: 0;
-    height: 50px;
-    padding: 14px 16px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    box-sizing: border-box;
-}
-
-.endgame-btn-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    font-size: 18px;
-    line-height: 1;
-    flex-shrink: 0;
-}
-.endgame-btn-icon .icon-image { width: 100%; height: 100%; object-fit: contain; }
-
-/* The text label is the one part of the button allowed to give way:
-   it clips with an ellipsis rather than wrapping or pushing the
-   button wider/taller — so a long translation never breaks the
-   "both buttons are exactly the same size" requirement above. */
-.endgame-btn-label {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.endgame-btn-primary {
-    background: var(--accent);
-    color: #fff;
-    box-shadow: 0 8px 20px rgba(189, 93, 56, 0.35);
-}
-.endgame-btn-primary:hover  { filter: brightness(1.08); }
-.endgame-btn-primary:active { filter: brightness(0.96); }
-
-.endgame-btn-secondary {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--text-main);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-.endgame-btn-secondary:hover  { background: rgba(255, 255, 255, 0.14); }
-.endgame-btn-secondary:active { background: rgba(255, 255, 255, 0.06); }
-
-/* Very narrow phones: stay in one row (never column-stack — that was
-   the previous behavior here and is exactly what this fix removes),
-   just tighten spacing/padding/font so both equally-sized buttons
-   keep fitting inside the popup without overflowing it. */
-@media (max-width: 420px) {
-    .endgame-actions { gap: 8px; }
-    .endgame-actions .screen-btn { padding: 12px 8px; font-size: 15px; }
-    .endgame-btn-icon { width: 18px; height: 18px; font-size: 16px; }
 }
 
 /* Help */

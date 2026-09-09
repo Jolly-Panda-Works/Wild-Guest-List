@@ -430,7 +430,7 @@ count, nothing hidden or random) and no Sudden Death round. A tie for
 any place *below* the lead never creates a Draw; only a tie for the
 single highest count does.
 
-The Game Result screen (`#endGameScreen`, `js/ui/endgame-ui.js`) then
+The Reward Popup (`#endGameScreen`, `js/ui/endgame-ui.js`) then
 shows Win/Draw/Lose and the final Leaderboard (`#finalScores`), with
 every player explicitly labeled `WINNER`, `DRAW`, or `LOSS`, with two
 primary actions below it:
@@ -1106,7 +1106,7 @@ button can never scroll out of reach on a short or narrow screen:
 └─────────────────────────────┘
 ```
 
-- **Full-screen panels** (Choose Bot Difficulty, End Game): opt into
+- **Full-screen panels** (Choose Bot Difficulty, Reward Popup): opt into
   `.screen-content--panel` + `.screen-panel-header` /
   `.screen-panel-scroll` / `.screen-panel-footer`.
 - **Popups**: opt into `.modal-content > .modal-header` /
@@ -1547,7 +1547,34 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.41.0
+**Current version:** 1.41.1
+
+**Style — Reward Popup action buttons now visually match the Pause Popup, via shared-component reuse (1.41.1):**
+The Reward Popup (`#endGameScreen`, `js/ui/endgame-ui.js` — the screen
+shown at the end of every match) previously styled its two actions,
+**Return to Home** and **Play Again**, as filled/outlined pill
+buttons (`.screen-btn` + `.endgame-btn-primary`/`.endgame-btn-secondary`)
+in a two-column grid — a different visual pattern from the Pause
+Popup's icon-over-label actions. Both buttons now reuse the Pause
+Popup's exact existing button implementation instead — no new/parallel
+CSS was written: the same `.pause-actions` row, `.pause-action`
+button, `.pause-action-icon.top-btn` icon box, and
+`.pause-action-label` label classes the Pause Popup (`#pauseModal`)
+already uses. That gives the Reward Popup's buttons the same size,
+height/width, border-radius, typography, icon alignment, spacing, and
+hover/active states as the Pause Popup's, on both Mobile and Desktop,
+with zero duplicated styling.
+
+Only presentation changed: `#returnHomeBtn`/`#playAgainBtn` keep
+their ids, `type="button"`, and click wiring (`js/game-main.js`)
+exactly as before — same two buttons, same behavior. The old
+`.endgame-btn-primary`/`.endgame-btn-secondary`/`.endgame-btn-icon`/
+`.endgame-btn-label` rules (the duplicated button styling) were
+removed from `css/style.css`; `.endgame-actions` remains as a
+Reward-Popup-scoped layout hook only, carrying no button visuals of
+its own. `tests/endgameActionButtons.test.mjs` was rewritten to
+assert the new shared-component markup instead of the old grid/
+equal-width regression it used to guard.
 
 **Feature — Play vs Bot's 1/2/3-Bot options are now pure selectors, with a separate Play button to start the match (1.41.0):**
 Tapping **1 Bot / 2 Bots / 3 Bots** (`.home-bot-options`) on Home's Play
