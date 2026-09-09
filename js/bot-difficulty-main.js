@@ -33,12 +33,34 @@ import { getAvatarId, getDisplayName, subscribeProfile } from "./services/profil
 
 const PENDING_DIFFICULTIES_KEY = "wgl_pendingDifficulties";
 
+// Handoff from Home's Play vs Bot panel (js/ui/home-ui.js) — which
+// bot-count option (1/2/3) was tapped. Falls back to 3 (today's only
+// proven match shape: 1 human + 3 bots) if missing/invalid — direct
+// URL access, an older tab left open, corrupted storage, etc. never
+// break this page.
+const SELECTED_BOT_COUNT_KEY = "wgl_selectedBotCount";
+
 // ── Bot definitions (names use i18n) ──────────────────────
-const BOT_DEFS = [
+const ALL_BOT_DEFS = [
     { id: "p2", nameKey: "bot1" },
     { id: "p3", nameKey: "bot2" },
     { id: "p4", nameKey: "bot3" }
 ];
+
+function readSelectedBotCount() {
+    try {
+        const n = parseInt(sessionStorage.getItem(SELECTED_BOT_COUNT_KEY), 10);
+        if (n >= 1 && n <= ALL_BOT_DEFS.length) return n;
+    } catch {
+        // sessionStorage unavailable — fall through to default
+    }
+    return ALL_BOT_DEFS.length;
+}
+
+// Only the first N seats are dealt in — this is what makes the
+// selected bot count (1/2/3) take effect. Everything below already
+// only ever looped over BOT_DEFS, so it needed no further changes.
+const BOT_DEFS = ALL_BOT_DEFS.slice(0, readSelectedBotCount());
 
 // ── Build the difficulty panel ────────────────────────────
 // The player's own avatar and name are shown read-only, sourced
@@ -125,7 +147,7 @@ async function buildDifficultyPanel() {
         await wireColorTriggers();
     });
 
-    const selected = { p2: "easy", p3: "easy", p4: "easy" };
+    const selected = Object.fromEntries(BOT_DEFS.map(b => [b.id, "easy"]));
 
     async function updateBotDisplay(botId, diff) {
         selected[botId] = diff;
@@ -192,7 +214,8 @@ function answerGuidanceRestart(startOver) {
 
 function launchGame() {
     const panel      = document.getElementById("difficultyPanel");
-    const selections = panel?._getSelections?.() || { p2: "easy", p3: "easy", p4: "easy" };
+    const selections = panel?._getSelections?.()
+        || Object.fromEntries(BOT_DEFS.map(b => [b.id, "easy"]));
     goToGame(selections);
 }
 

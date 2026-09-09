@@ -48,6 +48,14 @@ function wireComingSoon(id, iconKey, titleKey) {
     });
 }
 
+// Session-only handoff to bot-difficulty.html: which bot-count option
+// (1/2/3) was selected on Home's Play vs Bot panel when Play was
+// pressed. Read by js/bot-difficulty-main.js to decide how many bot
+// seats to build; falls back to 3 there if missing/invalid (direct
+// URL access, older tab left open, etc.) so nothing ever breaks the
+// existing flow.
+const SELECTED_BOT_COUNT_KEY = "wgl_selectedBotCount";
+
 function openComingSoon(iconKey, titleKey) {
 
     const titleEl = document.getElementById("comingSoonModalTitle");
@@ -76,16 +84,51 @@ export async function initHome() {
         openProfileModal();
     });
 
-    // ── Start Game tabs — Play vs Bot / Rank / Friendly. Play vs Bot
-    //    is the one menu item that's a real top-level destination
-    //    (bot-difficulty.html), not a popup — see the note above and
-    //    js/bot-difficulty-main.js. Rank and Friendly are switchable
-    //    tabs whose panel says Coming Soon; see
-    //    js/ui/homeGameStart-ui.js. ─────────────────────────────────
+    // ── Start Game tabs — Play vs Bot / Play vs Human. Primary tab
+    //    switching lives in js/ui/homeGameStart-ui.js; the secondary
+    //    options inside each panel are wired here since they actually
+    //    do something (start a match / open a modal) rather than just
+    //    toggling visibility. ─────────────────────────────────────
     initHomeGameStart();
-    document.getElementById("homePlayVsBotBtn")?.addEventListener("click", () => {
+
+    // Play vs Bot panel — three bot-count options plus a separate
+    // Play button. The options are pure selectors (radiogroup, one
+    // active/orange at a time) — tapping one only updates which
+    // count is selected, it never starts a match by itself. 1 Bot
+    // is selected by default in the markup. Only the Play button
+    // below (#homeBotPlayBtn) stores the currently-selected count
+    // and navigates to bot-difficulty.html — a real top-level
+    // destination (js/bot-difficulty-main.js), not a popup — see
+    // the note above.
+    document.querySelectorAll(".home-bot-option").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".home-bot-option").forEach(b => {
+                const isSelected = b === btn;
+                b.classList.toggle("home-bot-option--selected", isSelected);
+                b.setAttribute("aria-checked", String(isSelected));
+            });
+        });
+    });
+
+    document.getElementById("homeBotPlayBtn")?.addEventListener("click", () => {
+        const selectedBtn = document.querySelector(".home-bot-option--selected");
+        const botCount = selectedBtn?.dataset.bots || "1";
+        try {
+            sessionStorage.setItem(SELECTED_BOT_COUNT_KEY, botCount);
+        } catch {
+            // sessionStorage unavailable — bot-difficulty.html falls
+            // back to 3 bots, never a hard failure
+        }
         window.location.href = "bot-difficulty.html";
     });
+
+    // Play vs Human panel — Rank and Friendly are real, visible
+    // options, but neither has a backend or game flow yet, so tapping
+    // either honestly opens the shared #comingSoonModal (same pattern
+    // as Store/Tournament/Leaderboard below) instead of starting a
+    // match. No fake multiplayer.
+    wireComingSoon("homeHumanRankBtn", "trophy", "homeTabRank");
+    wireComingSoon("homeHumanFriendlyBtn", "users", "homeTabFriendly");
 
     // ── Secondary nav row — popups, matching How-to-Play ──
     document.getElementById("homeCardsBtn")?.addEventListener("click", () => {

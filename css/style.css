@@ -7544,7 +7544,12 @@ body.gameplay-locked #playerHand .card {
     height: 28px;
     border-radius: 0;
     object-fit: contain;
-    background: rgba(255, 255, 255, 0.1);
+    /* No background here on purpose — the avatar PNG's own transparent
+       areas should reveal the chip's dark background (.home-profile-chip
+       above), not a white/light square behind the artwork. A translucent
+       white fill used to sit here and showed through as an unwanted
+       light box behind every avatar. */
+    background: transparent;
     flex-shrink: 0;
 }
 
@@ -7697,6 +7702,131 @@ body.gameplay-locked #playerHand .card {
     background: rgba(255, 255, 255, 0.06);
     border: 1px dashed var(--border);
     border-radius: var(--radius-md);
+}
+
+/* ── Play vs Bot secondary options (1/2/3 Bots) ────────────
+   Three selectable cards rather than one big button — same
+   language as .home-tab's orange selected state, sized/spaced like
+   a compact button grid so they read as sibling game modes rather
+   than duplicates of the old single Play vs Bot button. These are
+   pure selectors (radiogroup, one active at a time) — they never
+   start a match themselves, see js/ui/home-ui.js. 1 Bot ships
+   selected by default. The separate .home-bot-play-btn below is
+   the only thing that starts a match, using whichever count is
+   currently selected here — see js/bot-difficulty-main.js. */
+.home-bot-options {
+    /* Same auto-fit strategy as .home-secondary-row / .home-bottom-nav:
+       3 cards share a row down to very narrow phones, and only wrap
+       onto a second row rather than overflowing/clipping if a
+       viewport is ever too narrow to fit all three comfortably. */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+    gap: 8px;
+}
+
+.home-bot-option {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-main);
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 14px 6px;
+    cursor: pointer;
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+}
+
+.home-bot-option:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.home-bot-option-icon {
+    font-size: 26px;
+    line-height: 1;
+    min-height: 1.2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.home-bot-option--selected {
+    background: linear-gradient(145deg, var(--accent), #8f4527);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: var(--shadow-card);
+}
+
+.home-bot-option--selected:hover {
+    background: linear-gradient(145deg, var(--accent), #8f4527);
+}
+
+.home-bot-option:active {
+    transform: scale(0.97);
+}
+
+/* ── Play vs Bot — separate Play CTA ────────────────────────
+   The only control that actually starts a match for this tab.
+   Sits directly below the 1/2/3 Bot selector row, full-width so it
+   reads as the natural "next step" rather than a fourth option in
+   the row above. Reuses .home-primary-btn/.home-play-btn's existing
+   orange gradient CTA styling exactly — only width/spacing differ
+   here, so it stays visually consistent with the app's one other
+   "start a match" button (Play vs Human isn't playable yet, so it
+   has no equivalent Play button). */
+.home-bot-play-btn {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* ── Play vs Human secondary options (Rank / Friendly) ─────
+   Visually distinct cards, each honestly tagged Coming Soon (same
+   badge language as the bottom nav below) — tapping opens the
+   shared #comingSoonModal rather than starting a fake match. */
+.home-human-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+}
+
+.home-human-option {
+    position: relative;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-main);
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 15px;
+    padding: 20px 10px;
+    cursor: pointer;
+    transition: background .18s ease, transform .18s ease;
+}
+
+.home-human-option:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.home-human-option:active {
+    transform: scale(0.97);
+}
+
+.home-human-option .home-coming-soon-tag {
+    font-size: 9px;
 }
 
 .home-primary-btn {
@@ -7894,6 +8024,20 @@ body.gameplay-locked #playerHand .card {
     justify-content: center;
 }
 
+/* Reserves the same two-line title height on all four Coming Soon
+   cards, regardless of whether a given title actually wraps ("Lucky
+   Wheel") or fits on one line (Store/Tournament/Leaderboard) — so
+   every card's icon sits at the same vertical position instead of
+   Lucky Wheel's icon getting pushed up by its taller two-line title. */
+.home-bottom-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.25;
+    min-height: calc(1.25em * 2);
+}
+
 /* ── Disabled-state primitive (reused wherever a Home feature
    is gated: Online Game today, future locked nav entries) ── */
 [aria-disabled="true"] {
@@ -7905,6 +8049,8 @@ body.gameplay-locked #playerHand .card {
 .home-primary-btn:focus-visible,
 .home-nav-btn:focus-visible,
 .home-bottom-btn:focus-visible,
+.home-bot-option:focus-visible,
+.home-human-option:focus-visible,
 .home-coin-pill:focus-visible,
 .home-gem-pill:focus-visible {
     outline: 2px solid #fff;
@@ -7932,6 +8078,31 @@ body.gameplay-locked #playerHand .card {
     .home-play-btn {
         font-size: 19px;
         padding: 18px 18px;
+    }
+
+    .home-bot-play-btn {
+        margin-top: 8px;
+    }
+
+    /* Three bot-count cards stay comfortably tappable down to very
+       narrow phones (see AGENTS-style responsive testing in the
+       task brief) — shrink padding/icon/text slightly rather than
+       letting them wrap or overflow. Still a single row: 3 cards at
+       this size comfortably fit under ~320px of content width, same
+       math as .home-secondary-row's 3-up note above. */
+    .home-bot-option {
+        padding: 11px 4px;
+        font-size: 11.5px;
+        gap: 6px;
+    }
+
+    .home-bot-option-icon {
+        font-size: 22px;
+    }
+
+    .home-human-option {
+        padding: 16px 8px;
+        font-size: 13.5px;
     }
 
     /* .home-secondary-row keeps its base auto-fit grid — a forced
@@ -7982,6 +8153,23 @@ body.gameplay-locked #playerHand .card {
         padding: 8px 8px 7px;
     }
 
+    .home-bot-option {
+        padding: 8px 4px;
+        gap: 4px;
+    }
+
+    .home-bot-option-icon {
+        font-size: 18px;
+    }
+
+    .home-human-option {
+        padding: 10px 8px;
+    }
+
+    .home-bot-play-btn {
+        margin-top: 6px;
+    }
+
     .home-gamestart {
         gap: 8px;
     }
@@ -8004,12 +8192,18 @@ body.gameplay-locked #playerHand .card {
 @media (prefers-reduced-motion: reduce) {
     .home-play-btn,
     .home-nav-btn,
-    .home-bottom-btn {
+    .home-bottom-btn,
+    .home-bot-option,
+    .home-bot-play-btn,
+    .home-human-option {
         transition: none;
     }
 
     .home-play-btn:hover,
-    .home-nav-btn:hover {
+    .home-nav-btn:hover,
+    .home-bot-option:hover,
+    .home-bot-play-btn:hover,
+    .home-human-option:hover {
         transform: none;
     }
 }

@@ -100,23 +100,41 @@ support and gets its own document.
 | `coming-soon.html`     | Shop / Tournament / Leaderboard (`?feature=`) | Unlinked from Home; still reachable by direct URL |
 
 **There is no separate Game Modes page.** Home's Start Game section
-(`index.html`) is a **tab bar** — Play vs Bot / Rank / Friendly — not
-three separate Home buttons. Switching tabs only swaps which panel is
-shown in place (no navigation). Only **Play vs Bot** is active:
-picking it is a real page navigation straight to
-`bot-difficulty.html` — a top-level destination and sibling of Home,
-not a panel rendered inside it. That page shows each seat's avatar +
-name read-only (sourced from the one authoritative profile) alongside
-editable bot difficulty and per-seat color, then a Start button
-(`confirmDiffBtn`) that hands off to `game.html` exactly as before,
-dealing the same 1 human + 3 bots as always. Because it's a real page,
-browser Back, refresh, and direct URL access all work for free, and
-leaving it fully unmounts it. **Rank** and **Friendly** are real,
-switchable tabs — their panel is visible and reachable — but neither
-has a game flow or backend yet, so their panel content honestly reads
-Coming Soon rather than starting a fake match. See
-`js/ui/homeGameStart-ui.js`, `js/bot-difficulty-main.js`, and
-`js/ui/home-ui.js`.
+(`index.html`) is a **two-level tab bar**, not three separate Home
+buttons:
+
+* **Primary tabs** — **Play vs Bot** / **Play vs Human**. Switching
+  primary tabs only swaps which panel is shown in place (no
+  navigation). **Play vs Bot** is the default tab, since it's the
+  only fully playable game type today.
+* **Play vs Bot's panel** — three selectable bot-count options,
+  **1 Bot / 2 Bots / 3 Bots**. Each option both selects and starts:
+  tapping it stores the chosen count (`sessionStorage`,
+  `wgl_selectedBotCount`) and navigates straight to
+  `bot-difficulty.html` — a top-level destination and sibling of
+  Home, not a panel rendered inside it — showing exactly that many
+  bot rows. That page shows each seat's avatar + name read-only
+  (sourced from the one authoritative profile) alongside editable bot
+  difficulty and per-seat color, then a Start button
+  (`confirmDiffBtn`) that hands off to `game.html` exactly as before.
+  **3 Bots** is marked selected by default and is still exactly the
+  original 1 human + 3 bots match; **1 Bot** and **2 Bots** deal in
+  fewer bot seats the same way (`js/bot-difficulty-main.js` builds
+  only the selected number of seats, `js/game-main.js` reads however
+  many bot difficulties actually came through the handoff and deals
+  in that many players — see both files' module comments). Because
+  `bot-difficulty.html` is a real page, browser Back, refresh, and
+  direct URL access all work for free, and leaving it fully unmounts
+  it.
+* **Play vs Human's panel** — **Rank** and **Friendly**, real and
+  visible options — but neither has a game flow or backend yet, so
+  tapping either honestly opens the shared `#comingSoonModal` (same
+  pattern as Store/Tournament/Leaderboard below) instead of starting
+  a fake match.
+
+See `js/ui/homeGameStart-ui.js` (primary tab switching),
+`js/ui/home-ui.js` (bot-count buttons + Rank/Friendly wiring), and
+`js/bot-difficulty-main.js`.
 
 **Home's menu popups share their underlying widgets/persistence with
 `game.html`'s in-game equivalents**, rather than duplicating them —
@@ -231,14 +249,17 @@ can never block the whole game from starting.
 point, and a navigation destination like any other (see
 🧭 Navigation Architecture above). It never initializes gameplay.
 
-* **Start Game tabs — Play vs Bot / Rank / Friendly** (see
-  `.home-gamestart` / `.home-tabs`) — a tab bar, not three separate
-  Home buttons and not an intermediate Game Modes screen. Only
-  **Play vs Bot** is active: its button navigates to its own
-  top-level page, `bot-difficulty.html` — gameplay is unchanged
-  (still always 1 human + 3 bots). **Rank** and **Friendly** are
-  selectable tabs whose panel says Coming Soon; see
-  `js/ui/homeGameStart-ui.js`.
+* **Start Game tabs — Play vs Bot / Play vs Human** (see
+  `.home-gamestart` / `.home-tabs`) — a two-level tab bar, not three
+  separate Home buttons and not an intermediate Game Modes screen.
+  **Play vs Bot** is the default primary tab; its panel holds three
+  bot-count options (**1 Bot / 2 Bots / 3 Bots**, `.home-bot-options`)
+  that each select-and-start a match with that many bot seats — see
+  `js/ui/home-ui.js`, `js/bot-difficulty-main.js`, `js/game-main.js`.
+  **Play vs Human**'s panel holds **Rank** and **Friendly**
+  (`.home-human-options`), both honest Coming Soon options that open
+  `#comingSoonModal` instead of starting a fake match. Primary tab
+  switching itself lives in `js/ui/homeGameStart-ui.js`.
 * **Secondary row** — Card Guide, Settings, and How to Play
   (tutorial) — each opens its own popup modal over Home
   (`#helpModal`, `#settingsModal`, `#tutorialModal`). About Developer
@@ -301,12 +322,14 @@ page, like Choose Bot Difficulty did).
 
 ### 1. Start the Game
 
-From Home's Start Game tabs, the **Play vs Bot** tab (the only active
-one — Rank and Friendly are Coming Soon) navigates to
-`bot-difficulty.html` to choose each opponent's difficulty and every
-seat's color — there's no separate Game Modes page to pass through
-first. The human player's name and avatar are shown read-only there,
-sourced from their Profile (Home's `#profileModal` popup) rather than
+From Home's Start Game tabs, the **Play vs Bot** tab (the only fully
+playable primary type — Play vs Human's Rank/Friendly are Coming
+Soon) offers **1 Bot / 2 Bots / 3 Bots**; picking one navigates to
+`bot-difficulty.html` (dealing in exactly that many bot seats) to
+choose each opponent's difficulty and every seat's color — there's no
+separate Game Modes page to pass through first. The human player's
+name and avatar are shown read-only there, sourced from their Profile
+(Home's `#profileModal` popup) rather than
 being editable in here — new players get a sensible default profile
 immediately, and can customize it any time.
 
@@ -646,7 +669,7 @@ WildGuestList/
 │       ├── leaderboard-ui.js
 │       ├── log-ui.js
 │       ├── mobile-ui.js
-│       ├── homeGameStart-ui.js (Home's Play vs Bot / Rank / Friendly tab bar)
+│       ├── homeGameStart-ui.js (Home's Play vs Bot / Play vs Human primary tab bar)
 │       ├── modal-ui.js    (Home's popup modals: Profile, Settings, Card Guide, About, Feedback, Tutorial — plus Game's own in-game Settings/Help)
 │       ├── orientation-ui.js (portrait-only gate — every top-level page)
 │       ├── pause-ui.js
@@ -1524,7 +1547,71 @@ Players need to think about:
 
 ## 🔖 Version
 
-**Current version:** 1.39.1
+**Current version:** 1.41.0
+
+**Feature — Play vs Bot's 1/2/3-Bot options are now pure selectors, with a separate Play button to start the match (1.41.0):**
+Tapping **1 Bot / 2 Bots / 3 Bots** (`.home-bot-options`) on Home's Play
+vs Bot panel no longer starts a match by itself. The three options are
+now a radiogroup of pure selectors (`role="radio"`/`aria-checked`,
+exactly one `.home-bot-option--selected` at a time, same orange
+active/inactive styling as before) — selecting one only changes which
+count is selected. **1 Bot** ships selected by default (previously 3
+Bots). A new, separate, full-width **Play** button
+(`#homeBotPlayBtn`, `.home-bot-play-btn`) sits directly below the
+three options, reusing the existing orange `.home-primary-btn`/
+`.home-play-btn` CTA styling unchanged; it's the only control that
+starts a match, using whichever bot count is currently selected. The
+handoff to `bot-difficulty.html` is otherwise unchanged: Play still
+stores the selected count in the same `wgl_selectedBotCount`
+sessionStorage key (`js/ui/home-ui.js`), read the same way by
+`js/bot-difficulty-main.js`. Play vs Human's **Rank**/**Friendly**
+options (`.home-human-options`) are untouched — still Coming Soon
+selectors that open `#comingSoonModal`, never start a fake match. Logo
+size and the rest of the existing visual style are unchanged.
+
+New localization key `homeBotPlayBtn` ("Play") added for all four
+supported languages (en/fa/ar/tr).
+
+**Feature — Home's Start Game restructured into Play vs Bot / Play vs Human, with selectable 1/2/3-Bot matches (1.40.0):**
+Home's Start Game tab bar is now two levels instead of one flat
+Play vs Bot / Rank / Friendly row. The primary level is
+**Play vs Bot** (default) / **Play vs Human**. Play vs Bot's panel now
+offers three selectable, self-starting options — **1 Bot / 2 Bots /
+3 Bots** (`.home-bot-options`, reusing the existing
+`playWith1Bot`/`playWith2Bots`/`playWith3Bots` icons) — instead of one
+big button; **3 Bots** ships selected by default and is still exactly
+the original 1 human + 3 bots match. Play vs Human's panel holds
+**Rank** and **Friendly** (`.home-human-options`), both honest Coming
+Soon options that open the shared `#comingSoonModal` instead of a
+Rank/Friendly-specific panel. The visual language (dark theme, orange
+accent, card/border/radius styling, logo size) is unchanged.
+
+Game-state side: `js/bot-difficulty-main.js` now builds only the
+selected number of bot rows (reading a new `wgl_selectedBotCount`
+sessionStorage handoff from `js/ui/home-ui.js`, defaulting to 3 if
+missing/invalid), and `js/game-main.js` now deals in however many bot
+difficulties actually came through the `wgl_pendingDifficulties`
+handoff (1–3) instead of always assuming exactly 3 — reusing the
+existing player/difficulty architecture (`Player`, `PLAYER_TYPES`,
+`gameState.players`) rather than introducing a parallel one. The
+existing 3-bot flow is unchanged end-to-end. 1-Bot and 2-Bot matches
+reuse the same generic engine (queue/party/trash resolution,
+abilities, scoring) that already only reads `gameState.players`
+rather than assuming a fixed seat count.
+
+Also fixed: an unwanted translucent-white fill behind Home's profile
+chip avatar (`.home-profile-chip-avatar`) that showed through the
+avatar artwork's transparent areas as a light box instead of the dark
+menu background — removed, background is now `transparent`. And the
+four Coming Soon cards (Store/Tournament/Leaderboard/Lucky Wheel) now
+reserve the same two-line title height (`.home-bottom-label`) so
+Lucky Wheel's wrapping two-line title no longer pushes its icon out of
+vertical alignment with the other three single-line cards.
+
+New localization keys (`gameModesPlayVsHuman`,
+`homePlayWith1Bot`/`2Bots`/`3Bots`) added for all four supported
+languages (en/fa/ar/tr); `Rank`/`Friendly` reuse the existing
+`homeTabRank`/`homeTabFriendly` keys.
 
 **Fix — Give/Send Feedback button now genuinely centered in the Reward Popup (1.39.1):**
 The Reward Popup's `#endgameFeedbackBtn` ("Give Feedback") sat flush

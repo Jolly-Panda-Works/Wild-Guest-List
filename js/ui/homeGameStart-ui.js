@@ -1,22 +1,21 @@
 // ══════════════════════════════════════════════════════════
 // Home Start Game tabs — js/ui/homeGameStart-ui.js
 //
-// Wires the Play vs Bot / Rank / Friendly tab bar on Home
-// (index.html, .home-gamestart). This is a tab bar, not a Game
-// Modes screen and not three separate Home buttons — switching
-// tabs only swaps which panel is shown in place, no navigation.
+// Wires the primary Play vs Bot / Play vs Human tab bar on Home
+// (index.html, .home-gamestart). This only handles the PRIMARY
+// level — switching which panel is shown, no navigation. Each
+// panel's own secondary options (the 1/2/3 Bot buttons, Rank/
+// Friendly) are wired separately in js/ui/home-ui.js, since those
+// actually start a match / open a modal rather than just toggling
+// visibility.
 //
-// Only Play vs Bot is active today: its panel is exactly the
-// existing "Play vs Bot" button, which navigates to its own
-// top-level page (bot-difficulty.html — see js/ui/home-ui.js).
-// Rank and Friendly are real, selectable tabs — the player can see
-// their panel — but neither has a game flow or backend yet, so
-// their panel content honestly says Coming Soon instead of starting
-// a fake match. Gameplay itself is completely unchanged: Play vs
-// Bot still always deals the same 1 human + 3 bots.
+// Play vs Bot is the default primary tab, since it's the only fully
+// playable game type today. Play vs Human is a real, selectable tab
+// — its panel is visible — but both options inside it are honest
+// Coming Soon placeholders.
 // ══════════════════════════════════════════════════════════
 
-const TAB_IDS = ["playVsBot", "rank", "friendly"];
+const TAB_IDS = ["playVsBot", "playVsHuman"];
 
 function elementsForTab(tabId) {
     const capitalized = tabId.charAt(0).toUpperCase() + tabId.slice(1);

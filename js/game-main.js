@@ -65,6 +65,13 @@ onOrientationUnblocked(() => {
 const PENDING_DIFFICULTIES_KEY = "wgl_pendingDifficulties";
 const DEFAULT_DIFFICULTIES = { p2: "easy", p3: "easy", p4: "easy" };
 
+// Max possible bot seats, in seat order — Home's Play vs Bot panel
+// (js/ui/home-ui.js) lets the player pick 1, 2, or 3 of these; how
+// many keys actually show up in the handoff is what decides how many
+// bot seats get dealt in below.
+const BOT_SEAT_IDS = ["p2", "p3", "p4"];
+const BOT_NAME_KEYS = { p2: "bot1", p3: "bot2", p4: "bot3" };
+
 // ── i18n boot — runs before anything else ─────────────────
 await loadI18n();
 buildLangSelector(document.getElementById("langSelector"));
@@ -75,20 +82,25 @@ await initCardColorPicker();
 await initializeTutorial();
 initHelp();
 
-/** Reads the bot-difficulty selections handed off by Home. Falls back
- *  to all-Easy if Game was opened without going through Home at all —
- *  never blocks entering a game. */
+/** Reads the bot-difficulty selections handed off by Home
+ *  (js/bot-difficulty-main.js). Only keeps seats that are actually
+ *  present and valid — this is what makes the selected bot count
+ *  (1/2/3) take effect here: a 1-Bot handoff has just { p2 }, a
+ *  2-Bot handoff has { p2, p3 }, and so on. Falls back to the full
+ *  3-bot default if the handoff is missing, empty, or corrupted (Game
+ *  opened without going through Home at all, older tab, etc.) — never
+ *  blocks entering a game, and never leaves a 0-bot table. */
 function readPendingDifficulties() {
     try {
         const raw = sessionStorage.getItem(PENDING_DIFFICULTIES_KEY);
         if (!raw) return { ...DEFAULT_DIFFICULTIES };
         const parsed = JSON.parse(raw);
         const isValid = v => Object.values(AI_DIFFICULTY).includes(v);
-        return {
-            p2: isValid(parsed?.p2) ? parsed.p2 : "easy",
-            p3: isValid(parsed?.p3) ? parsed.p3 : "easy",
-            p4: isValid(parsed?.p4) ? parsed.p4 : "easy",
-        };
+        const result = {};
+        BOT_SEAT_IDS.forEach(id => {
+            if (isValid(parsed?.[id])) result[id] = parsed[id];
+        });
+        return Object.keys(result).length > 0 ? result : { ...DEFAULT_DIFFICULTIES };
     } catch {
         return { ...DEFAULT_DIFFICULTIES };
     }
@@ -105,11 +117,18 @@ async function startGame() {
     const p1Name    = profile.displayName || t("you");
     const p1NameKey = profile.displayName ? null : "you";
 
+    // Only the bot seats present in `selections` are dealt in — 1, 2,
+    // or 3 bots, per the player's choice on Home (see
+    // readPendingDifficulties() above). Order follows BOT_SEAT_IDS
+    // (p2, p3, p4) so seating is always consistent regardless of key
+    // insertion order in the handoff object.
+    const botPlayers = BOT_SEAT_IDS
+        .filter(id => id in selections)
+        .map(id => new Player(id, t(BOT_NAME_KEYS[id]), PLAYER_TYPES.AI, selections[id], BOT_NAME_KEYS[id]));
+
     const players = [
-        new Player("p1", p1Name,    PLAYER_TYPES.HUMAN, AI_DIFFICULTY.EASY, p1NameKey),
-        new Player("p2", t("bot1"), PLAYER_TYPES.AI,    selections.p2,       "bot1"),
-        new Player("p3", t("bot2"), PLAYER_TYPES.AI,    selections.p3,       "bot2"),
-        new Player("p4", t("bot3"), PLAYER_TYPES.AI,    selections.p4,       "bot3"),
+        new Player("p1", p1Name, PLAYER_TYPES.HUMAN, AI_DIFFICULTY.EASY, p1NameKey),
+        ...botPlayers,
     ];
 
     gameState.players = players;
