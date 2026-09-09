@@ -41,7 +41,7 @@ from "./queueManager.js";
 
 import { notifyCardPlayed, isWalkthroughActive } from "../ui/walkthrough.js";
 
-import { getHandCardElement, getOpponentHandBackElement, renderTurnTimer, showBotPreviewBadge, clearBotPreviewBadge }
+import { getHandCardElement, getOpponentHandBackElement, renderTurnTimer }
 from "../ui/game-ui.js";
 
 import { previewAbility } from "../abilities/previewResolver.js";
@@ -166,11 +166,23 @@ export function startTurn(gameState){
  * Bot equivalent of the human player's drag: computes the exact same
  * Ability Preview (see ../abilities/previewResolver.js — the same
  * module the human drag flow in ../ui/game-ui.js calls) for the card
- * the Bot has decided to play, shows it on the board for a short
- * configurable duration (Section 7 of the brief), then hands off to the
- * regular playCard() — completely unchanged below — to actually
+ * the Bot has decided to play, shows the Queue Ability Preview (arrows/
+ * icons on the cards already in the Queue — see showQueuePreview) for a
+ * short configurable duration (Section 7 of the brief), then hands off
+ * to the regular playCard() — completely unchanged below — to actually
  * execute it. There is deliberately no separate Bot-specific preview
  * calculation anywhere in here.
+ *
+ * This used to also show a standalone "Bot Preview Badge" — a floating
+ * duplicate of the card about to be played, near the Bot's seat — for
+ * the same duration. That's gone: showing that separate card, clearing
+ * it, and then having the REAL card reveal on the deck a moment later
+ * (cardEnteredQueue in ../ui/game-ui.js) read as two disconnected cards/
+ * movements in a row instead of the single deck-reveal-hold-fly
+ * sequence the game is meant to show. The deck reveal's own hold
+ * (T.opponentHold there) was lengthened to give the player the same
+ * beat to register the card, so there is exactly one card animation for
+ * a Bot's play, not two.
  */
 async function previewThenPlayCard(player, index, gameState) {
     if (index === -1 || player.hand.length === 0 || director.isBusy()) {
@@ -183,7 +195,6 @@ async function previewThenPlayCard(player, index, gameState) {
         const result = await previewAbility(card, gameState);
         if (result) {
             showQueuePreview(result.queueActions);
-            showBotPreviewBadge(player, card);
             await wait(BOT_PREVIEW_DISPLAY_DURATION_MS);
             // Never let a Pause/walkthrough freeze land while the
             // preview is sitting on screen — same "point of no return"
@@ -193,7 +204,6 @@ async function previewThenPlayCard(player, index, gameState) {
     } catch (err) {
         console.error("[turnManager] bot preview failed, playing without one", err);
     } finally {
-        clearBotPreviewBadge();
         clearAllPreviewOverlays();
     }
 

@@ -2,7 +2,7 @@ import { t, getLang, playerDisplayName } from "../i18n.js";
 import { playCard } from "../game/turnManager.js";
 import { BOT_AVATARS, AI_DIFFICULTY } from "../constants/playerTypes.js";
 import { playSound } from "../services/soundManager.js";
-import { flip, flyToTarget, playBeat, wait, isReducedMotion } from "../presentation/flip.js";
+import { flip, flipToRect, flyToTarget, playBeat, wait, isReducedMotion } from "../presentation/flip.js";
 import { director } from "../presentation/director.js";
 import { EVENTS } from "../presentation/events.js";
 import { ANTICIPATION, DEFAULT_ANTICIPATION, REACTION, DEFAULT_REACTION } from "../presentation/abilityPresentations.js";
@@ -391,107 +391,20 @@ function wireHandCardDrag(cardEl, card, gameState, player) {
     };
 }
 
-// ── Ability Preview: Bot ─────────────────────────────────────
-//
-// Shows which card the Bot is about to play, near its seat, while its
-// Ability Preview is up on the Queue (Section 7 of the brief).
-// Deliberately a standalone floating element rather than reusing/
-// revealing one of renderOtherPlayers()'s own `.card-back` elements —
-// those are wired for the existing "face-down back flies to the queue,
-// then reveals" animation (see cardEnteredQueue above), and swapping
-// one out early for a face-up preview would desync that choreography
-// the moment the Bot's turn actually plays out.
-//
-// Appended to document.body (like the human player's `.card-drag-
-// ghost`, see wireHandCardDrag above) rather than into the Bot's own
-// `.other-player-row` — Bot Section resizing while this badge showed/
-// hid used to be an issue precisely because the badge lived inside
-// that row's DOM subtree; inserting/removing ANY child there (even
-// one styled `position: absolute`) is still a mutation of the Bot
-// Section's own layout tree, which is exactly the coupling Task asked
-// to remove. Living at the body level instead means there is no DOM
-// relationship left between the badge and the Bot Section at all, so
-// showing/hiding it structurally cannot resize or reflow
-// #otherPlayers, the Queue, or the Player Hand — see
-// positionBotPreviewBadge() below for how it still visually tracks the
-// right seat.
-let _botPreviewBadgeEl = null;
-let _botPreviewRepositionHandler = null;
-
-/** Places `badge` (fixed-position, body-level) just above — or, if
- *  there's no room, just below — `seatEl`'s current on-screen position.
- *  Reads a fresh getBoundingClientRect() every call rather than caching
- *  anything, so this is correct at any viewport size or seat layout
- *  (Mobile portrait at any width, Desktop's flanking columns) without
- *  hardcoding a screen position for any one resolution. */
-function positionBotPreviewBadge(badge, seatEl) {
-    if (!badge.isConnected || !seatEl.isConnected) return;
-
-    const rect = seatEl.getBoundingClientRect();
-    const badgeWidth = badge.offsetWidth || 70;
-    const badgeHeight = badge.offsetHeight || 100;
-    const margin = 8;
-
-    let x = rect.left + rect.width / 2 - badgeWidth / 2;
-    let y = rect.top - badgeHeight - margin;
-    if (y < margin) {
-        // Not enough room above the seat (small screens, or a seat
-        // already near the top edge) — sit just below it instead.
-        y = rect.bottom + margin;
-    }
-
-    // Clamp inside the viewport so the badge can never render
-    // off-screen, regardless of how narrow/short the viewport is or
-    // how close to an edge the seat sits.
-    x = Math.max(margin, Math.min(x, window.innerWidth - badgeWidth - margin));
-    y = Math.max(margin, Math.min(y, window.innerHeight - badgeHeight - margin));
-
-    badge.style.setProperty("--bpb-x", `${x}px`);
-    badge.style.setProperty("--bpb-y", `${y}px`);
-}
-
-export function showBotPreviewBadge(player, card) {
-    clearBotPreviewBadge();
-
-    const row = document.querySelector(`.other-player-row[data-player="${player.id}"]`);
-    if (!row) return;
-
-    const badge = document.createElement("div");
-    badge.className = "bot-preview-badge";
-    badge.appendChild(createCard(card));
-    document.body.appendChild(badge);
-    loadIcons(badge);
-
-    positionBotPreviewBadge(badge, row);
-
-    // The Preview shows for a fixed short duration (see
-    // BOT_PREVIEW_DISPLAY_DURATION_MS in turnManager.js) rather than
-    // being driven by pointer movement like the drag ghost, so it
-    // doesn't need continuous per-frame repositioning — but a resize
-    // or orientation flip mid-preview should still move it rather than
-    // leave it stranded at a stale position.
-    _botPreviewRepositionHandler = () => positionBotPreviewBadge(badge, row);
-    window.addEventListener("resize", _botPreviewRepositionHandler);
-    window.addEventListener("orientationchange", _botPreviewRepositionHandler);
-
-    // Next frame, so the opacity/transform transition in style.css
-    // actually plays instead of snapping straight to visible.
-    requestAnimationFrame(() => badge.classList.add("bot-preview-badge-visible"));
-
-    _botPreviewBadgeEl = badge;
-}
-
-export function clearBotPreviewBadge() {
-    if (_botPreviewRepositionHandler) {
-        window.removeEventListener("resize", _botPreviewRepositionHandler);
-        window.removeEventListener("orientationchange", _botPreviewRepositionHandler);
-        _botPreviewRepositionHandler = null;
-    }
-    if (_botPreviewBadgeEl) {
-        _botPreviewBadgeEl.remove();
-        _botPreviewBadgeEl = null;
-    }
-}
+// NOTE: A standalone "Bot Preview Badge" (a floating duplicate card
+// shown near the Bot's seat before it played) used to live here. It was
+// removed: showing that separate card, then removing it, then having
+// the REAL card reveal on the deck a moment later (see cardEnteredQueue
+// above) reads as two disconnected cards/movements back to back —
+// exactly the "appears elsewhere → jumps onto the deck" artifact the
+// single deck-reveal-hold-fly sequence is meant to avoid. The deck
+// reveal's own hold (T.opponentHold in cardEnteredQueue) was lengthened
+// to take over giving the player a beat to register the card, so there
+// is now exactly one card, appearing in exactly one place, for the
+// whole Bot-plays-a-card sequence. The Queue Ability Preview (arrows/
+// icons on the cards already in the Queue, via showQueuePreview in
+// previewOverlay-ui.js) is unrelated and unaffected — that's not a
+// card element, just overlays on existing queue slots.
 
 // ── Other players — deck-back style with avatar & deck count ──
 // Always rendered as a flat list of up to 3 `.other-player-slot`
@@ -782,7 +695,21 @@ const T = {
     majorBeat:   260,   // card-result-anticipation (0.26s) — pre-party wind-up
     majorFlip:   440,   // travel into Party
     majorCelebrate: 420, // card-party-celebrate (0.42s) — landing celebration
-    iconReceive: 260    // queue-icon-receive (0.26s) — Party/Trash icon "received it" bump
+    iconReceive: 260,   // queue-icon-receive (0.26s) — Party/Trash icon "received it" bump
+    // Opponent deck → queue, three-stage sequence (see cardEnteredQueue):
+    // reveal the real card on the deck, hold so it reads, then fly it —
+    // as that same element — into the queue. Must match this file's
+    // durations exactly against .card-reveal-on-deck / .card-flying-from-deck
+    // in css/style.css (see the note on duringClass timing above).
+    opponentReveal: 200,  // card-reveal-on-deck (0.2s) — face-up entrance on the deck
+    opponentHold:   700,  // stationary pause, no CSS animation — just a wait().
+                           // Lengthened from 350ms: this is now the ONLY beat
+                           // where the player sees the Bot's actual played card
+                           // before it's gone (the separate floating "Bot
+                           // Preview Badge" that used to show it beforehand was
+                           // removed — see the note above showBotPreviewBadge's
+                           // old location in this file).
+    opponentFlight: 460   // card-flying-from-deck (0.46s) — deck → queue travel
 };
 
 /** Hand → back-of-queue. The one transition that needs a specific source
@@ -811,35 +738,71 @@ async function cardEnteredQueue(card, sourceEl, toIndex) {
         // (it keeps showing that player's live remaining count) — it can
         // never be the thing that flies away. Instead, capture its
         // CURRENT on-screen position (never a hard-coded coordinate — see
-        // getOpponentHandBackElement above) and fly a temporary face-down
-        // ghost card from there into the queue slot, exactly like the
-        // human hand's own flight below, then swap in the real revealed
-        // card and discard the ghost.
+        // getOpponentHandBackElement above) and use it as the origin for
+        // the actual selected card.
+        //
+        // This must read as "a card was taken from this opponent's deck,
+        // revealed on top of their deck, and then played into the queue"
+        // — never as a card flying in from somewhere else. So, unlike a
+        // face-down ghost that only reveals after arriving, the REAL
+        // card (already face-up) is rendered directly at the deck's
+        // position as the very first visible frame, held there briefly,
+        // then flown — as that same element, no flip — into the queue.
         const originRect = sourceEl.getBoundingClientRect();
-        const ownerId = sourceEl.dataset.player || card.owner?.id || "";
 
-        const ghost = document.createElement("div");
-        ghost.className = "card-back flying-opponent-card";
-        if (ownerId) ghost.dataset.player = ownerId;
-        ghost.style.position = "fixed";
-        ghost.style.margin = "0";
-        ghost.style.left = `${originRect.left}px`;
-        ghost.style.top = `${originRect.top}px`;
-        ghost.style.width = `${originRect.width}px`;
-        ghost.style.height = `${originRect.height}px`;
-        ghost.style.zIndex = "500";
-        ghost.style.pointerEvents = "none";
-        document.body.appendChild(ghost);
+        const real = createCard(card);
+        real.style.position = "fixed";
+        real.style.margin = "0";
+        real.style.left = `${originRect.left}px`;
+        real.style.top = `${originRect.top}px`;
+        real.style.width = `${originRect.width}px`;
+        real.style.height = `${originRect.height}px`;
+        real.style.zIndex = "500";
+        real.style.pointerEvents = "none";
+        // Stay fully invisible until the fixed position above is
+        // actually committed by the browser — this is the guarantee
+        // that the FIRST thing the player ever sees of this card is it
+        // already sitting on the opponent's deck, never mid-transition
+        // or at some other default/static position.
+        real.style.opacity = "0";
+        document.body.appendChild(real);
 
-        await flip(ghost, () => slot.appendChild(ghost), {
-            duration: T.minorFlip,
+        // Force a layout flush now, with the card still invisible, so
+        // the fixed left/top/width/height above are fully laid out
+        // before anything is revealed on the next frame.
+        void real.offsetWidth;
+
+        // Phase 2 — Reveal: only now, one frame after the position
+        // above is guaranteed committed, does the card fade/scale in —
+        // face-up, already resting on the deck, no rotation.
+        await new Promise(resolve => requestAnimationFrame(resolve));
+        real.style.opacity = "";
+        real.classList.add("card-reveal-on-deck");
+        await wait(T.opponentReveal);
+        real.classList.remove("card-reveal-on-deck");
+
+        // Phase 3 — Hold: keep it stationary long enough to register
+        // which card was played before it starts moving anywhere.
+        await wait(T.opponentHold);
+
+        // Phase 4 — Flight: the SAME element travels from the deck to
+        // the actual queue slot. The target rect is measured HERE, from
+        // the real slot, BEFORE the reparent happens — flip()'s usual
+        // "remeasure el after mutate()" trick doesn't work for an `el`
+        // that's already `position: fixed` (its rect is driven by its
+        // own inline styles, not by where its DOM parent would place
+        // it), so flipToRect() takes the destination explicitly instead
+        // and only reparents once the visual flight is done.
+        const targetRect = slot.getBoundingClientRect();
+        await flipToRect(real, targetRect, () => slot.appendChild(real), {
+            duration: T.opponentFlight,
             duringClass: "card-flying-from-deck",
         });
 
-        const real = createCard(card);
-        real.classList.add("card-reveal");
-        ghost.replaceWith(real);
-        setTimeout(() => real.classList.remove("card-reveal"), 260);
+        // Phase 5 — Queue integration: `real` IS now the queue card
+        // (flip()'s mutate already reparented it) — no separate ghost
+        // or reveal element ever existed, so there's nothing left to
+        // discard and no risk of a duplicate/flicker.
         await playBeat(real, "card-joins-line", T.minorBeat);
     } else if (sourceEl.classList.contains("card-back")) {
         // Legacy path (per-card face-down back, not currently produced by

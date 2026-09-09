@@ -8,6 +8,27 @@ This file was consolidated from a changelog that had grown to live inline inside
 
 ---
 
+**Fix — Opponent card-play animation: removed the duplicate "Bot Preview Badge" (1.43.4):**
+A Bot's turn used to show a standalone floating card ("Bot Preview
+Badge", near its seat, above/below — not on its deck) for ~1.1s, then
+remove it, then immediately start the real deck-reveal-hold-fly
+sequence (`cardEnteredQueue`, `js/ui/game-ui.js`) with a *second*,
+separate card element. Back to back, this read as one broken animation:
+a card appearing off the deck, jumping onto it, holding, then flying to
+the Queue — even though the underlying deck-reveal sequence itself was
+already correct in isolation. `showBotPreviewBadge()` /
+`clearBotPreviewBadge()` / `positionBotPreviewBadge()` and the
+`.bot-preview-badge` CSS were removed entirely (`js/ui/game-ui.js`,
+`js/game/turnManager.js`, `css/style.css`); the deck reveal's own hold
+(`T.opponentHold` in `js/ui/game-ui.js`) was lengthened from 350ms to
+700ms to keep giving the player a beat to see the card, since it's now
+the only place a Bot's played card is shown before it enters the Queue.
+The Queue Ability Preview (the arrow/icon overlays on cards already
+sitting in the Queue, `js/ui/previewOverlay-ui.js`) is a separate,
+unaffected feature.
+
+---
+
 **Feature — Card Power restored to the Animal Cards on the table and the Card Guide (1.42.0):**
 `Power` (the numeric gameplay stat behind ability dispatch, queue
 sorting, ability targeting, and AI evaluation — `data/cardInfo.json`,

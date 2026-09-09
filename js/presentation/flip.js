@@ -234,6 +234,99 @@ export function flyToTarget(el, mutate, targetEl, opts = {}) {
     });
 }
 
+/**
+ * Like `flip()`, but for an `el` that is ALREADY `position: fixed` with
+ * explicit inline `left/top/width/height` when this is called (e.g. a
+ * card pinned to an opponent's deck for a reveal/hold beat before it
+ * travels on). `flip()` measures its "last" rect by re-checking `el`
+ * itself right after `mutate()` reparents it — but a fixed element's
+ * rect is driven purely by its own inline left/top/width/height, which
+ * `mutate()` doesn't touch, so that re-check would just return the same
+ * rect as "first" and the transition would silently be a no-op until an
+ * abrupt snap at the very end. This takes the real destination rect
+ * as a parameter instead of re-measuring, and defers `mutate()` (the
+ * actual reparent) until after the visual flight finishes, once `el` is
+ * already sitting exactly on top of where it's about to land.
+ *
+ * @param {HTMLElement} el
+ * @param {DOMRect} targetRect  the real destination, measured by the
+ *   caller BEFORE this runs (e.g. `queueSlot.getBoundingClientRect()`)
+ * @param {() => void} mutate  performs the real reparent, called once
+ *   the flight animation completes
+ * @param {{duration?:number, easing?:string, duringClass?:string, zIndex?:string}} opts
+ * @returns {Promise<void>}
+ */
+export function flipToRect(el, targetRect, mutate, opts = {}) {
+    if (!el || !el.isConnected) {
+        try { mutate(); } catch (e) { console.error("[flipToRect] mutate() failed on a missing element", e); }
+        return Promise.resolve();
+    }
+
+    const first = el.getBoundingClientRect();
+
+    if (isReducedMotion()) {
+        try { mutate(); } catch (e) { console.error("[flipToRect] mutate() threw", e); }
+        return crossFade(el, opts);
+    }
+
+    const duration = opts.duration ?? DEFAULT_DURATION;
+    const easing = opts.easing ?? "cubic-bezier(.4,0,.2,1)";
+    const last = targetRect;
+
+    return new Promise(resolve => {
+        let done = false;
+        const finish = () => {
+            if (done) return;
+            done = true;
+            // `el` is still visually pinned exactly on `last` at this
+            // point — reparent now, while nothing on screen changes,
+            // THEN drop the inline overrides so it settles into normal
+            // flow inside its new parent without a jump.
+            try { mutate(); } catch (e) { console.error("[flipToRect] mutate() threw after flight", e); }
+            el.style.transition = "";
+            el.style.position = "";
+            el.style.left = "";
+            el.style.top = "";
+            el.style.width = "";
+            el.style.height = "";
+            el.style.margin = "";
+            el.style.zIndex = "";
+            el.style.transform = "";
+            if (opts.duringClass) el.classList.remove(opts.duringClass);
+            el.removeEventListener("transitionend", onEnd);
+            resolve();
+        };
+        const onEnd = e => { if (e.target === el) finish(); };
+
+        el.style.position = "fixed";
+        el.style.margin = "0";
+        el.style.left = `${first.left}px`;
+        el.style.top = `${first.top}px`;
+        el.style.width = `${first.width}px`;
+        el.style.height = `${first.height}px`;
+        el.style.zIndex = opts.zIndex ?? "500";
+        el.style.transition = "none";
+        if (opts.duringClass) el.classList.add(opts.duringClass);
+
+        // Force a reflow so the "first" position is committed before we
+        // transition to "last" — same reasoning as flip() above.
+        void el.offsetWidth;
+
+        requestAnimationFrame(() => {
+            el.style.transition =
+                `left ${duration}ms ${easing}, top ${duration}ms ${easing}, ` +
+                `width ${duration}ms ${easing}, height ${duration}ms ${easing}`;
+            el.style.left = `${last.left}px`;
+            el.style.top = `${last.top}px`;
+            el.style.width = `${last.width}px`;
+            el.style.height = `${last.height}px`;
+
+            el.addEventListener("transitionend", onEnd);
+            setTimeout(finish, duration + 150);
+        });
+    });
+}
+
 function crossFade(el, opts = {}) {
     // Reduced-motion fallback for a FLIP move: no positional animation,
     // just a short opacity blip so the change still reads as a distinct
