@@ -8,6 +8,25 @@ This file was consolidated from a changelog that had grown to live inline inside
 
 ---
 
+**Fix — Bot's Queue Ability Preview now appears AFTER its card is visible, not before (1.43.5):**
+`previewThenPlayCard()` (`js/game/turnManager.js`) used to show the
+Queue Ability Preview (arrows/icons on cards already in the Queue —
+`showQueuePreview`, `js/ui/previewOverlay-ui.js`) for a fixed 1.1s
+*before* the Bot's card had even appeared on its deck — so the player
+saw the *effect* on the Queue before knowing *which card* caused it.
+`cardEnteredQueue()` (`js/ui/game-ui.js`) now takes an optional
+`onRevealed` callback, fired the instant the Bot's real card finishes
+its reveal on the deck (right as the Hold phase begins) — threaded
+through `director.presentCardEnteredQueue()` and `playCard()`
+(`js/presentation/director.js`, `js/game/turnManager.js`). The Preview
+is shown from that callback instead of before play, stays up for the
+deck reveal's existing Hold + Flight beats, and is cleared right as the
+card lands in the Queue and real ability resolution takes over. The
+now-unused `BOT_PREVIEW_DISPLAY_DURATION_MS` constant was removed
+(`js/constants/preview.js`, `docs/ARCHITECTURE.md`).
+
+---
+
 **Fix — Opponent card-play animation: removed the duplicate "Bot Preview Badge" (1.43.4):**
 A Bot's turn used to show a standalone floating card ("Bot Preview
 Badge", near its seat, above/below — not on its deck) for ~1.1s, then

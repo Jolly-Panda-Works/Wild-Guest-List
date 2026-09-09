@@ -45,11 +45,17 @@ class Director {
      * the queue. Kept separate from run() because it needs the specific
      * source element the click/AI-pick came from, which isn't something
      * pure game logic (addToQueue) knows about.
+     *
+     * `onRevealed`, if given, is forwarded straight through to the
+     * presenter — see cardEnteredQueue in js/ui/game-ui.js for exactly
+     * when it fires. The Director itself doesn't know or care what the
+     * callback does (still never decides WHAT happened) — it's just a
+     * pass-through so the caller can react to a specific animation beat.
      */
-    async presentCardEnteredQueue(card, sourceEl, toIndex) {
+    async presentCardEnteredQueue(card, sourceEl, toIndex, onRevealed) {
         if (!this._presenter?.cardEnteredQueue) return;
         try {
-            await this._presenter.cardEnteredQueue(card, sourceEl, toIndex);
+            await this._presenter.cardEnteredQueue(card, sourceEl, toIndex, onRevealed);
         } catch (e) {
             console.error("[director] cardEnteredQueue presentation failed, continuing", e);
         }

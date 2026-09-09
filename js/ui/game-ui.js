@@ -714,8 +714,14 @@ const T = {
 
 /** Hand → back-of-queue. The one transition that needs a specific source
  *  element handed to it, since pure game logic (addToQueue) has no idea
- *  which DOM node the play came from. */
-async function cardEnteredQueue(card, sourceEl, toIndex) {
+ *  which DOM node the play came from.
+ *
+ *  `onRevealed`, if given, fires once the card is actually visible on
+ *  the opponent's deck (right as the Hold phase begins) — never before.
+ *  Used by turnManager.js's previewThenPlayCard() to show the Bot's
+ *  Queue Ability Preview only once the player can see WHICH card caused
+ *  it, instead of the arrows appearing before the card itself does. */
+async function cardEnteredQueue(card, sourceEl, toIndex, onRevealed) {
     const slot = queueSlotEl(toIndex);
     if (!slot) return;
 
@@ -780,6 +786,13 @@ async function cardEnteredQueue(card, sourceEl, toIndex) {
         real.classList.add("card-reveal-on-deck");
         await wait(T.opponentReveal);
         real.classList.remove("card-reveal-on-deck");
+
+        // The card itself is now fully visible, stationary, on the
+        // deck — only NOW is it correct to show what it's about to do
+        // to the Queue (see this function's doc comment above).
+        if (typeof onRevealed === "function") {
+            try { onRevealed(); } catch (e) { console.error("[game-ui] cardEnteredQueue onRevealed callback failed", e); }
+        }
 
         // Phase 3 — Hold: keep it stationary long enough to register
         // which card was played before it starts moving anywhere.

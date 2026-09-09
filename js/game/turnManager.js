@@ -46,8 +46,6 @@ from "../ui/game-ui.js";
 
 import { previewAbility } from "../abilities/previewResolver.js";
 import { showQueuePreview, clearAllPreviewOverlays } from "../ui/previewOverlay-ui.js";
-import { BOT_PREVIEW_DISPLAY_DURATION_MS } from "../constants/preview.js";
-import { wait } from "../presentation/flip.js";
 
 import { isPaused } from "../ui/pause-ui.js";
 
@@ -166,23 +164,23 @@ export function startTurn(gameState){
  * Bot equivalent of the human player's drag: computes the exact same
  * Ability Preview (see ../abilities/previewResolver.js — the same
  * module the human drag flow in ../ui/game-ui.js calls) for the card
- * the Bot has decided to play, shows the Queue Ability Preview (arrows/
- * icons on the cards already in the Queue — see showQueuePreview) for a
- * short configurable duration (Section 7 of the brief), then hands off
- * to the regular playCard() — completely unchanged below — to actually
- * execute it. There is deliberately no separate Bot-specific preview
- * calculation anywhere in here.
+ * the Bot has decided to play, then hands off to the regular playCard()
+ * to actually execute it — passing an `onRevealed` callback so the
+ * Queue Ability Preview (arrows/icons on cards already in the Queue —
+ * see showQueuePreview) only appears once the Bot's card is actually
+ * visible on its deck (cardEnteredQueue's reveal, ../ui/game-ui.js),
+ * never before it. There is deliberately no separate Bot-specific
+ * preview calculation anywhere in here.
  *
- * This used to also show a standalone "Bot Preview Badge" — a floating
- * duplicate of the card about to be played, near the Bot's seat — for
- * the same duration. That's gone: showing that separate card, clearing
- * it, and then having the REAL card reveal on the deck a moment later
- * (cardEnteredQueue in ../ui/game-ui.js) read as two disconnected cards/
- * movements in a row instead of the single deck-reveal-hold-fly
- * sequence the game is meant to show. The deck reveal's own hold
- * (T.opponentHold there) was lengthened to give the player the same
- * beat to register the card, so there is exactly one card animation for
- * a Bot's play, not two.
+ * This used to show the Preview BEFORE playing at all — alongside a
+ * standalone "Bot Preview Badge" (a floating duplicate of the card,
+ * near the Bot's seat). Both are gone from that spot: the badge because
+ * showing it, clearing it, then having the REAL card reveal on the deck
+ * a moment later read as two disconnected cards/movements in a row
+ * instead of one clean sequence; the pre-play Preview timing because it
+ * told the player what the card would do to the Queue before they'd
+ * even seen which card it was. Now there's exactly one card animation,
+ * and the Preview arrives right as — never before — that card appears.
  */
 async function previewThenPlayCard(player, index, gameState) {
     if (index === -1 || player.hand.length === 0 || director.isBusy()) {
@@ -191,23 +189,18 @@ async function previewThenPlayCard(player, index, gameState) {
 
     const card = player.hand[index];
 
+    let result = null;
     try {
-        const result = await previewAbility(card, gameState);
-        if (result) {
-            showQueuePreview(result.queueActions);
-            await wait(BOT_PREVIEW_DISPLAY_DURATION_MS);
-            // Never let a Pause/walkthrough freeze land while the
-            // preview is sitting on screen — same "point of no return"
-            // pattern used throughout playCard() below.
-            await waitUntilResumed();
-        }
+        result = await previewAbility(card, gameState);
     } catch (err) {
-        console.error("[turnManager] bot preview failed, playing without one", err);
-    } finally {
-        clearAllPreviewOverlays();
+        console.error("[turnManager] bot preview computation failed, playing without one", err);
     }
 
-    return playCard(player, index, gameState);
+    const onRevealed = result
+        ? () => showQueuePreview(result.queueActions)
+        : undefined;
+
+    return playCard(player, index, gameState, onRevealed);
 }
 
 /**
@@ -227,11 +220,17 @@ async function previewThenPlayCard(player, index, gameState) {
  * reflected and the input lock is always released — the game can never
  * get stuck because a card's DOM element went missing or a transition
  * failed to fire.
+ *
+ * `onRevealed` (optional) is forwarded to director.presentCardEnteredQueue
+ * — see cardEnteredQueue in js/ui/game-ui.js for exactly when it fires.
+ * previewThenPlayCard() below uses it to show the Bot's Queue Ability
+ * Preview only once its card is actually visible on the deck.
  */
 export async function playCard(
     player,
     index,
-    gameState
+    gameState,
+    onRevealed
 ){
 
     // Defensive — a Preview (drag cancelled mid-flight, a stale Bot
@@ -292,7 +291,14 @@ export async function playCard(
             gameState
         );
 
-        await director.presentCardEnteredQueue(card, sourceEl, gameState.queue.length - 1);
+        await director.presentCardEnteredQueue(card, sourceEl, gameState.queue.length - 1, onRevealed);
+
+        // Whatever the Queue Ability Preview showed (via onRevealed
+        // above, for a Bot's card) has done its job the instant the
+        // card finishes arriving — real resolution is about to run and
+        // must never be seen alongside a now-stale preview of itself.
+        clearAllPreviewOverlays();
+
         await updateNonBoardUI(gameState);
 
         // Point of no return #1: don't resolve this card's ability

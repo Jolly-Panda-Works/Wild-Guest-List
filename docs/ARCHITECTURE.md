@@ -124,7 +124,7 @@ For the full per-animal breakdown (trigger/target/effect/Power dependency/edge c
 js/abilities/previewActions.js    action enum: Stay / MoveBack / Remove / Defend / MoveToSlot / Attach / Escape
 js/abilities/previewResolver.js   previewAbility() — the shared resolver
 js/ui/previewOverlay-ui.js        full-card overlays — visual layer only
-js/constants/preview.js           drag-start threshold, Bot preview display duration
+js/constants/preview.js           drag-start threshold
 ```
 
 Before a card actually enters the Queue, both the dragging human player and the bot (just before it plays its chosen card) can preview what would happen. `previewAbility(card, gameState)` runs the **exact same** `resolveAbility()` real execution uses, but against a throwaway clone of the Queue (`{ queue: [...gameState.queue, card], trash: [], logs: [] }` — new arrays, same card object references), capturing the same events real turns emit. Because Preview and real execution share one code path, they cannot drift into two different rule sets.
