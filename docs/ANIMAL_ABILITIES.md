@@ -1,386 +1,663 @@
-# Animal Abilities
+# قابلیت‌های حیوانات — Wild Guest List
 
-**Source of truth for this document:** `js/abilities/abilities.js` (ability dispatch + effects), `js/abilities/helpers/*.js` (shared movement/removal primitives), `js/game/queueManager.js` (Queue → Party/Trash resolution), `js/game/turnManager.js` (when abilities fire relative to a turn), `data/cardInfo.json` (Power/id/flavor text), `js/services/dataLoader.js` (id ↔ Power mapping), `js/game/deck.js` (deck composition), `js/game-main.js` (player count).
+**منبع اصلی این سند:** `js/abilities/abilities.js`، فایل‌های کمکی `js/abilities/helpers/*.js`، منطق تسویه‌ی صف در `js/game/queueManager.js`، زمان‌بندی نوبت در `js/game/turnManager.js`، و داده‌های کارت در `data/cardInfo.json`.
 
-Everywhere this document says "the code," it means the files above, inspected directly — not `data/cardInfo.json`'s description strings or `README.md`'s summary table, both of which are simplified marketing copy and are, in one case (Monkey), demonstrably wrong about what the implementation actually does. Discrepancies are called out explicitly where found.
+این سند دو بخش کاملاً جدا از هم دارد که **هرگز نباید با هم اشتباه گرفته شوند**:
 
----
-
-## Overview
-
-### The Queue / Party / Trash loop
-
-- A player plays one card from their hand; it is pushed to the back of the shared `gameState.queue` (`queueManager.js#addToQueue`).
-- That card's ability resolves **immediately**, synchronously with the play (`turnManager.js#playCard` → `abilities.js#resolveAbility`), before the queue-full check.
-- Once `gameState.queue.length >= 5`, the queue resolves (`queueManager.js#resolveQueue`):
-  - `queue.shift()` (front) → that card's **owner's `party`**.
-  - `queue.shift()` (new front) → that card's **owner's `party`**.
-  - `queue.pop()` (back) → the shared `gameState.trash`.
-  - The two cards left in the middle stay in the queue and slide up to the front for the next round.
-- At end of game, `resolveRemainingQueue()` drains whatever is left: while more than 2 cards remain it repeats the same shift/shift/pop pattern (front two → Party, back → Trash); once 2 or fewer remain, **all** of them go to Party (never Trash), tagged `order: "final"`.
-- Win condition (`js/game/matchOutcome.js`): highest `player.party.length` wins; ties on Party Card Count are a full **DRAW** with no secondary tie-breaker (Card Power explicitly plays no role in scoring — see that file's header comment).
-
-### Power's actual role
-
-Every card's `id` is numerically identical to its `power` (`dataLoader.js#loadCardData`), and `abilities.js#resolveAbility` dispatches purely on `switch(card.power)`. In other words, **Power is not just a stat — it is the animal's identity and the ability-dispatch key.** This has two consequences that matter for the tables below:
-
-1. Some abilities read `card.power` at runtime to *compare* against other cards' Power (Weasel, Parrot, Snake, Crocodile, Hippo — marked **Power Dependency: YES** below).
-2. Others check a specific animal's identity (`card.id === CARD_IDS.X`) rather than a Power threshold, even though, because id≡power, the two are numerically the same value (Monkey's Croc/Hippo purge, Lion's other-Lion/Monkey checks, Zebra's block checks, Sloth Bear's stickiness). These are marked **Power Dependency: NO** in this document because the code is not doing a *relative/threshold* Power comparison — it is matching a fixed animal identity. This distinction is called out per-ability below since it is easy to conflate the two.
-
-Two cards — **Sloth Bear (5)** and **Zebra (7)** — have **no `case` in the `resolveAbility` switch at all**. Playing either one triggers only the `default: console.log(...)` branch (a dev-console line, no gameplay effect, no log entry, no animation event). Their documented "abilities" are entirely **passive side effects coded inside other animals' abilities** (Hippo's and Crocodile's traversal loops, and Hippo's/Lion's `moveFollowersBehind` call).
-
-`resolveAbility` also sets `gameState.lastAbility = card` for every ability **except** Monkey (`if(card.power !== 2)`). No other code in the repository reads `gameState.lastAbility` — it is inert today (verified by search), so it has no observable gameplay effect. It's called out here purely because it is part of the actual `resolveAbility` implementation and could be a real hook for future systems.
-
-### Player count
-
-The number of players is variable: 1 human + 1–3 AI bots, chosen on Home (`js/game-main.js`), so **2, 3, or 4 players** are all real, reachable configurations. Each player has their own private deck of exactly one copy of each of the 12 animals (`deck.js#createDeck`) — so, e.g., "two Monkeys in the queue at once" requires two *different* players to each have played their own Monkey; it can never come from one player's deck alone.
+| بخش | وضعیت |
+| --- | --- |
+| **بخش یک — کارت‌های فعلی** | پیاده‌سازی‌شده در کد؛ دقیقاً همان چیزی که بازی امروز انجام می‌دهد |
+| **بخش دو و سه — کارت‌های پیشنهادی** | صرفاً طرح طراحی (Design Proposal)؛ **هیچ‌کدام پیاده‌سازی نشده‌اند** و هیچ خط کدی برای آن‌ها نوشته نشده است |
 
 ---
 
-## Current / Implemented Abilities
+## ۰. نمودار گردش بازی (Queue → Party / Trash)
 
-| Animal | Power | Ability (what it actually does) | Category | Trigger | Target | Power Dependency |
-| --- | ---: | --- | --- | --- | --- | --- |
-| Weasel | 1 | Removes the 2 highest-Power other cards in the queue | Removal | On Play | Automatic — top 2 by Power (excl. self) | YES |
-| Monkey | 2 | Moves itself to the back of the queue; if ≥2 Monkeys are then in the queue, removes **every** Crocodile and Hippo to Trash | Removal, Movement, Conditional Effect | On Play | Self (always) + all Crocodiles/Hippos (conditional) | NO |
-| Kangaroo | 3 | Jumps itself 1–2 positions toward the front | Movement | On Play | Self only | NO |
-| Parrot | 4 | Removes the 2 highest-Power other cards in the queue (code-identical to Weasel) | Removal | On Play | Automatic — top 2 by Power (excl. self) | YES |
-| Sloth Bear | 5 | **No ability of its own.** Passively gets pulled directly behind Hippo/Lion after either resolves, and is passed-through (not blocked) by Hippo | Passive / Movement | Passive (reacts inside Hippo's and Lion's resolution) | N/A (acted upon, not acting) | NO |
-| Seal | 6 | Reverses the entire queue order | Queue Manipulation | On Play | All cards in queue (incl. self) | NO |
-| Zebra | 7 | **No ability of its own.** Passively stops Hippo/Crocodile from advancing past it | Passive / Protection | Passive (checked inside Hippo's and Crocodile's resolution) | N/A (acted upon, not acting) | NO |
-| Giraffe | 8 | Swaps places with the single card immediately in front of it | Movement | On Play | The card immediately in front (automatic) | NO |
-| Snake | 9 | Sorts the entire queue by Power, highest → lowest | Queue Manipulation | On Play | All cards in queue (incl. self) | YES |
-| Crocodile | 10 | Eats every contiguous card with Power < 10 immediately in front of it, until it hits a Zebra or a Power ≥ 10 card | Removal / Offensive | On Play | Automatic — contiguous run of weaker cards in front | YES |
-| Hippo | 11 | Pushes forward past every contiguous card with Power < 11, until it hits a Zebra or a Power ≥ 11 card; pulls all Sloth Bears behind it | Movement / Disruption | On Play | Automatic — contiguous run of weaker cards in front, plus all Sloth Bears in queue | YES |
-| Lion | 12 | If another Lion is in the queue, this Lion is trashed instead. Otherwise removes all Monkeys, then moves itself to the front of the queue and pulls all Sloth Bears behind it | Removal / Movement | On Play | Automatic — other Lion (check), all Monkeys, self, all Sloth Bears | NO |
-
----
-
-## Detailed Ability Information
-
-### Weasel (Power 1)
-
-- **Ability:** Selects the two cards in the queue with the highest Power (excluding Weasel itself), sorted descending, and sends both to `gameState.trash`. Weasel remains in the queue.
-- **Category:** Removal.
-- **Trigger:** On Play.
-- **Target:** Automatic — no player choice. `queue.filter(c => c !== card).sort((a,b) => b.power - a.power).slice(0, 2)`.
-- **Effect:** Both targets are spliced out of `gameState.queue` and pushed onto the shared `gameState.trash` (not into any player's Party — they never score for anyone).
-- **Power Dependency: YES.** Targets are the two highest-Power *other* cards currently in the queue; there is no fixed Power threshold, it is a relative top-2 selection.
-- **Target Count:** Up to 2 cards — fewer if fewer are available (see Edge Cases).
-- **Edge cases:**
-  - **Weasel is the only card in queue:** `targets` is empty; no removal happens; the "removed" log still fires with an empty target list (`cardLabel` join produces `""`).
-  - **Exactly one other card in queue:** only that one card is removed (`.slice(0, 2)` safely returns 1 element).
-  - **Power ties:** possible only when two different players' identical animal card are both in the queue simultaneously (each player has one of each animal). `Array.prototype.sort` is a stable sort, so tied cards keep their pre-sort (i.e., queue) relative order — this is JavaScript engine behavior, **not** an explicit tie-break rule written in the code.
-  - **Multiplayer:** target selection is queue-wide and ownership-blind — Weasel can and will remove cards belonging to any player, including its own owner's other cards already in the queue, regardless of 2/3/4-player count.
-
-### Monkey (Power 2)
-
-- **Ability:** Always relocates itself to the back of the queue. If, after that move, the queue contains 2 or more Monkeys total, every Crocodile and every Hippo currently in the queue is removed to Trash.
-- **Category:** Removal, Movement, Conditional Effect.
-- **Trigger:** On Play (both parts run from the same trigger).
-- **Target:** Self (unconditional reposition) + all Crocodiles/Hippos in queue (conditional on the ≥2-Monkey check).
-- **Effect:**
-  1. `queue.splice(index,1); queue.push(card)` — Monkey moves to the back, unconditionally, every time it is played.
-  2. If `queue.filter(c => c.id === 2).length >= 2` (2 = Monkey's id/Power), the code walks the queue **back to front** and sends every card with `id === CROCODILE (10)` or `id === HIPPO (11)` to `gameState.trash`.
-- **Power Dependency: NO.** Both checks (`id === 2`, `id === 10 || id === 11`) match fixed animal identities, not a relative/threshold Power comparison, even though the numeric values happen to equal those animals' Power.
-- **✅ Flavor text fixed (was a discrepancy):** `data/cardInfo.json`'s Monkey `description`/`example` used to say the ability "removes all Crocodiles and Hippos and moves them to the front," which never matched the implementation — the code sends matching Crocodiles/Hippos to **Trash**, not to the front of the queue. Corrected during the tutorial/help content audit (see `CHANGELOG.md`) so the in-game Card Guide now says "back of the queue... sends every Crocodile and Hippo currently in the queue to the Trash," matching this document and the code. `README.md`'s Animal Cards table already had the correct wording independently.
-- **Target Count:** unbounded — every Crocodile and every Hippo in the queue at that moment, however many there are.
-- **Edge cases:**
-  - **Only 1 Monkey in queue after the move:** the removal branch never runs; only the reposition happens, and a "moved to end" log fires instead.
-  - **3 or 4 Monkeys simultaneously** (only reachable in 3–4 player games, since each player owns exactly one Monkey): the same `>= 2` check fires; there is no special handling for a 3rd/4th Monkey — the purge is a one-shot boolean condition, not scaled by Monkey count.
-  - **Sequential Monkeys:** if Player A's Monkey is played while the queue has 0 other Monkeys, no purge occurs. If Player B's Monkey is played afterward while A's Monkey is still in the queue, B's Monkey play now sees 2 Monkeys and *does* trigger the purge. Each Monkey's own On Play trigger is independently evaluated at the moment it resolves.
-  - Crocodiles/Hippos removed this way go to the shared Trash exactly like any other removal — they never enter any player's Party.
-
-### Kangaroo (Power 3)
-
-- **Ability:** Jumps itself forward (toward index 0) by 1 or 2 positions, limited by how far it currently is from the front.
-- **Category:** Movement.
-- **Trigger:** On Play.
-- **Target:** Self only. Cards it hops over receive a purely cosmetic reaction (`CARD_REACTED`, flavor `"hopped-over"`) — no state change.
-- **Effect:** `maxJump = min(currentIndex, 2)`. The actual jump distance is resolved by `chooseKangarooJump(owner, maxJump, { preview })`:
-  - If called in **Preview** mode (Ability Preview UI, drag-to-play), it always returns `maxJump` — the farthest legal jump — as a deliberate simplification; the real jump is decided again once the card is actually played.
-  - If there is no owning player object, it defaults to `1`.
-  - If the owner is an AI player, it picks a uniformly random integer in `[1, maxJump]`.
-  - If the owner is the human player, it opens an interactive chooser UI and awaits the player's explicit tap/choice.
-- **Power Dependency: NO.** Jump distance and eligibility depend only on queue position, never on any card's Power.
-- **Edge cases:**
-  - **Kangaroo is at index 0 (front) when played:** `maxJump = 0` → the ability logs "can't jump" and does nothing further. (This can only happen if Kangaroo is the very first card of a freshly-started/emptied queue.)
-  - **Kangaroo is at index 1:** `maxJump = 1`, forcing a 1-position jump regardless of the theoretical 2-position max.
-  - **Kangaroo at index ≥ 2:** the full 1–2 choice is offered.
-  - `if(targetIndex < 0) return;` is unreachable in practice — `targetIndex = index - jump` where `jump ≤ maxJump ≤ index`, so it can never go negative. Documented as written, as defensive dead code rather than a real rule.
-  - No Zebra interaction — Kangaroo ignores Zebra (unlike Hippo/Crocodile).
-
-### Parrot (Power 4)
-
-- **Ability, Category, Trigger, Target, Effect, Power Dependency, Target Count, Edge cases:** **Identical, line-for-line, to Weasel's implementation.** `abilities.js`'s `parrot()` and `weasel()` functions contain the same logic: excludes self, sorts remaining queue cards by Power descending, removes the top 2 to Trash. See **Weasel** above for the full, verified breakdown (including the empty-target and tie-order edge cases, which apply identically here).
-- This is a real, code-level duplication — not an assumption from the (differently worded) flavor text in `data/cardInfo.json`. It is flagged again in **Design Notes** below as something worth a maintainer's attention, without recommending or making any code change here.
-
-### Sloth Bear (Power 5)
-
-- **Ability:** None of its own. There is no `case 5` in `resolveAbility`'s switch — playing Sloth Bear falls through to `default: console.log(...)`, which produces no queue mutation, no log entry, and no animation event.
-- **Category:** Passive / Movement (as something *acted upon*, never as an actor).
-- **Trigger:** N/A for its own play. Its passive behavior activates as a side effect **inside** Hippo's and Crocodile's resolution loops, and inside `moveFollowersBehind()` (called from Hippo's and Lion's resolution).
-- **Target:** N/A — Sloth Bear is never the initiator.
-- **Effect (passive, as observed by other animals' code):**
-  1. **Inside Crocodile's loop:** Sloth Bear (Power 5 < 10) is eaten exactly like any other sub-10 card if Crocodile reaches it — there is no special exemption for it.
-  2. **Inside Hippo's loop:** if the card immediately ahead of Hippo is a Sloth Bear, Hippo still passes it (Power 5 < 11 satisfies the generic push condition regardless of the identity check), but the code emits a distinct `"sticky"` reason instead of the generic `"pushed"` reason — a purely presentational difference; the positional swap itself is identical to pushing past any other sub-11 card.
-  3. **`moveFollowersBehind(card, gameState)`** (called unconditionally at the end of both `hippo()` and `lion()`): every Sloth Bear currently positioned *anywhere behind* the mover's **final** index is relocated to snap directly behind it — not only Sloth Bears the mover actually passed over during its own traversal. Crocodile, Snake, Seal, Giraffe, Kangaroo, Weasel, Parrot, and Monkey never call this helper and never trigger it.
-- **Power Dependency: NO.** All of the above checks are by identity (`id === SLOTH_BEAR`, `id === LION/HIPPO`) or position, never a Power comparison.
-- **Edge cases:**
-  - **Multiple Sloth Bears behind the same mover:** `moveFollowersBehind` iterates the followers in queue order but re-reads each follower's *live* index right before splicing it in at `moverIndex + 1`. Because each subsequent insertion happens at the same slot, the **last-processed** Sloth Bear ends up immediately behind the mover, and earlier-processed ones are pushed back one slot each time — the final relative order of 2+ Sloth Bears behind the mover is the **reverse** of their original queue order. This is a real, non-obvious consequence of the loop structure, not an intentional "priority" rule.
-  - **Hippo doesn't need to actually move to trigger this:** `moveFollowersBehind(card, gameState)` is called **unconditionally** at the end of `hippo()`, even along the code path where Hippo was blocked immediately (e.g., by a Zebra right in front of it, so `index === startIndex` and no `CARD_MOVED` "push" event fires). Any Sloth Bear positioned after Hippo's (unchanged) position is still pulled in behind it.
-  - **A trashed Lion does *not* trigger this:** if Lion is blocked by another Lion, the function `return`s immediately after sending itself to Trash — `moveFollowersBehind` is never reached on that path.
-
-### Seal (Power 6)
-
-- **Ability:** Reverses the entire queue's order in place.
-- **Category:** Queue Manipulation.
-- **Trigger:** On Play.
-- **Target:** All cards currently in the queue, including Seal itself.
-- **Effect:** `queue.reverse()` — a full, unconditional in-place reversal. The whole move is captured as one batched `QUEUE_REORDERED` animation event rather than per-card moves.
-- **Power Dependency: NO.** No Power values are read or compared; only array order is affected.
-- **Edge cases:**
-  - **Queue of length 0 or 1 (Seal alone):** `reverse()` is a no-op; no `QUEUE_REORDERED` event is emitted (the computed `moves` list is empty), but the "reversed" log entry still fires unconditionally.
-  - Seal's own position flips along with everyone else's.
-
-### Zebra (Power 7)
-
-- **Ability:** None of its own. There is no `case 7` in `resolveAbility`'s switch — same `default` fallthrough as Sloth Bear.
-- **Category:** Passive / Protection — but **only** against Crocodile and Hippo specifically.
-- **Trigger:** N/A for its own play. Checked inside Crocodile's and Hippo's traversal loops (`previous.id === CARD_IDS.ZEBRA`).
-- **Target:** N/A — Zebra is never the initiator.
-- **Effect:** When Crocodile's or Hippo's advance reaches a Zebra as the very next card, the loop `break`s immediately: a "stopped" log fires, Zebra itself gets a purely cosmetic `"block"` reaction, and — critically — Zebra is **never itself removed or moved** by this interaction.
-- **Power Dependency: NO.** The block is an identity check (`id === ZEBRA`), not a Power comparison, even though it happens to correlate with Zebra's Power (7) being lower than both Crocodile's (10) and Hippo's (11) thresholds.
-- **Edge cases / scope:**
-  - Zebra provides **no protection whatsoever** against Weasel/Parrot's top-2-Power removal, Monkey's Crocodile/Hippo purge, Snake's full sort, Seal's full reverse, Giraffe's adjacent swap, or Lion's move-to-front — none of those abilities check for Zebra at all, so Zebra can be freely relocated, sorted, reversed, or (if it happens to be one of the two highest-Power cards, which never occurs since its Power is fixed at 7 and there are always higher cards possible, but worth noting the check is purely comparative) is otherwise unprotected.
-  - Because Crocodile/Hippo only ever look one step ahead (`queue[index-1]`), Zebra is a guaranteed **full stop** the first time either reaches it — not merely a speed bump that gets "worn down."
-  - **Multiple Zebras** (2+ players' Zebras in queue): each independently stops the first Hippo/Crocodile that reaches it; there is no combined or escalating effect coded for multiple Zebras.
-
-### Giraffe (Power 8)
-
-- **Ability:** Swaps places with whichever card is immediately in front of it in the queue.
-- **Category:** Movement.
-- **Trigger:** On Play.
-- **Target:** The single card immediately in front of Giraffe — automatic, no player choice, no Power check.
-- **Effect:** `swapCards(queue, index, index-1)` — a plain positional swap. Both cards get a `"hop"`-flavored `CARD_MOVED` event.
-- **Power Dependency: NO.** The swap happens unconditionally regardless of the other card's Power — Giraffe will happily swap with a Lion, another Zebra, or anything else.
-- **Edge cases:**
-  - **Giraffe is at index 0 (front) when played:** `if(index <= 0) return;` — nothing happens at all, not even a "can't move" log (unlike Kangaroo's explicit `logCantJump`). This can only occur if Giraffe is the very first card of a freshly-emptied queue.
-  - Giraffe ignores Zebra-blocking entirely (unlike Hippo/Crocodile) — it will swap directly with a Zebra in front of it.
-
-### Snake (Power 9)
-
-- **Ability:** Sorts the entire queue by Power, highest to lowest.
-- **Category:** Queue Manipulation.
-- **Trigger:** On Play.
-- **Target:** All cards in the queue, including Snake itself.
-- **Effect:** `queue.sort((a,b) => b.power - a.power)` — descending Power sort, captured as one batched `QUEUE_REORDERED` event.
-- **Power Dependency: YES.** This is the clearest full-queue Power comparison in the game — every card's position is decided purely by its Power value relative to every other card in the queue.
-- **Edge cases:**
-  - **Power ties:** `Array.prototype.sort` is guaranteed stable by the ECMAScript spec, so cards with equal Power keep their pre-sort relative order — again, engine guarantee, not an explicit in-code tie-break rule.
-  - **Queue of length 0 or 1:** no-op sort; the "sorted" log still fires.
-
-### Crocodile (Power 10)
-
-- **Ability:** Advances by eating every contiguous card with Power < 10 immediately in front of it, stopping at a Zebra or a card with Power ≥ 10.
-- **Category:** Removal / Offensive.
-- **Trigger:** On Play.
-- **Target:** Automatic — the contiguous run of sub-10-Power cards directly in front of Crocodile, walked one at a time.
-- **Effect:** Each eaten card is removed via `sendToTrash(eaten, gameState, "eaten")` (sent to `gameState.trash`, not any player's Party). Crocodile's own position advances as the queue closes up around it.
-- **Power Dependency: YES.** The threshold check is `previous.power < 10`, and stopping happens at `previous.power >= 10` (or Zebra). Note the threshold is a **hardcoded literal `10`**, not a dynamic read of `card.power` — functionally equivalent today only because Crocodile's own Power is always 10; documented precisely since the code does not generalize to "target.power < source.power" as written.
-- **Target Count:** Unbounded — every contiguous weaker card until the stop condition, not a fixed number.
-- **Edge cases (the most intricate in the codebase):**
-  - **Blocked by Zebra:** the loop `break`s inside the `if(previous.id === ZEBRA)` branch, which already logs "stopped" and emits a `"block"` reaction on the Zebra. Execution then falls through to the post-loop check below.
-  - **Post-loop suppression check:** after the main loop, the code re-reads Crocodile's new position and looks at the card now immediately in front of it (`before`). **If `before.power > 10`** (i.e., the blocking card is Hippo (11) or Lion (12) specifically — not Zebra (7), not another Crocodile (10)), the function `return`s **immediately**, skipping *both* the "recoil" reaction *and* the "ate" log — **even if Crocodile did eat one or more cards earlier in the same traversal.** Net effect: a Crocodile that eats several cards and is then finally stopped by a Hippo or Lion produces **no completion log or animation at all** for that play.
-  - **Blocked immediately with nothing eaten, by Hippo/Lion:** same suppression applies — the play produces literally zero log output.
-  - **Blocked immediately with nothing eaten, by another Crocodile (Power 10, not > 10):** suppression does *not* apply — the "ate" log still fires, with an **empty target list** (since `eatenList` is empty), because the `before.power > 10` check is false for a Power-10 blocker.
-  - **Blocked by Zebra after eating something:** because the Zebra branch already logged "stopped" *and* the post-loop check does not suppress for Zebra (Power 7, not > 10), the "ate" log fires **a second time**, listing whatever was eaten before the Zebra was reached — i.e., **two separate log lines are produced for one Crocodile play** in this specific case.
-  - **Blocked by Zebra with nothing eaten:** the "stopped" log fires from the loop, and the "ate" log fires afterward too, with an empty target list — again two log lines for one play.
-  - **Croc eats through to the very front of the queue** (`newIndex === 0`): the `if(newIndex > 0)` guard is false, so the suppression check is skipped entirely and the normal recoil + "ate" log always fires.
-
-### Hippo (Power 11)
-
-- **Ability:** Advances by pushing past every contiguous card with Power < 11 immediately in front of it (shifting them back one slot each, not removing them), stopping at a Zebra or a card with Power ≥ 11. Afterward, pulls all Sloth Bears in the queue directly behind itself.
-- **Category:** Movement / Disruption.
-- **Trigger:** On Play.
-- **Target:** Automatic — the contiguous run of sub-11-Power cards directly in front of Hippo, plus (separately) every Sloth Bear anywhere behind Hippo's final position.
-- **Effect:** Unlike Crocodile, the cards Hippo pushes past are **not removed** — they are shifted one slot back in the queue and remain there. Hippo itself advances into the vacated slots. See **Sloth Bear** above for the special "sticky" swap flavor and the unconditional `moveFollowersBehind` call (including the edge case where it fires even if Hippo never actually moved).
-- **Power Dependency: YES.** The threshold check is `previous.power < 11`; like Crocodile, this is a **hardcoded literal `11`**, not a dynamic read of Hippo's own `card.power`.
-- **Target Count:** Unbounded for the push (every contiguous weaker card); the Sloth-Bear pull is likewise unbounded (every Sloth Bear behind Hippo's final position, regardless of count).
-- **Edge cases:**
-  - **Blocked by Zebra:** loop breaks with a "stopped" log and a "block" reaction on the Zebra, exactly like Crocodile — but Hippo has **no analogous post-loop suppression check**; its own "pushed N cards" log always fires (with `n` possibly `0`), and its `CARD_MOVED` "push" event only fires `if(index !== startIndex)`.
-  - **Blocked immediately (Zebra or Power ≥ 11 card right in front):** `passedCount` stays 0; the "pushed 0" log still fires; `moveFollowersBehind` is still called (see Sloth Bear edge case above).
-  - Crocodile does **not** call `moveFollowersBehind` — the Sloth-Bear magnet effect is exclusive to Hippo and Lion.
-
-### Lion (Power 12)
-
-- **Ability:** If another Lion is already in the queue, this Lion is trashed and nothing else happens. Otherwise, every Monkey in the queue is removed to Trash, then Lion moves itself to the very front of the queue and pulls all Sloth Bears in the queue directly behind itself.
-- **Category:** Removal / Movement.
-- **Trigger:** On Play.
-- **Target:** Automatic, in sequence — (1) check for another Lion; (2) all Monkeys in queue; (3) self (reposition); (4) all Sloth Bears in queue (via `moveFollowersBehind`).
-- **Effect:**
-  1. `queue.find(c => c !== card && c.id === LION)` — if found, `sendToTrash(card, ...)` on the **newly played** Lion (the earlier Lion is untouched and stays exactly where it was), log "blocked", and `return` — nothing further in this function runs.
-  2. Otherwise, every Monkey (`id === MONKEY`) currently in queue is sent to Trash, in queue order, via `.forEach`.
-  3. Lion is spliced out of its current spot and `unshift`ed to index 0 — front of the queue, unconditionally, **ignoring Zebra** (unlike Hippo/Crocodile, Lion never checks for a Zebra blocker).
-  4. `moveFollowersBehind(card, gameState)` runs, pulling any Sloth Bears behind Lion's new front position in behind it (see Sloth Bear section for the multi-Sloth-Bear reversal behavior).
-- **Power Dependency: NO.** Despite "moves to the front" reading like a Power-supremacy move, every check here (`id === LION`, `id === MONKEY`, `id === SLOTH_BEAR`) is identity-based, not a Power comparison.
-- **Edge cases:**
-  - **Two Lions "in the queue at once"** requires two different players' Lions, since each player owns exactly one — the check only fires when an *earlier, still-unresolved* Lion (any player's) is already sitting in the queue at the moment a second Lion is played.
-  - A blocked/trashed Lion still consumes the turn and enters `gameState.trash` — it just never runs its own Monkey-purge or front-move logic.
-  - **Lion already at index 0 when played** (only possible if the queue was otherwise empty): the `CARD_MOVED` "rush" event is skipped (`if(fromIndex !== 0)`), but the "moved to front" log still fires unconditionally.
-  - Monkeys are purged **before** Lion physically relocates, so the order of operations never causes Lion to "pass through" a Monkey it's about to remove.
-
----
-
-## Power Dependency Summary
-
-| Animal | Power Dependency | How Power Is Used |
-| --- | --- | --- |
-| Weasel | YES | Selects the 2 highest-Power *other* cards in queue (relative comparison, top-2). |
-| Monkey | NO | Filters by fixed animal identity (Monkey/Crocodile/Hippo ids), not a Power threshold. |
-| Kangaroo | NO | Jump distance/eligibility depends only on queue position. |
-| Parrot | YES | Same relative top-2-by-Power selection as Weasel (identical code). |
-| Sloth Bear | NO | Has no ability of its own; passive interactions are identity/position-based. |
-| Seal | NO | Full reversal; no Power values read. |
-| Zebra | NO | Has no ability of its own; blocking check is identity-based (`id === ZEBRA`). |
-| Giraffe | NO | Unconditional swap with the adjacent card, regardless of its Power. |
-| Snake | YES | Sorts the entire queue by Power, descending. |
-| Crocodile | YES | Eats cards with `power < 10` (hardcoded threshold, not a dynamic self-power read). |
-| Hippo | YES | Pushes past cards with `power < 11` (hardcoded threshold, not a dynamic self-power read). |
-| Lion | NO | Checks are identity-based (other Lion / Monkey / Sloth Bear), not Power comparisons. |
-
----
-
-## Queue and Party/Trash Interaction Reference
-
-| Animal | Moves self? | Removes other cards (→ Trash)? | Repositions other cards (stay in Queue)? | Can affect its own eventual Queue/Trash/Party fate directly? |
-| --- | --- | --- | --- | --- |
-| Weasel | No | Yes (top 2, excl. self) | No | No — stays put; fate decided later by normal Queue resolution |
-| Monkey | Yes (to back) | Conditionally, all Crocodiles/Hippos | No | Yes — moving itself to the back changes when it will reach the front-of-queue resolution slots |
-| Kangaroo | Yes (1–2 toward front) | No | No | Yes — same reasoning as Monkey, in the opposite direction |
-| Parrot | No | Yes (top 2, excl. self) | No | No |
-| Sloth Bear | No (passive only) | No | No (only gets repositioned by others) | No |
-| Seal | Yes (whole-queue reverse) | No | Yes (everyone) | Yes |
-| Zebra | No (passive only) | No | No | No |
-| Giraffe | Yes (1 position) | No | Yes (the swapped card) | Yes |
-| Snake | Yes (whole-queue sort) | No | Yes (everyone) | Yes |
-| Crocodile | Yes (advances as it eats) | Yes (unbounded contiguous run) | No | Yes |
-| Hippo | Yes (advances as it pushes) | No | Yes (unbounded contiguous run) | Yes |
-| Lion | Yes (to front, or to Trash if blocked) | Yes (all Monkeys, conditionally) | No (aside from the Sloth Bear pull) | Yes |
-
-No implemented ability reads from or writes to a card already resolved into a player's **Party** — every ability listed above only ever affects cards still in the shared **Queue** (or sends them to the shared **Trash**). The only two exits from the Queue are the 5-card `resolveQueue()` shift/shift/pop resolution and `resolveRemainingQueue()` at game end; no Animal ability triggers either of those early or skips them.
-
----
-
-## Design Notes (observations on the current implementation)
-
-These are documentation-accuracy observations only — **no code was changed to produce this document**, per the task's scope restrictions.
-
-- **Weasel and Parrot share identical code.** Their `data/cardIntro.json` flavor text differs ("Clean Strong" vs. "Remove Strongest… Parrot stays"), but `abilities.js`'s `weasel()` and `parrot()` functions are line-for-line the same. Whether this is intentional (Power 1 and Power 4 deliberately sharing an effect) or a leftover from development is outside this document's scope to judge — it is simply recorded as a verified fact of the current code.
-- **Monkey's flavor text (`data/cardInfo.json`) and README's summary table both describe Crocodiles/Hippos being "moved to the front,"** which does not match the implementation (`sendToTrash`, i.e., removed). This document's Current/Implemented section follows the code, not the flavor text.
-- **Crocodile's post-loop log/animation suppression** (see its Edge Cases above) means some Crocodile plays that visibly ate cards produce no completion log, while others produce a duplicate log. This is a real, reproducible consequence of the current control flow, documented here for accuracy — not a proposal to fix it.
-- **`gameState.lastAbility`** is written by `resolveAbility` for every ability except Monkey, but is never read anywhere else in the codebase today (verified by search). It has no observable effect on gameplay currently.
-
----
-
-## Proposed / Not Implemented Abilities
-
-**None of the abilities in this section exist in the codebase.** They are design proposals only, written to extend the existing Queue/Party/Trash/Power system described above. Implementing any of them is out of scope for this document and would require code changes not made here.
-
-A structural note that applies to all five proposals below: `resolveAbility` dispatches strictly on `switch(card.power)`, and Powers 1–12 are all already occupied by the 12 existing animals (`data/cardInfo.json`). None of these proposals can be slotted in without either (a) extending the Power range beyond 12, or (b) some other dispatch mechanism being added alongside Power. The "Suggested Power" values below (13–17) are placeholders to illustrate the proposal, not a claim that the range is actually extendable today without further design/engineering work.
-
-### Otter
+برای فهم هر قابلیت، باید مسیر یک کارت را از دست بازیکن تا مقصد نهایی‌اش دید:
 
 ```
-Suggested Power: 13
-Ability: Move one chosen card from anywhere in the Queue to the back of the Queue.
-Category: Queue Manipulation, Target Manipulation
+   دست بازیکن (Hand)
+         │  بازیکن یک کارت بازی می‌کند
+         ▼
+   انتهای صف مشترک (Queue) ──────────────┐
+         │                                │
+         │  قابلیت حیوان بلافاصله         │  این چرخه تا وقتی که هر
+         │  اجرا می‌شود (On Play)         │  بازیکن ۱۲ کارت بازی کند
+         ▼                                │  ادامه دارد
+   وقتی طول صف به ۵ رسید:                 │
+         │                                │
+   ┌─────┴─────┐                          │
+   │ ۲ کارت جلو │──► وارد Party صاحبشان   │
+   │ می‌شوند     │                         │
+   └───────────┘                          │
+   ┌───────────┐                          │
+   │ ۱ کارت ته  │──► وارد Trash مشترک      │
+   │ صف          │    می‌شود               │
+   └───────────┘                          │
+   ┌───────────┐                          │
+   │ ۲ کارت وسط │──► در صف باقی می‌مانند   │
+   │            │    و به جلو می‌آیند ─────┘
+   └───────────┘
+```
+
+نکات کلیدی که در همهٔ قابلیت‌های زیر باید در نظر داشت:
+
+- **Power** فقط یک عدد آماری نیست؛ در کد، `id` هر کارت دقیقاً برابر `power` همان کارت است (`js/services/dataLoader.js`)، و تابع `resolveAbility` صرفاً با `switch(card.power)` تصمیم می‌گیرد کدام قابلیت اجرا شود. یعنی **Power همزمان هم هویت حیوان است و هم کلید انتخاب قابلیت.**
+- **Party** مخصوص هر بازیکن است (`player.party`)، اما **Queue** و **Trash** بین همهٔ بازیکنان یک میز مشترک هستند.
+- برد ممکن است بین ۲ تا ۴ بازیکن باشد (۱ انسان + ۱ تا ۳ ربات)، و چون هر بازیکن دقیقاً یک نسخه از هر حیوان دارد، سناریوهایی مثل «دو میمون هم‌زمان در صف» فقط وقتی ممکن است که دو بازیکن *متفاوت* میمون خودشان را بازی کرده باشند.
+- برندهٔ بازی فقط بر اساس **تعداد کارت‌های Party** تعیین می‌شود؛ **Power هیچ نقشی در تعیین برنده یا تساوی ندارد** — نقش Power فقط در گیم‌پلی (اجرای قابلیت‌ها) است.
+
+---
+
+# بخش یک — کارت‌های فعلی (پیاده‌سازی‌شده)
+
+## جدول خلاصه
+
+| Power | حیوان | قابلیت (خلاصه) | دسته‌بندی | Trigger | وابستگی به Power |
+| ----: | --- | --- | --- | --- | :---: |
+| ۱ | 🦡 راسو (Weasel) | دو کارت با بیشترین Power در صف (غیر از خودش) را حذف می‌کند | حذف (Removal) | On Play | بله |
+| ۲ | 🐒 میمون (Monkey) | خودش را به ته صف می‌برد؛ اگر ≥۲ میمون در صف باشد، همهٔ تمساح‌ها و اسب‌آبی‌ها حذف می‌شوند | حذف، حرکت، شرطی | On Play | خیر |
+| ۳ | 🦘 کانگورو (Kangaroo) | ۱ تا ۲ خانه به سمت جلوی صف می‌پرد | حرکت | On Play | خیر |
+| ۴ | 🦜 طوطی (Parrot) | دقیقاً مثل راسو — دو کارت قوی‌تر را حذف می‌کند | حذف | On Play | بله |
+| ۵ | 🦥 خرس‌تنبل (Sloth Bear) | قابلیت مستقل ندارد — پس از حرکت اسب‌آبی یا شیر، منفعلانه دقیقاً پشت آن‌ها کشیده می‌شود | منفعل / حرکت | (منفعل) | خیر |
+| ۶ | 🦭 فُک (Seal) | کل صف را برعکس می‌کند | دست‌کاری صف | On Play | خیر |
+| ۷ | 🦓 گورخر (Zebra) | قابلیت مستقل ندارد — منفعلانه جلوی اسب‌آبی و تمساح را می‌گیرد | منفعل / دفاعی | (منفعل) | خیر |
+| ۸ | 🦒 زرافه (Giraffe) | با کارت درست جلوی خودش جابه‌جا می‌شود | حرکت | On Play | خیر |
+| ۹ | 🐍 مار (Snake) | کل صف را بر اساس Power، از زیاد به کم، مرتب می‌کند | دست‌کاری صف | On Play | بله |
+| ۱۰ | 🐊 تمساح (Crocodile) | هر کارت ضعیف‌تر جلوی خودش را پشت سر هم می‌خورد تا به مانع برسد | حذف / تهاجمی | On Play | بله |
+| ۱۱ | 🦛 اسب‌آبی (Hippo) | از میان هر کارت ضعیف‌تر جلوی خودش رد می‌شود (نه حذف، فقط جابه‌جایی) | حرکت / اختلال | On Play | بله |
+| ۱۲ | 🦁 شیر (Lion) | اگر شیر دیگری در صف باشد، خودش Trash می‌شود؛ وگرنه همهٔ میمون‌ها را حذف کرده و به صدر صف می‌رود | حذف / حرکت | On Play | خیر |
+
+---
+
+## توضیح کامل هر کارت
+
+### ۱. راسو (Weasel) — Power 1
+
+- **قابلیت:** در میان همهٔ کارت‌های *دیگرِ* صف، دو کارت با بیشترین Power را پیدا کرده و هر دو را به Trash مشترک می‌فرستد. خودِ راسو در صف می‌ماند.
+- **Trigger:** On Play.
+- **هدف‌گیری:** خودکار، بدون انتخاب بازیکن — `queue.filter(c => c !== card).sort((a,b) => b.power - a.power).slice(0, 2)`.
+- **تعداد هدف:** حداکثر ۲ کارت؛ اگر کارت کمتری در صف باشد، همان‌ها حذف می‌شوند.
+- **وابستگی به Power: بله.** انتخاب هدف کاملاً نسبی است (دو کارتِ *قوی‌تر*)، نه یک آستانهٔ ثابت.
+- **موارد حاشیه‌ای:**
+  - اگر راسو تنها کارت صف باشد، هیچ هدفی وجود ندارد و چیزی حذف نمی‌شود (لاگ خالی ثبت می‌شود).
+  - اگر فقط یک کارت دیگر در صف باشد، همان یکی حذف می‌شود.
+  - در تساوی Power (که فقط وقتی ممکن است دو بازیکن یک حیوان یکسان را هم‌زمان در صف داشته باشند)، ترتیب انتخاب بر اساس پایداری الگوریتم `sort` جاوااسکریپت تعیین می‌شود، نه یک قانون صریح در کد.
+
+### ۲. میمون (Monkey) — Power 2
+
+- **قابلیت:** همیشه خودش را به انتهای صف منتقل می‌کند. اگر بعد از این جابه‌جایی، مجموعاً ۲ میمون یا بیشتر در صف باشند، **همهٔ** تمساح‌ها و اسب‌آبی‌های حاضر در صف به Trash فرستاده می‌شوند.
+- **Trigger:** On Play (هر دو بخش هم‌زمان اجرا می‌شوند).
+- **هدف‌گیری:** خودِ میمون (همیشه) + همهٔ تمساح‌ها/اسب‌آبی‌ها (فقط در حالت شرطی).
+- **وابستگی به Power: خیر.** بررسی‌ها بر اساس هویت ثابت انجام می‌شوند (`id === 2`، `id === 10 یا 11`)، نه مقایسهٔ نسبی Power.
+- **⚠ ناهماهنگی با متن توضیحی بازی:** توضیح موجود در `data/cardInfo.json` می‌گوید کارت‌های حذف‌شده «به جلوی صف منتقل می‌شوند»، اما کد واقعی آن‌ها را مستقیماً به **Trash** می‌فرستد، نه جلوی صف. این سند طبق کد واقعی نوشته شده است.
+- **موارد حاشیه‌ای:**
+  - اگر فقط یک میمون در صف باشد، فقط جابه‌جایی انجام می‌شود.
+  - در بازی ۳ یا ۴ نفره ممکن است ۳ یا ۴ میمون هم‌زمان در صف باشند؛ شرط اجرا همچنان فقط «حداقل ۲ عدد» است و رفتار ویژه‌ای برای تعداد بیشتر وجود ندارد.
+  - کارت‌های حذف‌شده مستقیماً به Trash می‌روند، نه Party هیچ بازیکنی.
+
+### ۳. کانگورو (Kangaroo) — Power 3
+
+- **قابلیت:** خودش را ۱ یا ۲ خانه به سمت جلوی صف می‌پراند.
+- **Trigger:** On Play.
+- **هدف‌گیری:** فقط خودش؛ کارت‌هایی که از رویشان پریده می‌شود فقط یک جلوهٔ بصری می‌گیرند، هیچ تغییر وضعیتی ندارند.
+- **مکانیزم انتخاب فاصلهٔ پرش:** `maxJump = min(موقعیت فعلی, 2)`. سپس:
+  - در حالت پیش‌نمایش (Preview) همیشه بیشترین پرش ممکن انتخاب می‌شود (ساده‌سازی عمدی برای نمایش).
+  - اگر بازیکن ربات باشد، عددی تصادفی بین ۱ و حداکثر مجاز انتخاب می‌شود.
+  - اگر بازیکن انسان باشد، از او خواسته می‌شود انتخاب کند.
+- **وابستگی به Power: خیر.** فاصلهٔ پرش فقط به موقعیت در صف بستگی دارد، نه به Power هیچ کارتی.
+- **موارد حاشیه‌ای:** اگر کانگورو در ابتدای صف بازی شود (موقعیت صفر)، اصلاً نمی‌تواند بپرد. گورخر مانع پرش کانگورو نمی‌شود.
+
+### ۴. طوطی (Parrot) — Power 4
+
+- کد این کارت **دقیقاً همان کدی است که در راسو استفاده شده** — همان انتخاب دو کارت قوی‌تر و ارسال به Trash، با همان قوانین و همان موارد حاشیه‌ای. این یک هم‌پوشانی واقعی و تأییدشده در کد است، نه یک فرض؛ متن توضیحی دو کارت در `data/cardInfo.json` متفاوت نوشته شده، ولی منطق اجرایی یکسان است.
+
+### ۵. خرس‌تنبل (Sloth Bear) — Power 5
+
+- **قابلیت مستقل:** ندارد. در تابع `resolveAbility` هیچ `case 5` وجود ندارد و بازی‌کردن آن فقط یک خط لاگ توسعه (بدون اثر گیم‌پلی) تولید می‌کند.
+- **رفتار منفعل (در داخل کد سایر حیوانات):**
+  1. در حلقهٔ حرکت تمساح، خرس‌تنبل مثل هر کارت ضعیف‌تر دیگری (Power=5) خورده می‌شود؛ استثنایی ندارد.
+  2. در حلقهٔ حرکت اسب‌آبی، اگر خرس‌تنبل جلوی اسب‌آبی باشد، رد شدن از آن دقیقاً مثل رد شدن از هر کارت ضعیف زیر ۱۱ است، فقط با برچسب جلوهٔ بصری متفاوت («چسبناک»).
+  3. تابع مشترک `moveFollowersBehind` (که در انتهای قابلیت اسب‌آبی *و* شیر صدا زده می‌شود) هر خرس‌تنبلی را که در هر نقطه‌ای پشت موقعیت نهاییِ اسب‌آبی/شیر باشد، مستقیماً درست پشت سر آن می‌کشد — نه فقط خرس‌تنبل‌هایی که مستقیماً از رویشان رد شده باشد.
+- **وابستگی به Power: خیر.**
+- **نکتهٔ حاشیه‌ای مهم:** این کشیدن به پشت حتی وقتی اسب‌آبی اصلاً حرکت نکرده باشد (مثلاً بلافاصله با گورخر متوقف شده) هم اجرا می‌شود، چون فراخوانی `moveFollowersBehind` در انتهای تابع اسب‌آبی **بدون شرط** است.
+- اگر بیش از یک خرس‌تنبل پشت اسب‌آبی/شیر باشند، به دلیل نحوهٔ اجرای حلقه، ترتیب نهایی آن‌ها پشت سر مهاجم **برعکسِ** ترتیب اصلی‌شان در صف در می‌آید.
+
+### ۶. فُک (Seal) — Power 6
+
+- **قابلیت:** کل ترتیب صف را برعکس می‌کند (`queue.reverse()`)، از جمله موقعیت خودش.
+- **Trigger:** On Play. **هدف‌گیری:** همهٔ کارت‌های صف.
+- **وابستگی به Power: خیر.** هیچ مقایسهٔ Power‌ای در این قابلیت وجود ندارد.
+- **موارد حاشیه‌ای:** اگر فُک تنها کارت صف باشد، برعکس‌کردن هیچ اثری ندارد، اما لاگ مربوطه همچنان ثبت می‌شود.
+
+### ۷. گورخر (Zebra) — Power 7
+
+- **قابلیت مستقل:** ندارد؛ درست مثل خرس‌تنبل، هیچ `case 7`‌ای در کد وجود ندارد.
+- **رفتار منفعل:** وقتی تمساح یا اسب‌آبی در حال پیشروی به گورخر برسند، حرکتشان بلافاصله **متوقف** می‌شود؛ گورخر هرگز حذف یا جابه‌جا نمی‌شود.
+- **وابستگی به Power: خیر** — این توقف بر اساس بررسی هویت (`id === ZEBRA`) است، نه مقایسهٔ Power.
+- **محدودهٔ این محافظت:** گورخر **هیچ** محافظتی در برابر راسو/طوطی (حذف دو کارت قوی‌تر)، حذف میمون در برابر تمساح/اسب‌آبی، مرتب‌سازی مار، برعکس‌کردن فُک، جابه‌جایی زرافه یا هجوم شیر ندارد — همهٔ این قابلیت‌ها اصلاً بررسی نمی‌کنند که کارت هدف گورخر است یا نه.
+
+### ۸. زرافه (Giraffe) — Power 8
+
+- **قابلیت:** جای خودش را با کارتی که دقیقاً جلوی آن است عوض می‌کند.
+- **Trigger:** On Play. **هدف‌گیری:** خودکار، بدون شرط Power، بدون توجه به گورخر.
+- **وابستگی به Power: خیر.**
+- **موارد حاشیه‌ای:** اگر زرافه در ابتدای صف بازی شود، هیچ اتفاقی نمی‌افتد (و حتی لاگی هم ثبت نمی‌شود).
+
+### ۹. مار (Snake) — Power 9
+
+- **قابلیت:** کل صف را بر اساس Power، از بیشترین به کمترین، مرتب می‌کند.
+- **Trigger:** On Play. **هدف‌گیری:** همهٔ کارت‌های صف (از جمله خودش).
+- **وابستگی به Power: بله** — واضح‌ترین و کامل‌ترین مقایسهٔ Power در کل بازی.
+- **موارد حاشیه‌ای:** در تساوی Power، ترتیب اصلی حفظ می‌شود (به دلیل پایدار بودن الگوریتم مرتب‌سازی جاوااسکریپت، نه یک قانون نوشته‌شده).
+
+### ۱۰. تمساح (Crocodile) — Power 10
+
+- **قابلیت:** به‌صورت پیوسته هر کارتی با Power کمتر از ۱۰ که درست جلوی آن است می‌خورد، تا به گورخر یا کارتی با Power ۱۰ یا بیشتر برسد.
+- **وابستگی به Power: بله**، اما آستانهٔ ۱۰ در کد به‌صورت ثابت نوشته شده، نه با خواندن دینامیک `card.power` خودِ تمساح.
+- **تعداد هدف:** بدون محدودیت — هر چند کارت ضعیف پشت سر هم که در مسیر باشد.
+- **موارد حاشیه‌ای (پیچیده‌ترین بخش کل بازی):**
+  - اگر تمساح توسط اسب‌آبی (۱۱) یا شیر (۱۲) متوقف شود، **هیچ لاگ یا انیمیشن پایانی ثبت نمی‌شود**، حتی اگر پیش‌تر چند کارت خورده باشد.
+  - اگر متوقف‌کننده تمساح دیگری (Power=10) باشد، لاگ به‌صورت عادی ثبت می‌شود (حتی اگر لیست خورده‌شده‌ها خالی باشد).
+  - اگر متوقف‌کننده گورخر باشد، هم لاگ «متوقف شد» و هم لاگ «خورد» ثبت می‌شوند — یعنی **دو خط لاگ برای یک بازی کارت**.
+
+### ۱۱. اسب‌آبی (Hippo) — Power 11
+
+- **قابلیت:** از میان هر کارت ضعیف‌تر از ۱۱ که پشت سر هم جلویش است رد می‌شود (آن‌ها را جابه‌جا می‌کند، نه حذف)، تا به گورخر یا کارتی با Power ۱۱ یا بیشتر برسد. سپس همهٔ خرس‌تنبل‌های صف را درست پشت خودش می‌کشد.
+- **تفاوت کلیدی با تمساح:** کارت‌هایی که اسب‌آبی از رویشان رد می‌شود، **حذف نمی‌شوند** — فقط یک خانه عقب می‌روند و در صف باقی می‌مانند.
+- **وابستگی به Power: بله** (آستانهٔ ثابت ۱۱، مشابه تمساح).
+- **موارد حاشیه‌ای:** فراخوانی `moveFollowersBehind` (کشیدن خرس‌تنبل‌ها) حتی اگر اسب‌آبی اصلاً حرکت نکرده باشد هم اجرا می‌شود.
+
+### ۱۲. شیر (Lion) — Power 12
+
+- **قابلیت:**
+  1. اگر شیر دیگری از قبل در صف باشد، **این** شیر تازه‌بازی‌شده مستقیماً به Trash می‌رود و هیچ‌کدام از مراحل بعدی اجرا نمی‌شود (شیر قدیمی دست‌نخورده می‌ماند).
+  2. در غیر این صورت، همهٔ میمون‌های حاضر در صف به Trash فرستاده می‌شوند.
+  3. شیر خودش را مستقیماً به صدر صف (موقعیت صفر) می‌برد — **بدون هیچ توجهی به گورخر**، برخلاف تمساح و اسب‌آبی.
+  4. همهٔ خرس‌تنبل‌های صف درست پشت شیر کشیده می‌شوند.
+- **وابستگی به Power: خیر.** با اینکه «رفتن به صدر صف» شبیه یک برتری بر اساس Power به نظر می‌رسد، همهٔ بررسی‌ها بر اساس هویت انجام می‌شوند.
+- **موارد حاشیه‌ای:** «دو شیر هم‌زمان در صف» فقط وقتی ممکن است که دو بازیکن *متفاوت* شیر خودشان را بازی کرده باشند. حذف میمون‌ها قبل از حرکت شیر به جلو انجام می‌شود.
+
+## جدول وابستگی به Power (کارت‌های فعلی)
+
+| حیوان | وابستگی به Power | نحوهٔ استفاده از Power |
+| --- | :---: | --- |
+| راسو | بله | انتخاب نسبیِ دو کارت با بیشترین Power |
+| میمون | خیر | بر اساس هویت ثابت (میمون/تمساح/اسب‌آبی)، نه مقایسهٔ نسبی |
+| کانگورو | خیر | فقط بر اساس موقعیت در صف |
+| طوطی | بله | دقیقاً مثل راسو |
+| خرس‌تنبل | خیر | قابلیت مستقل ندارد |
+| فُک | خیر | برعکس‌کردن بدون هیچ مقایسه‌ای |
+| گورخر | خیر | قابلیت مستقل ندارد؛ توقف بر اساس هویت |
+| زرافه | خیر | جابه‌جایی بدون شرط، مستقل از Power هدف |
+| مار | بله | مرتب‌سازی کامل صف بر اساس Power |
+| تمساح | بله | آستانهٔ ثابت `power < 10` |
+| اسب‌آبی | بله | آستانهٔ ثابت `power < 11` |
+| شیر | خیر | همهٔ بررسی‌ها بر اساس هویت (شیر/میمون/خرس‌تنبل) |
+
+---
+
+# بخش دو — پیشنهاد کارت‌های جدید (دستهٔ اول، ۱۲ حیوان)
+
+> **⚠ این بخش و بخش سه هیچ‌کدام پیاده‌سازی نشده‌اند.** هیچ خط کدی برای آن‌ها نوشته نشده و نباید به‌عنوان رفتار واقعی بازی در نظر گرفته شوند.
+
+### یک محدودیت فنی مهم قبل از شروع
+
+موتور فعلی با `switch(card.power)` قابلیت هر کارت را انتخاب می‌کند و مقادیر Power از ۱ تا ۱۲ همگی همین حالا اشغال شده‌اند. برای اینکه ۲۴ حیوان جدید زیر واقعاً قابل‌پیاده‌سازی باشند، باید یکی از این دو راه دنبال شود:
+
+1. گسترش بازهٔ Power فراتر از ۱۲ (مثلاً تا ۳۶)، یا
+2. افزودن یک مکانیزم انتخاب قابلیت مستقل از Power، در کنار Power.
+
+مقادیر «Power پیشنهادی» زیر (۱۳ تا ۲۴ برای دستهٔ اول و ۲۵ تا ۳۶ برای دستهٔ دوم) صرفاً **جانگه‌دار (Placeholder)** برای نشان‌دادن طرح هستند، نه ادعایی مبنی بر این‌که این بازه همین حالا در دسترس است.
+
+## جدول خلاصهٔ دستهٔ اول
+
+| Power پیشنهادی | حیوان | ایدهٔ اصلی | دسته‌بندی |
+| ----: | --- | --- | --- |
+| ۱۳ | 🦦 سمور آبی (Otter) | یک کارت انتخابی را به ته صف می‌فرستد | دست‌کاری صف / هدف |
+| ۱۴ | 🦉 جغد (Owl) | کارت بعدی هر حریف را فقط برای صاحب جغد فاش می‌کند | اطلاعاتی |
+| ۱۵ | 🦚 طاووس (Peacock) | یک کارت ضعیف را از حذف‌شدن محافظت می‌کند | حفاظتی |
+| ۱۶ | 🐢 لاک‌پشت (Tortoise) | اگر خودش به Trash برود، صاحبش یک کارت اضافه می‌کشد | منابع / شرطی |
+| ۱۷ | 🦫 میرکت (Meerkat) | یک کارت از Party خودش را به دسته برمی‌گرداند | Party / منابع |
+| ۱۸ | 🦊 روباه (Fox) | جای دو کارت دیگرِ دلخواه در صف را عوض می‌کند | هدف‌گیری |
+| ۱۹ | 🐘 فیل (Elephant) | همهٔ کارت‌های خیلی ضعیف (Power≤۳) صف را حذف می‌کند | حذف |
+| ۲۰ | 🐆 یوزپلنگ (Cheetah) | اگر صف کوتاه باشد، مستقیم به صدر می‌رود | حرکت شرطی |
+| ۲۱ | 🦩 فلامینگو (Flamingo) | یک کارت ضعیف را مستقیم وارد Party صاحبش می‌کند | Party / هدف |
+| ۲۲ | 🦔 جوجه‌تیغی (Porcupine) | در برابر هر قابلیت حذف، ایمن است | حفاظتی (منفعل) |
+| ۲۳ | 🦝 راکون (Raccoon) | ترتیب دو کارت بعدیِ دستهٔ خودش را می‌بیند و می‌چیند | منابع / اطلاعاتی |
+| ۲۴ | 🐺 کفتار (Hyena) | با ≥۲ کفتار در صف، قوی‌ترین کارت صف حذف می‌شود | حذف / شرطی |
+
+## توضیح کامل هر کارت پیشنهادی — دستهٔ اول
+
+### سمور آبی (Otter)
+
+```
+Power پیشنهادی: ۱۳
+قابلیت: یک کارت دلخواه از هر نقطهٔ صف را به انتهای صف منتقل می‌کند.
+دسته‌بندی: دست‌کاری صف، هدف‌گیری
 Trigger: On Play
-Target: One card in the Queue, chosen by the player who played Otter (any card, including an opponent's or Otter's own player's other cards; not itself)
-Effect: The chosen card is removed from its current position and reinserted at the back of the Queue. Otter itself does not move.
-Power Dependency: No — the point of the ability is free choice of target regardless of Power; adding a Power restriction would narrow, not deepen, the intended "reposition anything" niche this ability fills (no existing ability lets a player choose an arbitrary target card).
-Strategic Purpose: Currently no ability lets a player choose an arbitrary card to reposition — Giraffe/Kangaroo only move themselves, Snake/Seal affect everyone at once. Otter fills a genuine "single-target, player-chosen" gap and lets a player delay an opponent's card that's about to reach the front-two Party slots, or delay their own card if they want it to survive longer before Queue resolution.
-Potential Balance Risk: A player-chosen target with no restriction can reliably deny an opponent a Party slot on the turn before a resolution (Queue at 4 cards, opponent's strong card sitting 1st/2nd) by shoving it to the back right before the 5th card lands. This is a strong, precisely-timed disruption tool; consider restricting it to only targeting cards other than the two front-most Queue slots, or giving it a once-per-game feel via a single copy per deck (consistent with every other animal).
+هدف: یک کارت دیگر در صف، به انتخاب بازیکنی که سمور آبی را بازی کرده (هر کارتی، حتی متعلق به حریف؛ نه خودِ سمور)
+اثر: کارت انتخاب‌شده از موقعیت فعلی خارج و به انتهای صف اضافه می‌شود. خودِ سمور جابه‌جا نمی‌شود.
+وابستگی به Power: خیر — هدف کاملاً به انتخاب بازیکن است، نه بر اساس Power.
+هدف طراحی: هیچ قابلیت فعلی به بازیکن اجازهٔ انتخاب آزاد یک کارت برای جابه‌جایی نمی‌دهد (کانگورو/زرافه فقط خودشان را حرکت می‌دهند، مار/فُک کل صف را). سمور آبی این خلأ را پر می‌کند و می‌تواند ورود قریب‌الوقوع یک کارت حریف به Party را عقب بیندازد.
+ریسک تعادل: چون بازیکن آزادانه هدف را انتخاب می‌کند، می‌تواند دقیقاً یک لحظه قبل از تسویهٔ صف، کارت قوی حریف را که در دو خانهٔ جلو (در آستانهٔ ورود به Party) نشسته به ته صف بفرستد. پیشنهاد می‌شود دو خانهٔ جلوی صف از اهداف مجاز سمور آبی مستثنی شوند.
 ```
 
-### Owl
+### جغد (Owl)
 
 ```
-Suggested Power: 14
-Ability: Reveal the top card of every opponent's deck to Owl's owner only.
-Category: Information
+Power پیشنهادی: ۱۴
+قابلیت: کارت رویی دستهٔ هر حریف را فقط برای صاحب جغد فاش می‌کند.
+دسته‌بندی: اطلاعاتی
 Trigger: On Play
-Target: All opponents' decks (every other seated player, 1–3 of them depending on match size); Owl's own deck is not revealed (nothing to gain from seeing your own next draw here, since it's about to become known anyway on your next turn)
-Effect: No Queue/Party/Trash state changes at all — purely informational. The owner sees (client-side only) which animal is on top of each opponent's deck, until that player's next draw invalidates the reveal.
-Power Dependency: No — this ability doesn't touch the Queue or compare Power values at all; it's a look-ahead tool, not a comparison-driven one.
-Strategic Purpose: No implemented ability currently gives any player information beyond what's already visible on the board (Queue, Hands are opponent-hidden, Party, Trash). Owl would let the owner plan around, e.g., knowing a Crocodile or Lion is about to enter the Queue from a specific opponent, without changing any game state.
-Potential Balance Risk: Because each player has exactly one copy of each animal, seeing an opponent's next card is a very strong signal (full knowledge of their remaining deck order for that one look), stronger than "peek" abilities typically are in games with larger/randomized decks. Consider revealing only a category (e.g., "high Power" vs "low Power") rather than the exact card, or limiting the reveal to a single opponent chosen by Owl's owner rather than all opponents at once, before this is implemented.
+هدف: دستهٔ همهٔ حریفان (۱ تا ۳ نفر، بسته به تعداد بازیکنان)؛ دستهٔ خودِ صاحب جغد فاش نمی‌شود.
+اثر: هیچ تغییری در صف/Party/Trash ایجاد نمی‌شود — فقط یک اطلاعات خصوصی در اختیار صاحب جغد قرار می‌گیرد.
+وابستگی به Power: خیر.
+هدف طراحی: در حال حاضر هیچ قابلیتی اطلاعات پنهان بازی را فاش نمی‌کند. جغد ابزار برنامه‌ریزی می‌سازد بدون این‌که وضعیت صف را تغییر دهد.
+ریسک تعادل: چون هر بازیکن دقیقاً یک نسخه از هر حیوان دارد، دیدن «کارت بعدی» یک حریف اطلاعات بسیار قوی‌ای است (تقریباً معادل دانستن کل ترتیب باقی‌ماندهٔ آن حریف). پیشنهاد می‌شود یا فقط یک دسته‌بندی کلی (مثلاً «قوی» یا «ضعیف») فاش شود، یا جغد فقط بتواند یک حریف انتخابی را هدف بگیرد، نه همه را هم‌زمان.
 ```
 
-### Peacock
+### طاووس (Peacock)
 
 ```
-Suggested Power: 15
-Ability: Protect one chosen card in the Queue with Power 9 or lower from being removed by any other ability, until it exits the Queue through normal Queue resolution.
-Category: Protection
+Power پیشنهادی: ۱۵
+قابلیت: یک کارت با Power ۹ یا کمتر را تا زمانی که از صف خارج شود، از هر نوع حذف محافظت می‌کند.
+دسته‌بندی: حفاظتی
 Trigger: On Play
-Target: One card currently in the Queue with Power ≤ 9, chosen by the player who played Peacock (can be any player's card, not just the owner's own)
-Effect: The target is flagged as protected. For the remainder of its time in the Queue, it cannot be sent to Trash by Weasel, Parrot, Crocodile, Lion's Monkey-purge, or Monkey's Crocodile/Hippo-purge (an ability that would remove it instead has no effect on that specific card, but still resolves normally against any other valid targets it has). The flag has no effect once the card exits the Queue via the normal 5-card resolution (into Party or Trash) — it does not persist afterward, and does not protect it from *becoming* the Trash card in that resolution.
-Power Dependency: Yes — capped at Power ≤ 9 specifically so Peacock cannot be used to make Crocodile, Hippo, or Lion permanently un-removable, which would neuter Lion's own-Lion-block and Monkey's purge as counterplay against those specific high-Power threats.
-Strategic Purpose: No implemented ability currently grants protection from removal — Zebra's blocking is passive, narrow (Hippo/Crocodile only), and cannot be chosen or aimed. Peacock introduces an active, player-chosen protection tool and a genuine answer to the game's many removal effects (Weasel/Parrot/Crocodile/Lion/Monkey), at the cost of only working on already-weaker cards.
-Potential Balance Risk: Stacking multiple Peacocks (2+ players' copies) could protect enough of the Queue that Weasel/Parrot fizzle entirely if both of their would-be top-2 targets are protected (their effect would need a defined fallback — e.g., skip protected cards and take the next-highest unprotected ones, or simply remove fewer than 2). This fallback behavior would need to be nailed down precisely before implementation to avoid ambiguous resolution.
+هدف: یک کارت در صف با Power ≤۹، به انتخاب بازیکن (می‌تواند کارت هر بازیکنی باشد، نه فقط خودش)
+اثر: کارت هدف علامت‌گذاری می‌شود؛ تا وقتی در صف است، راسو/طوطی/تمساح/فیل/حذف میمون توسط شیر/حذف تمساح‌و‌اسب‌آبی توسط میمون نمی‌توانند آن را هدف بگیرند (آن قابلیت‌ها روی این کارت خاص بی‌اثرند، ولی روی سایر اهداف مجازشان طبق روال عادی اجرا می‌شوند). این محافظت پس از تسویهٔ عادی صف (ورود به Party یا Trash) از بین می‌رود.
+وابستگی به Power: بله — سقف Power=۹ عمداً گذاشته شده تا طاووس نتواند تمساح/اسب‌آبی/شیر را برای همیشه غیرقابل‌حذف کند.
+هدف طراحی: هیچ قابلیت فعلی محافظت فعال و قابل‌انتخاب ارائه نمی‌دهد؛ محافظت گورخر منفعل، محدود (فقط تمساح/اسب‌آبی) و غیرقابل‌هدایت است. طاووس اولین پاسخ فعال به انبوه قابلیت‌های حذف بازی است.
+ریسک تعادل: اگر چند طاووس هم‌زمان روی کارت‌های مختلف فعال شوند، ممکن است راسو/طوطی هیچ هدف مجازی پیدا نکنند — باید مشخص شود در این حالت آیا کمتر از ۲ کارت حذف می‌شود یا قابلیت کلاً بی‌اثر می‌ماند.
 ```
 
-### Tortoise
+### لاک‌پشت (Tortoise)
 
 ```
-Suggested Power: 16
-Ability: If Tortoise is the specific card that lands in Trash (not Party) during a 5-card Queue resolution, its owner immediately draws one card, subject to the normal 4-card hand cap.
-Category: Resource Manipulation, Conditional Effect
-Trigger: On Queue Resolution (specifically: only when Tortoise occupies the "back of queue → Trash" slot at the moment `resolveQueue()` runs its shift/shift/pop)
-Target: Self (its own eventual position is what the condition checks — no active targeting of other cards)
-Effect: Owner draws 1 card from their own deck, obeying the existing 4-card hand-size cap (`deck.js#drawCard`'s existing rule) — if the hand is already full, the draw simply does nothing, exactly like any other draw attempt today.
-Power Dependency: No — the trigger is about queue-resolution *position* (specifically the trash slot), not a Power comparison.
-Strategic Purpose: Turns landing in the "unlucky" Trash slot from a pure loss into a minor consolation for one specific animal, giving players a reason to be less afraid of Tortoise ending up there, and adds a first example of a Resource Manipulation ability (currently no ability affects a player's deck/hand at all).
-Potential Balance Risk: Since each player has exactly one Tortoise, this can trigger at most once per player per game, so there's no loop/engine risk — but it does require an explicit ruling for `resolveRemainingQueue()` at game end, where the "3rd+ card → Trash" branch can still occur if 3+ cards remain in the final queue. Whether Tortoise's bonus draw should still apply during that end-of-game cleanup (when there may be no deck left to draw from, or no further turns to use the drawn card) needs to be decided explicitly before implementation, since it's meaningfully different from the mid-game case.
+Power پیشنهادی: ۱۶
+قابلیت: اگر لاک‌پشت دقیقاً همان کارتی باشد که در یک تسویهٔ صف به Trash می‌رود (نه Party)، صاحبش بلافاصله یک کارت اضافه می‌کشد.
+دسته‌بندی: منابع، شرطی
+Trigger: On Queue Resolution (فقط وقتی لاک‌پشت در خانهٔ «ته صف → Trash» قرار بگیرد)
+هدف: خودش (بدون هدف‌گیری فعال روی کارت دیگر)
+اثر: صاحب لاک‌پشت یک کارت از دستهٔ خودش می‌کشد، با رعایت سقف عادی ۴ کارت در دست.
+وابستگی به Power: خیر — شرط اجرا موقعیت تسویه است، نه مقایسهٔ Power.
+هدف طراحی: افتادن در خانهٔ Trash را از یک ضرر خالص به یک جبران کوچک تبدیل می‌کند و اولین نمونهٔ قابلیت «منابع» بازی است.
+ریسک تعادل: چون هر بازیکن فقط یک لاک‌پشت دارد، حداکثر یک‌بار در کل بازی اتفاق می‌افتد — ریسک حلقه‌ای ندارد؛ اما باید مشخص شود در تسویهٔ پایانی بازی (`resolveRemainingQueue`) که ممکن است باز هم به Trash بیفتد، این پاداش اعمال شود یا نه.
 ```
 
-### Meerkat
+### میرکت (Meerkat)
 
 ```
-Suggested Power: 17
-Ability: Return one card from the playing player's own Party back to their deck.
-Category: Party Manipulation, Resource Manipulation
+Power پیشنهادی: ۱۷
+قابلیت: یک کارت از Party خودِ بازیکن را به دستهٔ او برمی‌گرداند.
+دسته‌بندی: Party، منابع
 Trigger: On Play
-Target: One card in the playing player's own Party (only reachable if that player has at least 1 card in their Party already); cannot target another player's Party
-Effect: The chosen card is removed from `player.party` and placed back into `player.deck` (reshuffled in), making it drawable and playable again later — including re-triggering its ability a second time when eventually replayed.
-Power Dependency: No — target selection is "any card currently in your own Party," not filtered by Power.
-Strategic Purpose: No implemented ability currently reaches back into a Party pile once cards have left the Queue — every existing ability only affects the Queue or sends cards to Trash. Meerkat introduces the first Party Manipulation ability, giving a way to reclaim an early, low-value Party card for a second use later, or to "undo" an unlucky early resolution.
-Potential Balance Risk: Recursion is the core risk category here — returning a high-impact Party card (Lion, Crocodile, Snake) lets a player re-trigger a decisive ability a second time, which could snowball a lead. Since only one Meerkat exists per deck, this is naturally capped at once per player per game, but consider restricting the target further (e.g., only a player's own lowest-Power Party card) before implementation, so it reads as "recover a wasted early play" rather than "replay your best card."
+هدف: یک کارت از Party خودِ بازیکنی که میرکت را بازی کرده (فقط در صورتی قابل‌اجراست که حداقل یک کارت در Party داشته باشد)
+اثر: کارت انتخابی از `player.party` خارج و به `player.deck` برمی‌گردد — یعنی دوباره قابل کشیدن و بازی‌کردن است (و قابلیتش دوباره اجرا می‌شود).
+وابستگی به Power: خیر.
+هدف طراحی: هیچ قابلیت فعلی به کارت‌هایی که از صف خارج شده‌اند دست نمی‌زند. میرکت اولین قابلیت «دست‌کاری Party» است.
+ریسک تعادل: بازپس‌گیری یک کارت پرتأثیر (شیر، تمساح، مار) و اجرای دوبارهٔ قابلیتش می‌تواند خیلی قوی باشد. چون هر بازیکن فقط یک میرکت دارد، سقف طبیعی «یک‌بار در بازی» وجود دارد، اما پیشنهاد می‌شود هدف فقط به ضعیف‌ترین کارت Party خودِ بازیکن محدود شود.
+```
+
+### روباه (Fox)
+
+```
+Power پیشنهادی: ۱۸
+قابلیت: جای دو کارتِ دیگرِ دلخواه در صف (نه خودِ روباه) را با هم عوض می‌کند.
+دسته‌بندی: هدف‌گیری
+Trigger: On Play
+هدف: دو کارت دیگر در صف، هر دو به انتخاب بازیکنی که روباه را بازی کرده
+اثر: موقعیت آن دو کارت با هم عوض می‌شود.
+وابستگی به Power: خیر.
+هدف طراحی: مکملی برای سمور آبی — سمور آبی فقط «به ته صف می‌برد»، روباه اجازهٔ جابه‌جایی دقیق و دوطرفهٔ هر دو کارت دلخواه را می‌دهد.
+ریسک تعادل: می‌تواند برای ساختن ترکیب‌های خطرناک استفاده شود (مثلاً کارت حریف را درست جلوی تمساح قرار دادن). پیشنهاد می‌شود دو خانهٔ جلوی صف از اهداف مجاز مستثنی شوند، مشابه سمور آبی.
+```
+
+### فیل (Elephant)
+
+```
+Power پیشنهادی: ۱۹
+قابلیت: همهٔ کارت‌های صف با Power ۳ یا کمتر را (نه فقط کارت‌های مجاور) حذف می‌کند.
+دسته‌بندی: حذف
+Trigger: On Play
+هدف: همهٔ کارت‌های صف با Power ≤۳ (غیر از خودش)؛ برخلاف تمساح، محدود به کارت‌های مجاور نیست و کل صف را پویش می‌کند.
+اثر: همهٔ اهداف به Trash فرستاده می‌شوند.
+وابستگی به Power: بله — آستانهٔ ثابت و پایین.
+هدف طراحی: پاسخی به انباشت کارت‌های سبک/کاربردی (راسو، میمون، کانگورو) که ممکن است حذف‌کننده‌های معمولی از آن‌ها عبور کنند.
+ریسک تعادل: چون همهٔ صف را (نه فقط مجاورها) پویش می‌کند، می‌تواند در یک بازی چند کارت را هم‌زمان حذف کند — پیشنهاد می‌شود سقف «حداکثر ۲ هدف» گذاشته شود.
+```
+
+### یوزپلنگ (Cheetah)
+
+```
+Power پیشنهادی: ۲۰
+قابلیت: اگر طول صف در لحظهٔ بازی‌شدن حداکثر ۳ باشد، مستقیم به صدر صف می‌رود؛ در غیر این صورت فقط یک خانه جلو می‌رود.
+دسته‌بندی: حرکت شرطی
+Trigger: On Play
+هدف: خودش
+اثر: بر اساس طول فعلی صف، یا پرش کامل به صدر یا یک‌خانه جلو رفتن.
+وابستگی به Power: خیر — شرط بر اساس طول صف است، نه Power.
+هدف طراحی: پاداش برای بازی تهاجمی و زودهنگام، بدون این‌که مثل شیر همیشه به صدر برود.
+ریسک تعادل: چون بستگی به وضعیت صف در لحظهٔ بازی دارد، ممکن است در عمل خیلی کم یا خیلی زیاد فعال شود؛ نیاز به آزمایش تعادلی دارد.
+```
+
+### فلامینگو (Flamingo)
+
+```
+Power پیشنهادی: ۲۱
+قابلیت: یک کارت با Power کمتر از ۵ را مستقیماً از صف خارج و وارد Party صاحبش می‌کند (بدون نیاز به رسیدن به تسویهٔ ۵تایی).
+دسته‌بندی: Party، هدف‌گیری
+Trigger: On Play
+هدف: یک کارت در صف با Power <۵، به انتخاب بازیکنی که فلامینگو را بازی کرده (می‌تواند کارت خودش یا حریف باشد)
+اثر: کارت هدف مستقیماً به Party صاحب همان کارت اضافه می‌شود، بدون عبور از ریسک معمول Trash.
+وابستگی به Power: بله — فقط کارت‌های ضعیف واجد شرایط‌اند.
+هدف طراحی: نجات کارت‌های ضعیف پیش از این‌که توسط راسو/طوطی/تمساح/فیل جارو شوند.
+ریسک تعادل: اگر بدون محدودیت باشد، بازیکنان می‌توانند تضمینی و بدون ریسک به Party برسند — باید محدود به کارت‌های *خودِ* بازیکن شود، نه هر بازیکنی.
+```
+
+### جوجه‌تیغی (Porcupine)
+
+```
+Power پیشنهادی: ۲۲
+قابلیت: تا وقتی در صف است، هیچ قابلیت دستهٔ «حذف» نمی‌تواند آن را هدف بگیرد.
+دسته‌بندی: حفاظتی (منفعل)
+Trigger: On Play (فقط برای ورود به صف؛ خودش حرکتی نمی‌کند)، سپس رفتار منفعل تا خروج از صف ادامه دارد
+هدف: ندارد — قابلیتش روی خودش اعمال می‌شود
+اثر: هر قابلیت حذفی (راسو/طوطی/تمساح/فیل/حذف میمون توسط شیر/حذف تمساح‌و‌اسب‌آبی توسط میمون) که می‌خواست جوجه‌تیغی را هدف بگیرد، روی این کارت خاص بی‌اثر می‌ماند (ولی روی سایر اهداف مجازش طبق روال عادی اجرا می‌شود).
+وابستگی به Power: خیر.
+هدف طراحی: نسخهٔ خودمحافظِ طاووس — بدون نیاز به انتخاب فعال بازیکن، همیشه فعال است.
+ریسک تعادل: مشابه طاووس، باید مشخص شود اگر همهٔ اهداف مجاز راسو/طوطی جوجه‌تیغی باشند، این قابلیت‌ها چند کارت حذف می‌کنند.
+```
+
+### راکون (Raccoon)
+
+```
+Power پیشنهادی: ۲۳
+قابلیت: دو کارت بعدی دستهٔ خودِ بازیکن را می‌بیند و می‌تواند ترتیبشان را عوض کند.
+دسته‌بندی: منابع، اطلاعاتی
+Trigger: On Play
+هدف: دو کارت بعدی *خودِ* دستهٔ صاحب راکون (هیچ اثری روی صف/Party/Trash ندارد)
+اثر: بازیکن می‌تواند ترتیب کشیدن دو کارت بعدی خودش را انتخاب کند.
+وابستگی به Power: خیر.
+هدف طراحی: کنترل برنامه‌ریزی روی دستهٔ خودی، مکمل جغد که اطلاعات دستهٔ حریف را نشان می‌دهد.
+ریسک تعادل: کم — تأثیر مستقیمی روی صف ندارد، فقط ترتیب کشیدن را کنترل می‌کند؛ ریسک اصلی صرفاً این است که برنامه‌ریزی را خیلی قابل‌پیش‌بینی کند.
+```
+
+### کفتار (Hyena)
+
+```
+Power پیشنهادی: ۲۴
+قابلیت: اگر ۲ کفتار یا بیشتر (از بازیکنان مختلف) هم‌زمان در صف باشند، قوی‌ترین کارت صف حذف می‌شود.
+دسته‌بندی: حذف، شرطی
+Trigger: On Play
+هدف: تک کارت با بیشترین Power در صف (در صورت تساوی، طبق همان قاعدهٔ پایداری ترتیب که در سایر قابلیت‌ها هم دیده می‌شود)
+اثر: کارت هدف به Trash فرستاده می‌شود.
+وابستگی به Power: بله — هدف بر اساس بیشترین Power انتخاب می‌شود.
+هدف طراحی: مکانیزم شرطیِ «دسته‌جمعی» مشابه میمون، ولی به‌جای هدف ثابت (تمساح/اسب‌آبی)، هدفش نسبی و بر اساس بیشترین Power است.
+ریسک تعادل: چون فقط در بازی‌های ۳ تا ۴ نفره قابل‌فعال‌سازی است (هر بازیکن فقط یک کفتار دارد)، در بازی دونفره اصلاً فعال نمی‌شود؛ نیاز به تعادل جداگانه برای تعداد بازیکنان مختلف دارد.
 ```
 
 ---
 
-## Multiplayer Considerations (Proposed Abilities)
+# بخش سه — پیشنهاد کارت‌های جدید (دستهٔ دوم، ۱۲ حیوان دیگر)
 
-All five proposals above are written to behave identically regardless of whether the match has 2, 3, or 4 players:
+این ۱۲ حیوان کاملاً متفاوت از ۱۲ حیوانِ دستهٔ اول‌اند و روی مکانیزم‌هایی تمرکز دارند که در بخش دو کمتر دیده شدند (تبدیل، منطقهٔ محافظت، بازیافت از Trash، سینرژی گروهی).
 
-- **Otter / Peacock:** target selection is always "one specific card the player points at," resolved against whatever the shared Queue contains at that moment — the Queue's contents already scale naturally with player count (more players in the match means more decks feeding the same shared Queue, but the targeting mechanism itself doesn't change).
-- **Owl:** explicitly iterates "every other seated player," so it naturally scales from 1 opponent (2-player match) to 3 opponents (4-player match) with no special-casing needed, mirroring how Monkey's Crocodile/Hippo purge and Lion's Monkey purge already iterate "every matching card in queue" regardless of player count.
-- **Tortoise:** the Trash slot in a Queue resolution is always exactly one card regardless of player count (`resolveQueue()`'s `pop()` is a single card every time), so this proposal is inherently player-count-agnostic.
-- **Meerkat:** scoped to the acting player's own Party only, so opponent count is irrelevant to its resolution.
+## جدول خلاصهٔ دستهٔ دوم
 
-None of the five proposals require an ambiguous "choose the best/strongest opponent" rule of the kind the task guidance warns against — Otter/Peacock use explicit player choice, Owl/Tortoise/Meerkat have deterministic, count-scaling targets.
+| Power پیشنهادی | حیوان | ایدهٔ اصلی | دسته‌بندی |
+| ----: | --- | --- | --- |
+| ۲۵ | 🦎 آفتاب‌پرست (Chameleon) | قابلیت کارت جلویی را برای یک بار تکرار می‌کند | تبدیل |
+| ۲۶ | 🦫 بیدستر (Beaver) | بخشی از صف جلوی خودش را در برابر حذف مصون می‌کند | حفاظتی / صف |
+| ۲۷ | 🦅 کرکس (Vulture) | یک کارت را از Trash به Party برمی‌گرداند | Party / منابع |
+| ۲۸ | 🐺 گرگ (Wolf) | با حضور چند گرگ، هرکدام Power مؤثر بیشتری برای مقایسه می‌گیرند | شرطی / دفاعی |
+| ۲۹ | 🦇 خفاش (Bat) | جای خودش را با کارت جلوی صف عوض می‌کند | حرکت / هدف |
+| ۳۰ | 🐼 پاندا (Panda) | تا پایان عمر این صف، غیرقابل‌هدف‌گیری می‌شود | حفاظتی (خودی) |
+| ۳۱ | 🦏 کرگدن (Rhino) | تا ۳ کارت جلویی را بدون توجه به Power عقب می‌راند | حرکت / اختلال |
+| ۳۲ | 🦤 شترمرغ (Ostrich) | در برابر قابلیت‌های اطلاعاتی و هدف‌گیری مصون می‌شود | حفاظتی محدود |
+| ۳۳ | 🐿️ سنجاب (Squirrel) | اگر دست پر نباشد، بلافاصله یک کارت اضافه می‌کشد | منابع |
+| ۳۴ | 🦨 راسوی بدبو (Skunk) | قابلیت حذفِ بعدیِ هر بازیکنی یک هدف کمتر می‌گیرد | اختلال / شرطی |
+| ۳۵ | 🐫 شتر (Camel) | یک‌بار می‌تواند از رفتن به Trash در تسویه فرار کند | حفاظتی / صف |
+| ۳۶ | 🐨 کوالا (Koala) | قابلیت مستقل ندارد؛ هیچ قابلیتی نمی‌تواند آن را هدف بگیرد | منفعل / حفاظتی |
+
+## توضیح کامل هر کارت پیشنهادی — دستهٔ دوم
+
+### آفتاب‌پرست (Chameleon)
+
+```
+Power پیشنهادی: ۲۵
+قابلیت: قابلیت کارتی که درست جلوی آن است را، با استفاده از خودِ آفتاب‌پرست به‌عنوان منبع، یک‌بار دیگر اجرا می‌کند.
+دسته‌بندی: تبدیل (Transformation)
+Trigger: On Play
+هدف: کارت درست جلوی آفتاب‌پرست
+اثر: قابلیت آن کارت دوباره اجرا می‌شود، این‌بار با آفتاب‌پرست به‌جای منبع اصلی. اگر کارت هدف خرس‌تنبل یا گورخر باشد (که قابلیت مستقلی ندارند)، هیچ اثر اضافه‌ای رخ نمی‌دهد.
+وابستگی به Power: بله — چون Power منبعِ کپی‌شده، تعیین‌کنندهٔ همان آستانه‌ها/مقایسه‌هایی است که در قابلیت اصلی وجود دارد.
+هدف طراحی: تکه‌ای برای ترکیب و ارزش دوبرابر، مشابه ایدهٔ «کپی‌کردن قابلیت» در بازی‌های کارتی دیگر.
+ریسک تعادل: تکرار قابلیت شیر یا تمساح می‌تواند بسیار قدرتمند باشد — پیشنهاد می‌شود فقط کپی‌کردن کارت‌هایی با Power ۹ یا کمتر مجاز باشد.
+```
+
+### بیدستر (Beaver)
+
+```
+Power پیشنهادی: ۲۶
+قابلیت: صف را از موقعیت خودش دو تکه می‌کند و بخش جلوییِ صف (جلوتر از بیدستر) را تا زمانی که از صف خارج شوند، در برابر قابلیت‌های حذف مصون می‌کند.
+دسته‌بندی: حفاظتی، دست‌کاری صف
+Trigger: On Play
+هدف: همهٔ کارت‌های جلوتر از بیدستر در لحظهٔ بازی‌شدن (نه یک انتخاب دستی، بلکه یک منطقهٔ موقعیتی)
+اثر: هیچ قابلیت حذفی نمی‌تواند این کارت‌ها را هدف بگیرد، تا وقتی که از صف خارج شوند.
+وابستگی به Power: خیر — منطقه بر اساس موقعیت تعیین می‌شود، نه Power.
+هدف طراحی: نسخهٔ ناحیه‌ای و غیرانتخابیِ طاووس — بدون نیاز به انتخاب تک‌تک کارت‌ها.
+ریسک تعادل: اگر بیدستر دیر در صف بازی شود، ممکن است تقریباً کل صف را محافظت کند و راسو/طوطی/تمساح را کاملاً بی‌اثر کند — نیاز به سقف یا محدودیت تعداد کارت تحت‌پوشش دارد.
+```
+
+### کرکس (Vulture)
+
+```
+Power پیشنهادی: ۲۷
+قابلیت: اگر Trash حداقل ۲ کارت داشته باشد، یک کارت دلخواه از Trash را برمی‌دارد و مستقیم وارد Party صاحبِ کرکس می‌کند.
+دسته‌بندی: Party، منابع
+Trigger: On Play
+هدف: یک کارت دلخواه در Trash (پیشنهاد می‌شود فقط کارت‌های خودِ بازیکن مجاز باشند، نه دزدیدن کارت حریف از Trash)
+اثر: کارت انتخابی از Trash خارج و مستقیماً به Party صاحبِ کرکس اضافه می‌شود.
+وابستگی به Power: خیر.
+هدف طراحی: Trash را از یک ضرر خالص به یک منبع بالقوه تبدیل می‌کند و مستقیماً با قابلیت‌های حذف بازی (راسو/تمساح/فیل و…) در تعامل است.
+ریسک تعادل: ترکیب یک دستهٔ پرحذف با کرکس می‌تواند بسیار قوی شود. چون هر بازیکن فقط یک کرکس دارد، حداکثر یک‌بار در بازی اتفاق می‌افتد، ولی همچنان باید محدود به کارت‌های خودِ بازیکن باشد تا از «دزدیدن» کارت حریف جلوگیری شود.
+```
+
+### گرگ (Wolf)
+
+```
+Power پیشنهادی: ۲۸
+قابلیت: اگر این دومین یا سومین گرگی باشد که در صف حاضر است (از بازیکنان مختلف)، هر گرگ حاضر در صف، برای مقایسه‌های Power (توسط تمساح/اسب‌آبی/مار/راسو/طوطی)، Power مؤثر بالاتری (مثلاً +۳) پیدا می‌کند — بدون تغییر هویت واقعی‌اش.
+دسته‌بندی: شرطی، دفاعی
+Trigger: On Play
+هدف: همهٔ گرگ‌های حاضر در صف (شامل خودش)
+اثر: برای باقی عمر این صف، مقایسه‌های Power مربوط به این گرگ‌ها با Power افزایش‌یافته انجام می‌شود.
+وابستگی به Power: بله — مستقیماً روی نحوهٔ محاسبهٔ Power اثر می‌گذارد.
+هدف طراحی: مکانیزم «همبستگی گروهی» مشابه میمون، ولی به‌جای حذف یک هدف ثابت، به خودِ حیوان‌های هم‌نوع مصونیت نسبی می‌دهد؛ فقط در بازی‌های ۳ تا ۴ نفره واقعاً معنادار است.
+ریسک تعادل: پیچیدگی زمان‌بندی (آیا این افزایش روی مقایسه‌هایی که قبلاً انجام شده هم اثر دارد؟) باید پیش از پیاده‌سازی دقیقاً مشخص شود؛ پیشنهاد می‌شود فقط روی مقایسه‌های *بعد از* فعال‌شدن این افزایش اعمال شود.
+```
+
+### خفاش (Bat)
+
+```
+Power پیشنهادی: ۲۹
+قابلیت: جای خودش را با کارتی که در حال حاضر در صدر صف است عوض می‌کند.
+دسته‌بندی: حرکت، هدف‌گیری
+Trigger: On Play
+هدف: کارت صدر صف (موقعیت صفر)
+اثر: خفاش به صدر صف می‌رود و کارتی که قبلاً آنجا بود، به موقعیت قبلیِ خفاش (انتهای صف) منتقل می‌شود.
+وابستگی به Power: خیر.
+هدف طراحی: ابزار جایگزین برای «رسیدن به جلوی صف» غیر از شیر — بدون حذف میمون‌ها یا بی‌توجهی به گورخر؛ در عوض هزینه‌اش این است که کارتی که در صدر بود را به عقبِ صف پرتاب می‌کند.
+ریسک تعادل: می‌تواند برای انکار ورود قریب‌الوقوع یک کارت حریف (که در صدر صف نشسته) به Party استفاده شود — دقیقاً همان ریسکی که برای سمور آبی هم ذکر شد.
+```
+
+### پاندا (Panda)
+
+```
+Power پیشنهادی: ۳۰
+قابلیت: تا وقتی در همین صف است، هیچ حیوان *دیگری* نمی‌تواند آن را هدف حذف یا حرکت قرار دهد.
+دسته‌بندی: حفاظتی (فقط خودی)
+Trigger: On Play
+هدف: خودش
+اثر: پاندا در برابر همهٔ قابلیت‌های حذف و حرکتِ سایر بازیکنان مصون می‌شود (نه در برابر تسویهٔ عادی صف).
+وابستگی به Power: خیر.
+هدف طراحی: کارتی با نتیجهٔ قابل‌پیش‌بینی — بدون انتخاب هدف دیگر، فقط خودش را تضمین می‌کند.
+ریسک تعادل: اگر چند کارتِ «غیرقابل‌لمس» هم‌زمان در صف باشند، ممکن است تسویهٔ صف را یک‌طرفه و کسل‌کننده کنند؛ پیشنهاد می‌شود این مصونیت فقط «تا اولین تسویهٔ صف» دوام داشته باشد، نه برای همیشه.
+```
+
+### کرگدن (Rhino)
+
+```
+Power پیشنهادی: ۳۱
+قابلیت: تا ۳ کارت جلوی خودش را، بدون توجه به Power آن‌ها، عقب می‌راند (شبیه اسب‌آبی، ولی بدون هیچ آستانهٔ Power).
+دسته‌بندی: حرکت، اختلال
+Trigger: On Play
+هدف: تا ۳ کارت پشت‌سرهم جلوی کرگدن (تعداد ثابت، نه بر اساس Power)؛ همچنان با رسیدن به گورخر متوقف می‌شود.
+اثر: کارت‌های هدف یک خانه عقب می‌روند؛ کرگدن جلو می‌آید.
+وابستگی به Power: خیر — برخلاف اسب‌آبی، این قابلیت عمداً کاملاً مستقل از Power طراحی شده تا در تضاد طراحی با اسب‌آبی قرار بگیرد.
+هدف طراحی: نمایش یک الگوی متفاوت («عبور با زور» به‌جای «عبور بر اساس ضعف»)، و اولین قابلیتی که می‌تواند حتی شیر یا اسب‌آبی را هم به عقب براند.
+ریسک تعادل: این‌که کرگدن بتواند حتی شیر یا اسب‌آبی را جابه‌جا کند، جایگاه ویژهٔ «کارت‌های سنگین که کسی نمی‌تواند تکانشان دهد» را زیر سؤال می‌برد؛ پیشنهاد می‌شود پیش از پیاده‌سازی، شیر/اسب‌آبی/تمساح از اهداف کرگدن مستثنی شوند یا تعداد هدف کاهش یابد.
+```
+
+### شترمرغ (Ostrich)
+
+```
+Power پیشنهادی: ۳۲
+قابلیت: تا وقتی در صف است، نمی‌تواند هدف قابلیت‌های اطلاعاتی (جغد/راکون) یا هدف‌گیریِ مستقیم (سمور آبی/روباه) قرار بگیرد.
+دسته‌بندی: حفاظتی (محدود)
+Trigger: On Play
+هدف: خودش
+اثر: مصونیت محدود، فقط در برابر دستهٔ «اطلاعاتی» و «هدف‌گیری»، نه در برابر حذف یا حرکت.
+وابستگی به Power: خیر.
+هدف طراحی: نسخهٔ محدودتر و متمرکزتر از پاندا — تمرکز روی خنثی‌کردن قابلیت‌های جدید «انتخاب‌محور» بخش دو و سه.
+ریسک تعادل: چون فقط دستهٔ محدودی از قابلیت‌ها را خنثی می‌کند، ریسک تعادلی کمی دارد؛ باید در کنار سایر پیشنهادها (به‌خصوص جغد/روباه/سمور آبی) دوباره ارزیابی شود.
+```
+
+### سنجاب (Squirrel)
+
+```
+Power پیشنهادی: ۳۳
+قابلیت: اگر دستِ صاحبش در لحظهٔ بازی کمتر از ۴ کارت داشته باشد، بلافاصله یک کارت اضافه می‌کشد.
+دسته‌بندی: منابع
+Trigger: On Play (همیشه، نه شرطی به سرنوشت بعدی خودش)
+هدف: ندارد
+اثر: یک کارت اضافه از دستهٔ خودِ بازیکن کشیده می‌شود.
+وابستگی به Power: خیر.
+هدف طراحی: نسخهٔ «مطمئن ولی بی‌خطر» در برابر لاک‌پشت — لاک‌پشت شرطی و دیرهنگام است، سنجاب فوری و تضمینی است اما هیچ محافظتی برای خودِ سنجاب ندارد.
+ریسک تعادل: کشیدن تضمینی کارت اضافه، به‌طور طبیعی قوی است؛ باید در ازای آن، سنجاب هیچ مزیت موقعیتی یا محافظتی نداشته باشد (که در طراحی بالا هم رعایت شده است).
+```
+
+### راسوی بدبو (Skunk)
+
+```
+Power پیشنهادی: ۳۴
+قابلیت: قابلیت حذفِ *بعدی* که توسط هر بازیکنی بازی می‌شود (راسو/طوطی/تمساح/فیل/حذف میمون توسط شیر/حذف تمساح‌و‌اسب‌آبی توسط میمون)، یک هدف کمتر از حد عادی حذف می‌کند.
+دسته‌بندی: اختلال، شرطی
+Trigger: On Play (اثرش یک‌بارمصرف و برای بعدی ذخیره می‌شود)
+هدف: اولین قابلیت حذفیِ بعدی که بازی می‌شود (هر بازیکنی، نه فقط حریف)
+اثر: آن قابلیت یک هدف کمتر انتخاب می‌کند (مثلاً راسو/طوطی به‌جای ۲ کارت، فقط ۱ کارت حذف می‌کنند)؛ پس از یک‌بار مصرف، اثر راسوی بدبو از بین می‌رود.
+وابستگی به Power: خیر.
+هدف طراحی: یک پاسخ نرم و عمومی به فراوانیِ قابلیت‌های حذف در بازی، به‌جای محافظت از یک کارت خاص.
+ریسک تعادل: می‌تواند به‌طور کامل یک قابلیت حذفِ تک‌هدفه (مثل حذف تک‌کارتِ کفتار) را کاملاً خنثی کند؛ ترتیب اجرا و این‌که چه‌کسی اول این اثر را «مصرف» می‌کند باید دقیقاً مشخص شود.
+```
+
+### شتر (Camel)
+
+```
+Power پیشنهادی: ۳۵
+قابلیت: اگر قرار باشد در یک تسویهٔ ۵تایی، شتر همان کارتی باشد که به Trash می‌رود، به‌جای آن کارتِ ماقبل‌آخر به Trash می‌رود و شتر یک دور دیگر در صف می‌ماند.
+دسته‌بندی: حفاظتی، دست‌کاری صف
+Trigger: On Queue Resolution (منفعل — فقط وقتی خودش در خانهٔ Trash‌بندیِ تسویه باشد)
+هدف: خودش (و به‌طور غیرمستقیم، کارت ماقبل‌آخر که به‌جایش به Trash می‌رود)
+اثر: شتر یک‌بار می‌تواند از رفتن به Trash فرار کند.
+وابستگی به Power: خیر.
+هدف طراحی: نسخهٔ «تحمل/بقا»ی متفاوت از لاک‌پشت (که به‌جای فرار از Trash، از افتادن در Trash سود می‌برد).
+ریسک تعادل: باید فقط یک‌بار در طول بازی قابل‌استفاده باشد، وگرنه می‌تواند به‌طور نامحدود از Trash فرار کند.
+```
+
+### کوالا (Koala)
+
+```
+Power پیشنهادی: ۳۶
+قابلیت: مستقل ندارد — سومین حیوانِ «کاملاً منفعل» بازی، در کنار خرس‌تنبل و گورخر. تا وقتی در صف است، هیچ قابلیتی (نه دوستانه، نه خصمانه؛ نه حذف، نه حرکت، نه هدف‌گیری) نمی‌تواند آن را هدف بگیرد.
+دسته‌بندی: منفعل، حفاظتی
+Trigger: (منفعل — قابلیت مستقلی ندارد)
+هدف: ندارد
+اثر: کوالا کاملاً از تعامل با سایر قابلیت‌ها مستثناست، چه به ضررش باشد (حذف) چه به نفعش (مثلاً نجات توسط فلامینگو یا محافظت توسط طاووس هم روی آن اثر نمی‌گذارد).
+وابستگی به Power: خیر.
+هدف طراحی: تقارن طراحی با خرس‌تنبل/گورخر — یک الگوی سوم از «شیء خنثیِ غیرقابل‌تعامل»، برای تنوع در دستهٔ منفعل‌ها.
+ریسک تعادل: کوالا همچنان باید بتواند به‌صورت عادی وارد تسویهٔ ۵تایی صف شود (یعنی مصونیتش فقط در برابر قابلیت‌هاست، نه در برابر تسویهٔ معمولی)؛ وگرنه ممکن است اگر زود در صف بیفتد، صف را به‌طور بی‌معنایی مسدود کند.
+```
 
 ---
 
-## Acceptance Checklist (for this document)
+# جمع‌بندی
 
-- [x] Every currently implemented Animal (all 12) is documented, including the 2 (Sloth Bear, Zebra) with no `case` of their own.
-- [x] Every ability's current Power value, trigger, target, effect, and category are documented from the code.
-- [x] Power Dependency is stated explicitly (YES/NO) for every implemented and proposed ability, with reasoning.
-- [x] Multi-target behavior, target counts, and tie handling are documented, including where tie behavior is JS-engine-guaranteed rather than an explicit in-code rule.
-- [x] Queue and Party/Trash interactions are documented per ability, including the flow through `resolveQueue()`/`resolveRemainingQueue()`.
-- [x] Edge cases are documented per ability, including two verified discrepancies against `data/cardInfo.json`'s flavor text (Monkey's actual removal-not-move-to-front effect; Weasel/Parrot's code duplication) and Crocodile's log-suppression quirk.
-- [x] Proposed abilities are clearly separated under "Proposed / Not Implemented," each with Power, Trigger, Target, Effect, Category, Strategic Purpose, and Balance Risk, and multiplayer behavior is addressed for all five.
-- [x] No gameplay or UI code was modified to produce this document.
+## جدول کلی همهٔ ۳۶ حیوان (فعلی + پیشنهادی)
+
+| Power | حیوان | وضعیت | دسته‌بندی اصلی |
+| ----: | --- | --- | --- |
+| ۱ | راسو | ✅ پیاده‌سازی‌شده | حذف |
+| ۲ | میمون | ✅ پیاده‌سازی‌شده | حذف / حرکت / شرطی |
+| ۳ | کانگورو | ✅ پیاده‌سازی‌شده | حرکت |
+| ۴ | طوطی | ✅ پیاده‌سازی‌شده | حذف |
+| ۵ | خرس‌تنبل | ✅ پیاده‌سازی‌شده (منفعل) | منفعل |
+| ۶ | فُک | ✅ پیاده‌سازی‌شده | دست‌کاری صف |
+| ۷ | گورخر | ✅ پیاده‌سازی‌شده (منفعل) | منفعل / حفاظتی |
+| ۸ | زرافه | ✅ پیاده‌سازی‌شده | حرکت |
+| ۹ | مار | ✅ پیاده‌سازی‌شده | دست‌کاری صف |
+| ۱۰ | تمساح | ✅ پیاده‌سازی‌شده | حذف |
+| ۱۱ | اسب‌آبی | ✅ پیاده‌سازی‌شده | حرکت / اختلال |
+| ۱۲ | شیر | ✅ پیاده‌سازی‌شده | حذف / حرکت |
+| ۱۳ | سمور آبی | ❌ پیشنهادی | دست‌کاری صف / هدف |
+| ۱۴ | جغد | ❌ پیشنهادی | اطلاعاتی |
+| ۱۵ | طاووس | ❌ پیشنهادی | حفاظتی |
+| ۱۶ | لاک‌پشت | ❌ پیشنهادی | منابع / شرطی |
+| ۱۷ | میرکت | ❌ پیشنهادی | Party / منابع |
+| ۱۸ | روباه | ❌ پیشنهادی | هدف‌گیری |
+| ۱۹ | فیل | ❌ پیشنهادی | حذف |
+| ۲۰ | یوزپلنگ | ❌ پیشنهادی | حرکت شرطی |
+| ۲۱ | فلامینگو | ❌ پیشنهادی | Party / هدف |
+| ۲۲ | جوجه‌تیغی | ❌ پیشنهادی | حفاظتی (منفعل) |
+| ۲۳ | راکون | ❌ پیشنهادی | منابع / اطلاعاتی |
+| ۲۴ | کفتار | ❌ پیشنهادی | حذف / شرطی |
+| ۲۵ | آفتاب‌پرست | ❌ پیشنهادی | تبدیل |
+| ۲۶ | بیدستر | ❌ پیشنهادی | حفاظتی / صف |
+| ۲۷ | کرکس | ❌ پیشنهادی | Party / منابع |
+| ۲۸ | گرگ | ❌ پیشنهادی | شرطی / دفاعی |
+| ۲۹ | خفاش | ❌ پیشنهادی | حرکت / هدف |
+| ۳۰ | پاندا | ❌ پیشنهادی | حفاظتی (خودی) |
+| ۳۱ | کرگدن | ❌ پیشنهادی | حرکت / اختلال |
+| ۳۲ | شترمرغ | ❌ پیشنهادی | حفاظتی محدود |
+| ۳۳ | سنجاب | ❌ پیشنهادی | منابع |
+| ۳۴ | راسوی بدبو | ❌ پیشنهادی | اختلال / شرطی |
+| ۳۵ | شتر | ❌ پیشنهادی | حفاظتی / صف |
+| ۳۶ | کوالا | ❌ پیشنهادی | منفعل / حفاظتی |
+
+## نمودار پراکندگی دسته‌بندی‌ها
+
+```
+حذف (Removal)            ████████████        (راسو، طوطی، تمساح، شیر*، میمون*، فیل، کفتار)
+حرکت (Movement)           ██████████         (کانگورو، زرافه، اسب‌آبی، شیر*، یوزپلنگ، خفاش، کرگدن)
+حفاظتی (Protection)         ██████████       (طاووس، جوجه‌تیغی، بیدستر، پاندا، شترمرغ، شتر، کوالا*، گورخر*)
+دست‌کاری صف (Queue Manip.)     ████          (فُک، مار، سمور آبی، بیدستر)
+منابع (Resource)                 ████        (لاک‌پشت، راکون، سنجاب)
+Party (Party Manip.)              ████       (میرکت، فلامینگو، کرکس)
+اطلاعاتی (Information)             ██        (جغد، راکون)
+شرطی (Conditional)              ██████       (میمون، کفتار، گرگ، راسوی بدبو)
+هدف‌گیری (Target Manip.)           ████      (سمور آبی، روباه، فلامینگو، خفاش)
+تبدیل (Transformation)              ▓        (آفتاب‌پرست — تنها نمونه)
+منفعل (Passive)                    ▓▓▓       (خرس‌تنبل، گورخر، کوالا)
+
+* برخی حیوانات در بیش از یک دسته قرار می‌گیرند و در نمودار بالا تکرار شده‌اند.
+```
+
+نکتهٔ طراحی از این نمودار: در بازی فعلی، «حذف» و «حرکت» پرتکرارترین دسته‌ها هستند، و هیچ نمونه‌ای از «تبدیل» وجود ندارد. به همین دلیل در دستهٔ پیشنهادی، عمداً روی دسته‌های کم‌نماینده — **حفاظتی فعال**، **اطلاعاتی**، **منابع**، **Party**، و **تبدیل** — تمرکز شده تا تکرار قابلیت‌های حذفی/حرکتیِ موجود به حداقل برسد (طبق همان اصل طراحی که در نسخهٔ قبلی این سند هم رعایت شده بود: از تکثیر بی‌دلیل قابلیت‌های تکراری پرهیز شود).
+
+## نکات فنی نهایی
+
+- هیچ‌کدام از ۲۴ حیوان پیشنهادی در بخش دو و سه پیاده‌سازی نشده‌اند و هیچ کد گیم‌پلی برای آن‌ها نوشته نشده است.
+- برای پیاده‌سازی واقعی هر کدام، حداقل نیاز به گسترش بازهٔ `card.power` فراتر از ۱۲ (یا افزودن یک مکانیزم انتخاب قابلیت مستقل از Power) وجود دارد — این یک تغییر معماری در موتور بازی است، نه صرفاً افزودن یک `case` جدید.
+- چند مکانیزم پیشنهادی (محافظت فعال/منفعل، بازگرداندن از Trash یا Party، دست‌کاری صف منطقه‌ای) به فیلد/حالت جدیدی روی خود آبجکت کارت یا `gameState` نیاز دارند که امروز وجود ندارد (مثلاً یک پرچم `protected` یا `immune`).
+- این سند صرفاً برای بحث و طراحی است؛ هیچ تغییری در `js/abilities/abilities.js` یا سایر فایل‌های گیم‌پلی اعمال نشده است.
