@@ -1,0 +1,44 @@
+Gameplay screen: revert to tabletop layout — per-side opponents + persistent Log/Chat (1.44.0)
+
+Reworks the Desktop/Tablet (pointer: fine, >=601px) gameplay screen
+per the tabletop-layout reference brief: opponents seated left/top/
+right of the board instead of one shared row, plus persistent,
+collapsible Game Log (top-left) and Chat (bottom-left) panels instead
+of popups. Confirmed with the requester as a deliberate reversal of
+1.36.11 (opponents -> one row) and 1.36.12 (Log/Chat -> popups), with
+the root causes behind both those changes (row overflow with 3
+opponents; a cramped fixed-height Chat sidebar) fixed directly rather
+than reintroduced. Touch/mobile is unaffected on every input type and
+every width <=600px.
+
+- js/ui/game-ui.js: renderOtherPlayers() (now exported) assigns each
+  opponent to one of three fixed slots by seat order/count.
+- game.html: #otherPlayers wraps 3 fixed slots; new persistent
+  #gameLog panel; #chatPanel gains a collapse toggle; both marked
+  .collapsible-panel.
+- js/ui/log-ui.js: renderLog() feeds #mobileLogContent (popup) and
+  #gameLogContent (persistent panel) from one generated markup string.
+- js/ui/panelCollapse-ui.js (new): shared collapse/expand toggle,
+  wired from js/game-main.js.
+- css/style.css: #gameLayout becomes a CSS Grid on Desktop/Tablet;
+  #otherPlayers unwraps via display:contents; #gameLog/#chatPanel
+  become real grid panels instead of centered popups; redundant
+  Log/Chat rail buttons hidden; split the old
+  #mobileLeaderboard,#chatPanel popup rule so Chat is no longer part
+  of it.
+- data/config.json: + chevronDown icon glyph.
+- data/i18n.json: + panelCollapseToggle (en/fa/ar/tr).
+- tests/tabletopLayout.test.mjs (new): slot assignment, empty-slot
+  hiding, renderLog() dual-target behavior, grid placement.
+- tests/desktopPartyTrash.test.mjs: widened 3 media-block slice
+  lengths (6000/9000 -> 16400 chars) that no longer reached their
+  target rules once this task's CSS was inserted ahead of them in the
+  same block; no change to what they assert.
+- README.md / CHANGELOG.md: version 1.43.7 -> 1.44.0, full changelog
+  entry with rationale.
+
+Known limitation: no live browser in this environment, so this was
+verified via CSS-source/markup-level tests and manual grid/cascade
+review, not an actual rendered screenshot or click-through. A real
+visual pass (2/3/4 players, en/fa/ar/tr, common desktop/tablet widths)
+is recommended before shipping.

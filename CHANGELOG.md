@@ -8,6 +8,105 @@ This file was consolidated from a changelog that had grown to live inline inside
 
 ---
 
+**Gameplay screen — Tabletop layout: per-side opponents + persistent Log/Chat (1.44.0):**
+Requested as a redesign of the gameplay screen's Desktop/Tablet
+(fine-pointer, ≥601px) composition, following a reference-screenshot
+brief specifying a classic digital-tabletop arrangement. This
+deliberately reverses two earlier decisions on this same breakpoint —
+opponents seated left/top/right of the board instead of one shared
+row (1.36.11 moved *away* from a per-side `#topPlayer`/`#leftPlayer`/
+`#rightPlayer` layout), and Game Log/Chat as persistent panels again
+instead of popups (1.36.12 moved Chat out of a permanent sidebar
+specifically because a fixed `height: 140px` there was cramped). This
+was a deliberate, explicitly confirmed reversal, not an oversight —
+the root causes those two changes fixed are addressed directly rather
+than reintroduced:
+- **Opponent row overflow (1.36.11's motivation):** the old row
+  squeezed however many opponents there were into one shared strip.
+  The new layout gives each opponent exactly one of three fixed grid
+  cells (`#oppSlotLeft`/`#oppSlotTop`/`#oppSlotRight`) — a slot never
+  holds more than one player, so there's nothing left to squeeze.
+- **Cramped Chat panel (1.36.12's motivation):** the old sidebar's
+  Chat had a fixed `height: 140px`. The new `#chatPanel` sits in a
+  real CSS Grid row (`flex: 1` within it) sized by however much room
+  the "chat" grid row actually has, plus its own collapse toggle if a
+  player wants that room back for the board.
+
+Touch/mobile (`pointer: coarse`, and any width ≤600px regardless of
+pointer) is completely unaffected: opponents stay one row, and
+Log/Chat stay popup-only via `#railLogBtn`/`#railChatBtn` — none of
+this is reachable or visible there.
+
+- `js/ui/game-ui.js` — `renderOtherPlayers()` (now exported) assigns
+  each opponent to exactly one of the three fixed slots by seat order
+  and count: 1 opponent → top (face-to-face), 2 → left+right
+  (flanking), 3 → left+top+right. A slot nobody is assigned to is left
+  with zero children.
+- `game.html` — `#otherPlayers` now wraps three fixed
+  `#oppSlotLeft`/`#oppSlotTop`/`#oppSlotRight` containers instead of
+  being a flat, dynamically-populated row. Added the new persistent
+  `#gameLog` panel (`#gameLogContent` body, mirrors `#logModal`'s
+  `#mobileLogContent`). `#chatPanel` gained a `.panel-collapse-btn`
+  alongside its existing mobile-only close button; both it and
+  `#gameLog` are marked `.collapsible-panel`.
+- `js/ui/log-ui.js` — `renderLog()` now writes its one generated
+  markup string into both `#mobileLogContent` (popup, every layout)
+  and `#gameLogContent` (persistent panel, Desktop/Tablet only) — one
+  render, two targets, no duplicated log logic or state.
+- `js/ui/panelCollapse-ui.js` *(new)* — wires the shared
+  `.panel-collapse-btn`/`.collapsed` toggle for `#gameLog`/`#chatPanel`;
+  called from `js/game-main.js` alongside the existing mobile-UI init.
+  Purely presentational — never touches `gameState` or `gameState.logs`.
+- `css/style.css` —
+  - `@media (min-width: 601px) and (pointer: fine)`: `#gameLayout`
+    becomes a CSS Grid (`log`/`oppTop`/`oppLeft`/`turn`/`oppRight`/
+    `board`/`chat` named areas); `#otherPlayers` unwraps via
+    `display: contents` (the same technique already used for
+    `#queuePartyTrashRow`) so its three slots place directly onto that
+    grid; `#gameLog`/`#chatPanel` become real flex-column panels
+    instead of centered popups; `#railLogBtn`/`#railChatBtn` (now
+    redundant) are hidden; `#mobileSideRail` (left holding only the
+    Standings button) becomes a small floating control instead of
+    reserving a grid row for a single button. The pre-existing
+    `#mobileLeaderboard, #chatPanel { position: fixed; ... }` Desktop
+    popup rule is split so `#chatPanel` is no longer part of it (it's
+    no longer a popup at all there) — Standings alone keeps that
+    behavior.
+  - New `.opp-slot`/`.opp-slot:empty` (hides an unassigned slot
+    entirely — no empty seat is ever rendered), `.collapsible-panel`/
+    `.panel-collapse-btn`/`.panel-collapse-body` (generic collapse
+    toggle shared by both new panels), and `#gameLog`'s own base panel
+    styling (`display: none` off the Desktop/Tablet breakpoint — Log's
+    only Mobile surface stays `#logModal`).
+  - RTL note: this uses `grid-template-areas`, which mirrors
+    automatically under `direction: rtl` (already set on
+    `<html dir>` by `js/i18n.js` for `fa`/`ar`) — left/right opponent
+    seating flips correctly for those languages with no extra rule.
+- `data/config.json` — added a `chevronDown` icon glyph (`▾`) for the
+  new collapse toggle, no existing icon fit.
+- `data/i18n.json` — added `panelCollapseToggle` (en/fa/ar/tr) as the
+  toggle button's `aria-label`.
+- `tests/tabletopLayout.test.mjs` *(new)* — opponent slot assignment by
+  count/seat order, empty-slot behavior, `renderLog()` feeding both
+  targets identically, and the Desktop/Tablet grid actually placing
+  each element on its named area.
+- `tests/desktopPartyTrash.test.mjs` — three of its Desktop-media-block
+  slice lengths (`6000`/`9000` chars from the media query's start) were
+  too short to still reach the Party/Trash-flanking-the-Queue rules
+  once this task's new CSS was added ahead of them in the same media
+  block; widened to `16400` so the same assertions still run against
+  the same real rules (no change to what's being asserted).
+
+**Known limitation:** this environment has no live browser, so the
+layout was verified by CSS-source/markup-level tests and manual
+reasoning about the grid (rectangular-area check, cascade/specificity
+audit for the split popup rule above) rather than an actual rendered
+screenshot or click-through at each breakpoint/player-count/language.
+A real visual pass (2/3/4 players, en/fa/ar/tr, common desktop/tablet
+widths) is recommended before shipping.
+
+---
+
 **Style — Achievements redesigned as a vertical list, not a card grid (1.43.7):**
 The Achievement Collection (Profile → Achievements) previously laid
 achievements out as a responsive multi-column card grid

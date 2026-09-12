@@ -22,6 +22,7 @@ import { startTurn }            from "./game/turnManager.js";
 import { updateUI, initializeUI } from "./ui/ui.js";
 import { initHelp }             from "./game/help.js";
 import { initMobileUI, initMobileTabs } from "./ui/mobile-ui.js";
+import { initPanelCollapse } from "./ui/panelCollapse-ui.js";
 import { PLAYER_TYPES, AI_DIFFICULTY } from "./constants/playerTypes.js";
 import { loadI18n, t, buildLangSelector } from "./i18n.js";
 import { playBackgroundMusic } from "./services/soundManager.js";
@@ -161,6 +162,7 @@ async function startGame() {
     // must run after that first render — moved below updateUI().
     await updateUI(gameState);
     initMobileTabs();
+    initPanelCollapse();
     startTurn(gameState);
 
     // In-game walkthrough (first time only)

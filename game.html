@@ -151,23 +151,95 @@
                          "Coming Soon" placeholder — only how it's
                          reached changed (a real popup instead of a
                          toast), per the Final Game UI Layout brief. -->
-                    <div id="chatPanel">
+                    <!-- Persistent Game Log panel — Desktop/Tablet
+                         (fine-pointer, ≥601px) tabletop layout only.
+                         Grid-placed top-left of #gameLayout (see
+                         css/style.css's `@media (min-width: 601px) and
+                         (pointer: fine)` block). Touch/mobile still
+                         reaches Log exclusively through #logModal via
+                         #railLogBtn — this panel stays `display:none`
+                         there, so there is exactly one Log entry point
+                         per input type, never both at once.
+                         #gameLogContent is filled by the same
+                         renderLog() (js/ui/log-ui.js) call that already
+                         fills #mobileLogContent — one render, two
+                         targets, no duplicated log logic/state. The
+                         collapse toggle only hides the body (`.panel-
+                         collapse-btn`, wired in
+                         js/ui/panelCollapse-ui.js); gameState.logs
+                         itself is never affected by collapsing. -->
+                    <div id="gameLog" class="collapsible-panel">
+                        <div class="panel-header">
+                            <h3>
+                                <span data-icon="gameLog"></span> <span data-i18n="btnLog">Game Log</span>
+                            </h3>
+                            <button type="button" class="panel-collapse-btn icon-btn" data-i18n-aria-label="panelCollapseToggle" aria-label="Collapse">
+                                <span data-icon="chevronDown"></span>
+                            </button>
+                        </div>
+                        <div id="gameLogContent" class="panel-collapse-body"></div>
+                    </div>
+
+                    <!-- Persistent Chat panel — same Desktop/Tablet-only
+                         treatment as #gameLog above, grid-placed
+                         bottom-left. On touch/mobile this exact element
+                         keeps its original popup behavior untouched
+                         (`.mobile-open`, opened by #railChatBtn — see
+                         js/ui/mobile-ui.js) since the persistent
+                         placement only applies at the fine-pointer
+                         breakpoint. Unlike the old permanent sidebar
+                         version that caused this to be removed
+                         (fixed 140px height — see CHANGELOG 1.36.12),
+                         this panel gets a real flexible height
+                         (`flex: 1` inside the bottom-left grid row) and
+                         its own collapse toggle, so it can never be
+                         squeezed the same way again. Chat itself is
+                         still a future feature — content stays the
+                         existing "Coming Soon" placeholder; only
+                         reachability/positioning changed. -->
+                    <div id="chatPanel" class="collapsible-panel">
                         <div class="panel-header">
                             <h3>
                                 <span data-icon="chat"></span> <span data-i18n="chat">Chat</span>
                             </h3>
+                            <button type="button" class="panel-collapse-btn icon-btn" data-i18n-aria-label="panelCollapseToggle" aria-label="Collapse">
+                                <span data-icon="chevronDown"></span>
+                            </button>
                             <button class="panel-close mobile-only-btn icon-btn close"><span data-icon="close"></span></button>
                         </div>
-                        <div class="comingSoon" data-i18n="comingSoon">Coming Soon</div>
+                        <div class="panel-collapse-body">
+                            <div class="comingSoon" data-i18n="comingSoon">Coming Soon</div>
+                        </div>
                     </div>
 
-                    <!-- Opponent players — ALWAYS one horizontal row
-                         above the Game Table (never beside YOU, never a
-                         per-side layout). Populated dynamically by
-                         renderOtherPlayers() in js/ui/game-ui.js with
-                         one `.other-player-slot` per non-You player
-                         (1–3, since the game seats at most 4 total). -->
-                    <div id="otherPlayers"></div>
+                    <!-- Opponent players. On touch/mobile this stays
+                         exactly what it always was: ONE horizontal row
+                         above the Game Table (`#otherPlayers`'s own
+                         base CSS rule, untouched). On Desktop/Tablet
+                         (fine-pointer, ≥601px) `#otherPlayers` becomes
+                         `display: contents` (same "unwrap into the
+                         parent grid" technique already used for
+                         `#queuePartyTrashRow` — see CHANGELOG 1.36.x
+                         Desktop Party/Trash notes) so its three fixed
+                         `.opp-slot` children place independently onto
+                         `#gameLayout`'s tabletop grid: left / top /
+                         right of the board. Populated dynamically by
+                         renderOtherPlayers() in js/ui/game-ui.js, which
+                         assigns each real opponent (1–3, since the game
+                         seats at most 4 total) to exactly one of these
+                         three slots based on seat order — see that
+                         function's comment for the exact left/top/right
+                         assignment per player count. A slot with no
+                         opponent assigned is left with no children, so
+                         `.opp-slot:empty { display: none }` removes it
+                         from layout — no empty seats are ever rendered,
+                         satisfying the "don't render empty player
+                         slots" requirement on every player count. -->
+                    <div id="otherPlayers">
+                        <div id="oppSlotLeft" class="opp-slot" data-slot="left"></div>
+                        <div id="oppSlotTop" class="opp-slot" data-slot="top"></div>
+                        <div id="oppSlotRight" class="opp-slot" data-slot="right"></div>
+                    </div>
 
                     <!-- Party area -->
                     <div id="partyArea">

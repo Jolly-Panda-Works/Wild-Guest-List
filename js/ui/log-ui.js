@@ -40,15 +40,27 @@ export function renderLog(gameState) {
         </div>`;
     }).join("");
 
-    // #logEntries (a permanent desktop-only sidebar container) no
-    // longer exists — Log's only presentation surface now is the
-    // #logModal popup, opened from #railLogBtn in the universal
-    // Utility Buttons row (#mobileSideRail, every layout now), backed
-    // by #mobileLogContent below. gameState.logs itself, and
-    // everything that appends to it, is untouched.
+    // Two presentation surfaces share this one render, same generated
+    // markup, no duplicated log logic:
+    //  - #mobileLogContent inside #logModal — the popup entry point
+    //    (#railLogBtn), used on every layout, and the ONLY Log surface
+    //    on touch/mobile.
+    //  - #gameLogContent inside #gameLog — the persistent top-left
+    //    panel that exists only on Desktop/Tablet (fine-pointer,
+    //    ≥601px; see css/style.css). `#gameLog` itself stays
+    //    `display: none` off that breakpoint, so this simply writes
+    //    into a hidden, harmless element elsewhere.
+    // gameState.logs itself, and everything that appends to it, is
+    // untouched by either target.
+    const html = buildHTML();
     const mobile = document.getElementById("mobileLogContent");
     if (mobile) {
-        mobile.innerHTML = buildHTML();
+        mobile.innerHTML = html;
         mobile.scrollTop = mobile.scrollHeight;
+    }
+    const persistent = document.getElementById("gameLogContent");
+    if (persistent) {
+        persistent.innerHTML = html;
+        persistent.scrollTop = persistent.scrollHeight;
     }
 }

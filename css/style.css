@@ -1185,7 +1185,8 @@ body {
 
 #partyArea,
 #trashArea,
-#chatPanel {
+#chatPanel,
+#gameLog {
 
     background: var(--bg-panel);
 
@@ -1194,6 +1195,30 @@ body {
     border-radius: var(--radius-lg);
 
     box-sizing: border-box;
+}
+
+/* #gameLog: persistent Desktop/Tablet-only panel (see the
+   `@media (min-width: 601px) and (pointer: fine)` block for where it
+   actually becomes visible). Off that breakpoint it stays fully
+   `display: none` — unlike #chatPanel/#partyArea/#trashArea it has no
+   popup form of its own on touch/mobile; Log's only mobile entry
+   point remains #logModal (#railLogBtn), untouched. */
+#gameLog {
+    display: none;
+    flex-direction: column;
+    min-height: 0;
+    padding: 14px;
+}
+
+#gameLog .panel-header h3 {
+    color: var(--text-main);
+    letter-spacing: 1px;
+}
+
+#gameLog #gameLogContent {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 
@@ -1957,6 +1982,29 @@ body.popup-open::before {
     width: 100%;
     box-sizing: border-box;
 
+}
+
+/* Fixed left/top/right slots inside #otherPlayers (see game.html).
+   On touch/mobile #otherPlayers stays a plain flex row (rule above),
+   so these three just sit inside it in DOM order. On Desktop/Tablet
+   the `@media (min-width: 601px) and (pointer: fine)` block further
+   down turns #otherPlayers into `display: contents`, at which point
+   each slot becomes an independent grid item of #gameLayout and this
+   rule is what actually shapes it. renderOtherPlayers()
+   (js/ui/game-ui.js) only ever puts a real opponent's
+   `.other-player-slot` into a slot that has one — an unassigned slot
+   is left with zero children, and `:empty` below removes it from
+   layout entirely so no empty seat is ever shown, on Mobile or
+   Desktop, for any player count. */
+.opp-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+}
+
+.opp-slot:empty {
+    display: none;
 }
 
 
@@ -5090,6 +5138,45 @@ body.gameplay-locked #playerHand .card {
 
 .panel-close { display: none; }  /* shown only on mobile */
 
+/* Collapse toggle shared by the persistent #gameLog/#chatPanel panels
+   (Desktop/Tablet only — see the `@media (min-width: 601px) and
+   (pointer: fine)` block for where these two actually become visible,
+   persistent panels instead of popups). Hidden everywhere else since
+   there's nothing to collapse when the panel itself is a popup/hidden. */
+.panel-collapse-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.08);
+    color: var(--text-main, #fff);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background .15s ease, transform .2s ease;
+}
+
+.panel-collapse-btn:hover {
+    background: rgba(255,255,255,0.16);
+}
+
+.panel-collapse-btn [data-icon] {
+    transition: transform .2s ease;
+}
+
+/* Chevron flips to point "closed" (up→toward the header) once
+   collapsed, giving a clear affordance for which way the toggle goes
+   next — purely visual, no logic here. */
+.collapsible-panel.collapsed .panel-collapse-btn [data-icon] {
+    transform: rotate(-180deg);
+}
+
+.collapsible-panel.collapsed .panel-collapse-body {
+    display: none;
+}
+
 /* Info tooltip button */
 .panel-info-btn {
     display: inline-flex;
@@ -5422,47 +5509,212 @@ body.gameplay-locked #playerHand .card {
     .other-player-stack { gap: 2px; }
 }
 
-/* ── Desktop: Other Players side by side in one row ──────────
-   #otherPlayers's base rule (see the OTHER PLAYER HANDS section near
-   the top of this file) now sets `display: flex; flex-direction: row`
-   itself, so opponents are already a single row by default. This
-   block just retunes gap/stretch for real Desktop specifically.
+/* ── Desktop/Tablet (fine-pointer, ≥601px): Tabletop layout ──────
+   #gameLayout becomes a real CSS Grid here — Game Log, opponents
+   (left/top/right of the board), the board itself, and Chat each get
+   their own region instead of everything stacking in the single
+   Mobile/touch column. See the full grid-area breakdown in the next
+   comment block, right above `#gameLayout`'s grid-template-areas.
 
    Scoped to `(pointer: fine)` — the same fine/coarse-pointer split
    the Orientation Gate itself uses (js/ui/orientation-ui.js) to
-   define "real Desktop" vs. a touch device — so this can never
-   combine with the touch+portrait Mobile layer's own row-of-
-   wrapping-chips treatment, whose children need to stay sized to
-   their own content (`width: auto`) rather than stretched into equal
-   columns. `min-width: 601px` matches the existing Tablet/Mobile
-   boundary used throughout this file, so a resized *desktop* browser
-   window down at Tablet width still gets one row (not the ≤600px
-   stacked Mobile treatment, which stays untouched either way since
-   it isn't gated on pointer type at all). */
+   define "real Desktop" vs. a touch device — so a touch tablet
+   (which can easily be wider than 600px) still gets the Mobile/touch
+   single-column treatment, never this grid. `min-width: 601px`
+   matches the existing Tablet/Mobile boundary used throughout this
+   file. */
 @media (min-width: 601px) and (pointer: fine) {
-    #otherPlayers {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap;
+
+    /* ── Tabletop layout ────────────────────────────────────────
+       #gameLayout becomes a real CSS Grid so Log/opponents/board/
+       Chat/hand can each occupy their own region instead of all
+       stacking in one column (the single-column base rule, and the
+       old single-row #otherPlayers treatment below it, both stay as
+       the Mobile/touch fallback and are overridden here).
+
+       Grid regions (see the areas map):
+         log      — persistent Game Log panel, top-left
+         oppTop   — the single opponent seated "across the table"
+                    when there are 1 or 3 opponents total (see
+                    OPP_SLOT_ORDER in js/ui/game-ui.js — every slot
+                    holds at most one opponent, never more), spans the center+right columns
+                    so it sits above the board, not squeezed to one
+                    column's width
+         oppLeft  — opponent seated to the left of the board
+         turn     — the existing #gameState turn/timer strip, kept in
+                    its own row so it never overlaps the board below it
+         oppRight — opponent seated to the right; spans the same three
+                    rows oppLeft+board+chat occupy so a tall column is
+                    available regardless of how much oppLeft/chat use
+         board    — #centerArea (Queue + Party/Trash-flanking + Hand),
+                    spans the two remaining rows so the Hand still
+                    lands at the very bottom, per the reference layout
+         chat     — persistent Chat panel, bottom-left
+
+       Every region name above is rectangular across the
+       rows/columns it's assigned, which `grid-template-areas`
+       requires — see the row-by-row breakdown in this rule's
+       companion comments below (#gameLog/.opp-slot/#chatPanel etc.)
+       for exactly which area each element claims. */
+    #gameLayout {
+        display: grid;
+        grid-template-columns: minmax(200px, 240px) 1fr minmax(200px, 240px);
+        grid-template-rows: auto auto 1fr auto;
+        grid-template-areas:
+            "log      oppTop   oppTop"
+            "oppLeft  turn     oppRight"
+            "oppLeft  board    oppRight"
+            "chat     board    oppRight";
+        gap: 14px;
         align-items: stretch;
-        justify-content: center;
-        gap: clamp(8px, 1.6vw, 24px);
     }
 
-    /* Content-sized (not equal-width flex-growers): a slot takes only
-       the width its own avatar/name/deck need, so the row sizes to
-       however many opponents there are instead of stretching to fill
-       the viewport with 1–2 of them. Can still shrink (not grow) if
-       genuinely tight with 3 opponents — see name-truncation below. */
+    /* #mobileTabs/#mobileLeaderboard/#partyArea/#trashArea stay
+       `display: none` (their own base/mobile-open rules, untouched)
+       whenever they're not an open popup, so they never consume a
+       grid cell here — nothing extra to exclude them explicitly.
+       #mobileSideRail is the one exception that's normally visible;
+       see its own rule further below. */
+
+    /* #otherPlayers itself unwraps (same technique already used for
+       #queuePartyTrashRow below) so its three fixed slot children —
+       #oppSlotLeft/#oppSlotTop/#oppSlotRight, populated by
+       renderOtherPlayers() in js/ui/game-ui.js — place independently
+       onto the grid above instead of staying one flex row. */
+    #otherPlayers {
+        display: contents;
+    }
+
+    .opp-slot[data-slot="top"] {
+        grid-area: oppTop;
+        justify-content: center;
+    }
+
+    .opp-slot[data-slot="left"] {
+        grid-area: oppLeft;
+        align-items: flex-start;
+    }
+
+    .opp-slot[data-slot="right"] {
+        grid-area: oppRight;
+        align-items: flex-start;
+    }
+
+    /* Left/right slots are a tall, narrow column rather than a wide
+       row, so their one opponent's summary card stacks avatar-over-
+       name/deck instead of side-by-side — same underlying markup
+       (.other-player-row), just re-flowed for the shape of the
+       column it now lives in. The top slot keeps the original
+       horizontal row shape (avatar beside name/deck), since it has a
+       whole shared-with-the-board-width row to itself. */
+    .opp-slot[data-slot="left"] .other-player-row,
+    .opp-slot[data-slot="right"] .other-player-row {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        width: 100%;
+        gap: 6px;
+    }
+
+    .opp-slot[data-slot="left"] .other-player-stack,
+    .opp-slot[data-slot="right"] .other-player-stack {
+        align-items: center;
+    }
+
+    .opp-slot[data-slot="left"] .other-player-row .player-label,
+    .opp-slot[data-slot="right"] .other-player-row .player-label {
+        justify-content: center;
+    }
+
+    #gameState {
+        grid-area: turn;
+    }
+
+    #centerArea {
+        grid-area: board;
+        min-width: 0;
+    }
+
+    /* ── Persistent Game Log (top-left) ──────────────────────────
+       Off this breakpoint #gameLog stays `display: none` (see its
+       base rule in the LOG section) — Log is popup-only there. Here
+       it becomes a real flex-column panel, sized by its grid cell,
+       never a fixed/cramped height. */
+    #gameLog {
+        display: flex;
+        grid-area: log;
+    }
+
+    /* ── Persistent Chat (bottom-left) ───────────────────────────
+       Overrides #chatPanel's popup rules (display:none/position:fixed
+       — still exactly what Mobile/touch uses) with a real, flexible-
+       height grid panel. This is the direct fix for the reason Chat
+       was pulled out of a permanent sidebar before (CHANGELOG
+       1.36.12: a fixed 140px was "cramped") — `flex: 1` here lets it
+       take whatever room the "chat" row actually has, and it's
+       collapsible on top of that (.collapsible-panel, see the PANEL
+       HEADER section) if a player wants the room back. */
+    #chatPanel {
+        display: flex;
+        position: static;
+        grid-area: chat;
+        transform: none;
+        width: auto;
+        max-height: none;
+        flex: 1;
+        box-shadow: none;
+    }
+
+    #chatPanel .panel-collapse-body {
+        flex: 1;
+        min-height: 0;
+    }
+
+    #gameLog .panel-collapse-body {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    .collapsible-panel .panel-collapse-btn {
+        display: flex;
+    }
+
+    /* Log/Chat now have their own persistent, always-reachable panels
+       above, so the two rail buttons that used to open them as popups
+       are redundant here (Standings has no persistent equivalent and
+       stays a popup, so #leaderboardBtn stays visible). */
+    #railLogBtn,
+    #railChatBtn {
+        display: none;
+    }
+
+    /* With Log/Chat's buttons gone, only Standings is left in what
+       was a 3-button row — floated as a small standalone control
+       under the header instead of reserving a grid cell for a
+       now-single-button row. */
+    #mobileSideRail {
+        position: fixed;
+        top: 78px;
+        right: 16px;
+        z-index: 20;
+        margin: 0;
+        width: auto;
+    }
+
+    /* Content-sized, not equal-width flex-growers. Each of the three
+       fixed slots (oppLeft/oppTop/oppRight) is assigned at most one
+       opponent (see OPP_SLOT_ORDER in js/ui/game-ui.js) — unlike the
+       old single-row layout, a slot is never shared by more than one
+       player, so this is just a sane max width for that one summary
+       card, not multi-column squeeze handling. */
     .other-player-slot {
         flex: 0 1 auto;
         min-width: 0;
         max-width: 220px;
     }
 
-    /* Three columns share the width one used to have alone, so the
-       row's chrome and fixed-size pieces (avatar, deck) are trimmed to
-       fit all three side by side. */
+    /* Tuned chrome sizing shared by every slot. */
     .other-player-row {
         gap: 4px;
         padding: 3px 4px;
@@ -5552,16 +5804,17 @@ body.gameplay-locked #playerHand .card {
        only on mobile"), since Desktop previously never opened any of
        these as a popup at all (Party/Trash didn't exist as Desktop
        popups, and Standings/Chat lived in the permanent #leftSidebar
-       instead). Now that all four do, they need their close button
-       back; re-clicking the same flanking icon/rail button and
-       clicking the popup's own empty background (see
+       instead). Now that Party/Trash/Standings do, they need their
+       close button back; re-clicking the same flanking icon/rail
+       button and clicking the popup's own empty background (see
        js/ui/mobile-ui.js's initMobileTabs()) still work as backup
        close paths, same as Mobile, but a visible X is the expected
-       affordance for a centered Desktop modal. */
+       affordance for a centered Desktop modal. Chat is deliberately
+       excluded here — it's a persistent panel now, not a popup, so
+       its header shows only the collapse toggle, never a close X. */
     #partyArea .panel-close,
     #trashArea .panel-close,
-    #mobileLeaderboard .panel-close,
-    #chatPanel .panel-close {
+    #mobileLeaderboard .panel-close {
         display: flex;
     }
 
@@ -5669,16 +5922,16 @@ body.gameplay-locked #playerHand .card {
         box-shadow: 0 20px 60px rgba(0,0,0,.6);
     }
 
-    /* Standings (#mobileLeaderboard) and Chat (#chatPanel) are real
-       Desktop popups too now — the old always-visible #leftSidebar
-       (Leaderboard permanently shown, Chat as a "Coming Soon" panel)
-       is gone. Same centered-popup mechanics as Party/Trash (declared
-       separately so as not to disturb that block's own tested text);
-       height is content-sized (`max-height`, not a fixed `height`)
-       since a short standings table or the Chat placeholder don't need
-       Party/Trash's much taller fixed card-grid height. */
-    #mobileLeaderboard,
-    #chatPanel {
+    /* Standings (#mobileLeaderboard) is still a real Desktop popup —
+       the old always-visible #leftSidebar Leaderboard panel is gone,
+       replaced by this same centered-popup mechanics Party/Trash use
+       (declared separately so as not to disturb that block's own
+       tested text). Chat (#chatPanel) is NOT part of this anymore —
+       it's the persistent bottom-left panel declared earlier in this
+       same media block, not a popup, so it's deliberately excluded
+       from this selector list and from the `.mobile-open` rule below
+       (that class is simply never applied to it on this breakpoint). */
+    #mobileLeaderboard {
         position: fixed;
         top: 50%;
         left: 50%;
@@ -5699,8 +5952,7 @@ body.gameplay-locked #playerHand .card {
         box-shadow: 0 20px 60px rgba(0,0,0,.6);
     }
 
-    #mobileLeaderboard.mobile-open,
-    #chatPanel.mobile-open {
+    #mobileLeaderboard.mobile-open {
         display: flex;
     }
 }
