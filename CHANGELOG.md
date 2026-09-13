@@ -8,6 +8,46 @@ This file was consolidated from a changelog that had grown to live inline inside
 
 ---
 
+**Gameplay UI — Move Turn Indicator above opponents (1.44.4):**
+Focused layout correction: the Turn Indicator (`#gameState`) now sits
+at the top of the gameplay board, directly above the opponent row,
+instead of directly above the local player's hand. Same component,
+same single source of turn state — only its position changed.
+
+- **`game.html`:** moved `#gameState` out of `#centerArea` (where it
+  sat directly above `#handArea`) to be a direct `#gameLayout` child,
+  placed immediately before `#otherPlayers`.
+- **`css/style.css` — Desktop/Tablet tabletop grid** (`@media
+  (min-width: 601px) and (pointer: fine)`): `#gameLayout` gained a new
+  `turn` grid row, spanning the opponent/board columns, directly above
+  `oppTop`; `#leftUtilityColumn` (`utility`) now spans all three rows
+  instead of two, so it still runs the full height of the board.
+  `#gameState` was given `grid-area: turn` in place of its old
+  "flex item inside `#centerArea`" rule.
+- **`css/style.css` — Mobile flex column** (`@media (max-width:
+  600px)`, both the primary and the later effective order block):
+  `#gameState` now gets an explicit `order` placing it before
+  `#otherPlayers` (previously it had no order of its own, since it
+  used to be nested inside `#centerArea` instead).
+- **Touch/Mobile Portrait** (`@media (pointer: coarse) and
+  (orientation: portrait)`): no CSS change needed — this tier has
+  always relied on plain DOM source order with no `order` overrides,
+  so moving the markup was sufficient; only the explanatory comment
+  was updated.
+- No duplicate turn state was introduced: `renderCurrentTurn()`/
+  `renderTurnTimer()` in `js/ui/game-ui.js` were not touched, and the
+  opponents' existing `.current-turn` glow (in `renderOtherPlayers()`)
+  remains the only per-seat signal — `#gameState` is still the one
+  shared indicator.
+- **Files changed:** `game.html`, `css/style.css`,
+  `tests/tabletopLayout.test.mjs` (updated the DOM-position assertion
+  to match the new location).
+- Verified against the test suite: 120/121 passing, same one
+  pre-existing unrelated failure (`header markup has a dedicated Party
+  column cell carrying the partyEmoji icon`) — nothing newly broken.
+
+---
+
 **Gameplay UI — Remove Tutorial button from header (1.44.3):**
 Focused header cleanup: removed the Tutorial control from the
 gameplay screen's top-right controls, leaving `[ Help ] [ Pause ]`.

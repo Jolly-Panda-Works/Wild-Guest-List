@@ -4195,20 +4195,21 @@ body.gameplay-locked #playerHand .card {
         padding-bottom: 120px;
     }
 
-    /* ── ORDER: utilities → leaderboard(popup, dead) → otherPlayers → tabs → queue/turn/hand ──
-       #gameState and #chatPanel are no longer direct children of
-       #gameLayout at all (see game.html: #gameState moved inside
-       #centerArea directly above #handArea; #chatPanel moved inside
-       the new #leftUtilityColumn wrapper alongside #gameLog) — their
-       old `order` entries here were removed since `order` on an
-       element only affects its position among *its actual parent's*
-       flex children, and leaving a stale `order: -1` on #gameState
-       here would have wrongly reordered it inside #centerArea's own
-       flex column instead (pushing the turn indicator above the
-       Queue, not above the Hand). #chatPanel's old entry is harmless
-       either way once open (`.mobile-open` makes it `position: fixed`,
-       which ignores `order`), but is removed too for accuracy. */
+    /* ── ORDER: utilities → turn indicator → otherPlayers → tabs → queue/hand ──
+       #gameState is a direct #gameLayout child again (see game.html:
+       moved back out of #centerArea, now sitting directly above
+       #otherPlayers — see the Gameplay UI Fix 01 work order, § Move
+       Turn Indicator Above Opponents). #chatPanel stays inside the
+       #leftUtilityColumn wrapper alongside #gameLog, so it still has
+       no entry here — harmless either way once open (`.mobile-open`
+       makes it `position: fixed`, which ignores `order`). This
+       block's own #otherPlayers/#mobileTabs/#centerArea values are
+       superseded further down the file by the later, identical-scope
+       order block (search "leaderboard(popup, dead)/mobileTabs
+       order") — that one is the effective ruling for this breakpoint,
+       kept in sync with this one below. */
     #mobileSideRail    { order: -2; }
+    #gameState         { order: 0; }
     #otherPlayers      { order: 1; }
     #mobileTabs        { order: 2; }
     #centerArea        { order: 3; }
@@ -5342,11 +5343,18 @@ body.gameplay-locked #playerHand .card {
         display: none !important;
     }
 
-    /* leaderboard(popup, dead)/mobileTabs order — #gameState and
-       #chatPanel removed from this list; see the identical note above
-       the other copy of this order block further up this file. */
+    /* leaderboard(popup, dead)/mobileTabs order — this is the
+       effective ruling for this breakpoint (kept in sync with the
+       earlier copy of this block further up the file). #gameState is
+       a direct #gameLayout child again (see game.html — moved back
+       out of #centerArea, now directly above #otherPlayers, per the
+       Gameplay UI Fix 01 work order), so it gets its own order here,
+       placed before #otherPlayers. #chatPanel stays inside
+       #leftUtilityColumn alongside #gameLog, so it still has no entry
+       of its own here. */
     #gameLayout { display: flex; flex-direction: column; }
     #mobileSideRail     { order: -2; }
+    #gameState          { order: 0; }
     #mobileTabs         { order: 1; padding: 6px 12px 4px; }
     #otherPlayers       { order: 2; }
     #centerArea         { order: 3; }
@@ -5544,18 +5552,21 @@ body.gameplay-locked #playerHand .card {
        Grid regions (see the areas map):
          utility  — #leftUtilityColumn (Game Log + Chat, top to
                     bottom — see that element's own comment in
-                    game.html), spanning BOTH rows as one column. This
-                    is a dedicated column, structurally independent of
-                    every player position: no opponent/player element
-                    is ever placed inside it, specifically so its
-                    height (which changes only with Log/Chat's own
-                    fixed internal split, never with how much content
-                    Log holds — see css rules below) can never affect
-                    where any player sits. #gameState (the turn
-                    indicator) isn't part of this grid at all anymore
-                    — it moved into #centerArea's own internal layout,
-                    directly above the local player's hand (see
-                    game.html).
+                    game.html), spanning ALL THREE rows as one column.
+                    This is a dedicated column, structurally
+                    independent of every player position: no
+                    opponent/player element is ever placed inside it,
+                    specifically so its height (which changes only
+                    with Log/Chat's own fixed internal split, never
+                    with how much content Log holds — see css rules
+                    below) can never affect where any player sits.
+         turn     — #gameState (the turn indicator), its own row
+                    spanning oppLeft+board+oppRight, directly above
+                    `oppTop` — see the Gameplay UI Fix 01 work order,
+                    § Move Turn Indicator Above Opponents. Previously
+                    lived inside #centerArea's own internal layout,
+                    directly above the local player's hand; now a
+                    grid item in its own right, same as `oppTop`.
          oppTop   — the single opponent seated "across the table" when
                     there are 1 or 3 opponents total (see
                     OPP_SLOT_ORDER in js/ui/game-ui.js — every slot
@@ -5564,9 +5575,9 @@ body.gameplay-locked #playerHand .card {
                     whole main area, not just the board
          oppLeft  — opponent seated to the left of the board — its own
                     column, never sharing a track with `utility`
-         board    — #centerArea (Queue + Party/Trash-flanking + Turn
-                    indicator + Hand, stacked internally — see
-                    game.html), same single row as oppLeft/oppRight
+         board    — #centerArea (Queue + Party/Trash-flanking + Hand,
+                    stacked internally — see game.html), same single
+                    row as oppLeft/oppRight
          oppRight — opponent seated to the right — its own column
 
        Every region name above is rectangular across the
@@ -5577,8 +5588,9 @@ body.gameplay-locked #playerHand .card {
     #gameLayout {
         display: grid;
         grid-template-columns: minmax(200px, 240px) minmax(160px, 200px) 1fr minmax(160px, 200px);
-        grid-template-rows: auto 1fr;
+        grid-template-rows: auto auto 1fr;
         grid-template-areas:
+            "utility turn    turn    turn"
             "utility oppTop  oppTop  oppTop"
             "utility oppLeft board   oppRight";
         gap: 14px;
@@ -5660,14 +5672,17 @@ body.gameplay-locked #playerHand .card {
         min-width: 0;
     }
 
-    /* #gameState (turn indicator) now lives inside #centerArea,
-       directly above #handArea — see game.html. It's a normal flex
-       item in #centerArea's existing `flex-direction: column` (queue
-       → turn → hand), so it just needs its own compact, centered
-       chrome here; no grid-area of its own anymore. */
+    /* #gameState (turn indicator) is its own grid item now — see the
+       "turn" row in `#gameLayout`'s grid-template-areas above, and
+       the Gameplay UI Fix 01 work order, § Move Turn Indicator Above
+       Opponents. Centered within its full-width row, same compact
+       chrome as before (base #gameState rule), directly above
+       `oppTop`. */
     #gameState {
+        grid-area: turn;
+        justify-self: center;
         align-self: center;
-        margin: 6px 0;
+        margin: 0;
     }
 
     /* ── Left Utility Column (Game Log + Chat) ───────────────────
@@ -9166,9 +9181,10 @@ body.gameplay-locked #playerHand .card {
     }
 
     /* ── centerArea / Other Players / Queue / Hand ──
-       Same DOM order/hierarchy and stacking as landscape (Other
-       Players → Queue → Hand, in that source order — no `order`
-       overrides needed). What changes: height is now the abundant
+       Same DOM order/hierarchy and stacking as landscape: #gameState
+       (turn indicator) → #otherPlayers → ... → #centerArea (Queue →
+       Hand only now), in that source order — no `order` overrides
+       needed on this tier. What changes: height is now the abundant
        dimension, so sections size to their own content instead of
        claiming a fixed % share of it, and card sizing switches from
        height-driven (dvh) to width-driven (dvw) clamps, since width

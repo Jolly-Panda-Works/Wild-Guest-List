@@ -222,6 +222,41 @@
 
                     </div>
 
+                    <!-- Game State (turn indicator) — display-only:
+                         whose turn + the remaining turn timer. No
+                         Round, no other info. Not a button, opens
+                         nothing. See renderCurrentTurn()/
+                         renderTurnTimer() in js/ui/game-ui.js.
+                         Moved here, directly above #otherPlayers (see
+                         the Gameplay UI Fix 01 work order, § Move
+                         Turn Indicator Above Opponents) — it
+                         previously sat lower, directly above the
+                         local player's own hand. Still the exact same
+                         component/markup and the same single source
+                         of turn state (gameState.currentPlayer, read
+                         by renderCurrentTurn()/renderTurnTimer()) —
+                         only its position in the DOM changed, so it
+                         keeps updating correctly on every turn change
+                         with no duplicated state. For opponents, the
+                         existing `.current-turn` highlight already
+                         applied directly to their own component in
+                         renderOtherPlayers() (a border/glow, not a
+                         separate label) remains the per-seat "whose
+                         turn" signal — this element stays the one
+                         shared, never-duplicated indicator, now
+                         placed immediately above the row it's
+                         announcing. -->
+                    <div id="gameState" role="status" aria-live="polite">
+                        <span id="turnStateIcon" class="game-state-icon" data-icon="yourTurn" aria-hidden="true"></span>
+                        <span class="turn-label" id="turnPlayer">Your Turn</span>
+                        <span class="game-state-divider" aria-hidden="true"></span>
+                        <span class="turn-timer-icon" data-icon="timer" aria-hidden="true"></span>
+                        <span class="turn-timer-label" id="turnTimer">10</span>
+                        <div class="game-state-timer-track" aria-hidden="true">
+                            <div id="gameStateTimerFill" class="game-state-timer-fill"></div>
+                        </div>
+                    </div>
+
                     <!-- Opponent players. On touch/mobile this stays
                          exactly what it always was: ONE horizontal row
                          above the Game Table (`#otherPlayers`'s own
@@ -271,45 +306,6 @@
 
                         <div id="queueArea">
                             <div id="queue"></div>
-                        </div>
-
-                        <!-- Game State (turn indicator) — display-only:
-                             whose turn + the remaining turn timer. No
-                             Round, no other info. Not a button, opens
-                             nothing. See renderCurrentTurn()/
-                             renderTurnTimer() in js/ui/game-ui.js.
-                             Moved here, directly above #handArea/
-                             #playerDeckInfo (see the Layout Corrections
-                             work order, § Turn Indicator Must Be ABOVE
-                             the Player) — it used to sit in its own row
-                             above the board instead of belonging to the
-                             player area. This element already shows
-                             whoever's turn it is by name/icon ("Your
-                             Turn" vs "ALICE'S TURN", see
-                             renderCurrentTurn()), so keeping it as the
-                             one shared indicator (never duplicated
-                             per-seat) and pinning it here means it's
-                             always literally above the local player's
-                             own info/hand, exactly as specified for
-                             "You". For opponents, the existing
-                             `.current-turn` highlight already applied
-                             directly to their own component in
-                             renderOtherPlayers() (a border/glow, not a
-                             separate label) is the equivalent
-                             "positioning logic applied to their
-                             component" — reusing that rather than
-                             duplicating a second turn-state UI/DOM node
-                             per opponent, per "do not duplicate turn
-                             state inside the UI". -->
-                        <div id="gameState" role="status" aria-live="polite">
-                            <span id="turnStateIcon" class="game-state-icon" data-icon="yourTurn" aria-hidden="true"></span>
-                            <span class="turn-label" id="turnPlayer">Your Turn</span>
-                            <span class="game-state-divider" aria-hidden="true"></span>
-                            <span class="turn-timer-icon" data-icon="timer" aria-hidden="true"></span>
-                            <span class="turn-timer-label" id="turnTimer">10</span>
-                            <div class="game-state-timer-track" aria-hidden="true">
-                                <div id="gameStateTimerFill" class="game-state-timer-fill"></div>
-                            </div>
                         </div>
 
                         <div id="handArea">

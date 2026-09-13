@@ -312,15 +312,17 @@ test("renderLog(): newest entry renders first (at the top), oldest last — game
     assert.equal(gameState.logs.map(e => e.params.card).join(","), originalOrder, "expected gameState.logs itself to be left in its original (append) order — only the rendered markup is reversed");
 });
 
-// ── 6. Turn indicator lives above the local player, not the board ──
+// ── 6. Turn indicator lives above the opponents, not the board ──
 
-test("game.html: #gameState (turn indicator) is nested inside #centerArea, directly before #handArea", () => {
-    const centerAreaIdx = gameHtml.indexOf('id="centerArea"');
-    const handAreaIdx = gameHtml.indexOf('id="handArea"');
+test("game.html: #gameState (turn indicator) is a direct #gameLayout child, directly before #otherPlayers", () => {
+    const gameLayoutIdx = gameHtml.indexOf('id="gameLayout"');
     const gameStateIdx = gameHtml.indexOf('id="gameState"');
-    assert.ok(centerAreaIdx !== -1 && handAreaIdx !== -1 && gameStateIdx !== -1);
-    assert.ok(gameStateIdx > centerAreaIdx, "expected #gameState to be nested inside #centerArea");
-    assert.ok(gameStateIdx < handAreaIdx, "expected #gameState to come before #handArea (i.e. above the player, not below)");
+    const otherPlayersIdx = gameHtml.indexOf('id="otherPlayers"');
+    const centerAreaIdx = gameHtml.indexOf('id="centerArea"');
+    assert.ok(gameLayoutIdx !== -1 && gameStateIdx !== -1 && otherPlayersIdx !== -1 && centerAreaIdx !== -1);
+    assert.ok(gameStateIdx > gameLayoutIdx, "expected #gameState to be nested inside #gameLayout");
+    assert.ok(gameStateIdx < otherPlayersIdx, "expected #gameState to come before #otherPlayers (i.e. above the opponents)");
+    assert.ok(otherPlayersIdx < centerAreaIdx, "expected #otherPlayers to still come before #centerArea (the board)");
 });
 
 // ── 7. Standalone Leaderboard panel removed from the gameplay screen ─
