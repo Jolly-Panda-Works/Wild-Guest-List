@@ -1,0 +1,43 @@
+Gameplay screen: Layout Corrections — fixed-height Log, dedicated
+utility column, turn indicator above player, Leaderboard removed (1.44.1)
+
+Follow-up correction pass on 1.44.0's Tabletop layout. Does not
+redesign or revert the tabletop layout; fixes four structural issues
+in it.
+
+Root cause: #gameLog was a plain CSS Grid item sized by an
+auto-height track spanning the full grid width, so every new log
+entry grew the track and shifted every row below it -- including the
+left-seated opponent, which shared that same column. Fixed by giving
+#gameLog a fixed flex-basis (never max-height, never content-driven)
+with overflow-y:auto on its scrollable body only, and by moving the
+left-seated opponent out of Log/Chat's column into its own dedicated
+grid area.
+
+- game.html: new #leftUtilityColumn wraps #gameLog + #chatPanel only
+  (no player/opponent ever nested inside it); #gameState (turn
+  indicator) moved above #handArea inside #centerArea; standalone
+  Leaderboard panel/button removed from the gameplay screen.
+- css/style.css: #gameLayout's Desktop/Tablet grid re-shaped to
+  utility | oppLeft | board | oppRight columns; #gameLog/#chatPanel
+  get fixed flex-basis shares of the utility column; removed two
+  stale `#gameState { order: -1 }` rules left over from its old
+  position (would have wrongly reordered it inside #centerArea).
+- js/ui/log-ui.js: renderLog() now shows newest-first (display order
+  only -- gameState.logs itself is never mutated/reordered).
+- js/ui/walkthrough.js + data/i18n.json (en/fa/ar/tr): tutorial step 6
+  retargeted from the removed Standings button to #railLogBtn, copy
+  updated.
+- Player rank beside name was already implemented pre-task (medal
+  badges on both opponents and the local player, computed live from
+  gameState) -- verified intact, not rebuilt.
+- tests/tabletopLayout.test.mjs: new/updated coverage for all of the
+  above. tests/desktopPartyTrash.test.mjs: widened its Desktop-media-
+  block slice length again (16400 -> 19500 chars).
+- README.md / CHANGELOG.md: version 1.44.0 -> 1.44.1.
+
+Known limitation: no live browser in this environment -- verified via
+CSS-source/markup-level tests and manual review, not an actual
+rendered screenshot or click-through. A real visual pass (2/3/4
+players, en/fa/ar/tr, several log-entry counts including 20+, several
+viewport heights) is recommended before shipping.

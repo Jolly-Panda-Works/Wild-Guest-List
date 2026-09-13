@@ -8,6 +8,347 @@ This file was consolidated from a changelog that had grown to live inline inside
 
 ---
 
+**Gameplay UI Fix — Remove drawer icons and improve player rank indicator (1.44.5):**
+Focused UI correction: no gameplay-screen redesign, no gameplay-logic
+changes.
+
+- **Drawer icon removal:** the collapse/expand chevron ("drawer
+  icon") beside the `#gameLog` and `#chatPanel` headers on
+  Desktop/Tablet has been removed completely. That button was the
+  *entire* implementation of the collapse/expand feature for those
+  two persistent panels — inspected `js/ui/panelCollapse-ui.js`
+  (`initPanelCollapse()`) before removing it and confirmed nothing
+  else ever toggled the `.collapsed` class, so removing the button
+  removes the feature cleanly with no leftover state. Removed:
+  - both `<button class="panel-collapse-btn">` elements and the
+    now-meaningless `.collapsible-panel` marker class from
+    `game.html`.
+  - `js/ui/panelCollapse-ui.js` (dead file) and its
+    import/`initPanelCollapse()` call in `js/game-main.js`.
+  - the collapse-specific CSS (`.panel-collapse-btn` and its
+    `:hover`/icon-rotate rules, `.collapsible-panel.collapsed ...`,
+    and the Desktop-only `display: flex` override) from
+    `css/style.css`.
+  - the now-unused `chevronDown` icon key (`data/config.json`) and
+    `panelCollapseToggle` i18n string (all 4 locales,
+    `data/i18n.json`).
+  - `#gameLogContent`/`.panel-collapse-body` themselves were **kept**
+    — they're the structural scroll/flex-sizing wrapper, unrelated to
+    the toggle button, and still needed for the fixed-height Game
+    Log/Chat behavior from 1.44.1.
+- **Rank indicator enlarged:** `.player-rank-badge` (shared by the
+  local player's `#playerDeckRankBadge` and every opponent's badge in
+  `renderOtherPlayers()` — one CSS rule, one data source
+  `js/game/scoreManager.js`, unchanged) went from a fixed `18px` to a
+  single `font-size: clamp(22px, 2.6vw, 32px)`. The icon glyph/image
+  is sized in `em` (`width/height: 1em` on `.player-rank-badge
+  .icon-image`) so it always tracks that one font-size — no
+  per-breakpoint override needed at `max-width: 600px` or
+  `pointer: coarse`, consistent with this project's preferred
+  `em`-driven scaling pattern. No rank data changes: still the same
+  live `getPlayerRankIndexes()`/`getRankIcon()` computation, no
+  hardcoded values, no duplicate ranking state.
+- **Files changed:** `game.html`, `css/style.css`,
+  `js/game-main.js`, `data/config.json`, `data/i18n.json` (+ deleted
+  `js/ui/panelCollapse-ui.js`), `tests/tabletopLayout.test.mjs`,
+  `tests/leaderboardRankBadge.test.mjs`.
+- Verified against the test suite: 121/122 passing, same one
+  pre-existing unrelated failure noted in 1.44.4 above (`header
+  markup has a dedicated Party column cell carrying the partyEmoji
+  icon`) — nothing newly broken.
+
+---
+
+**Gameplay UI — Move Turn Indicator above opponents (1.44.4):**
+Focused layout correction: the Turn Indicator (`#gameState`) now sits
+at the top of the gameplay board, directly above the opponent row,
+instead of directly above the local player's hand. Same component,
+same single source of turn state — only its position changed.
+
+- **`game.html`:** moved `#gameState` out of `#centerArea` (where it
+  sat directly above `#handArea`) to be a direct `#gameLayout` child,
+  placed immediately before `#otherPlayers`.
+- **`css/style.css` — Desktop/Tablet tabletop grid** (`@media
+  (min-width: 601px) and (pointer: fine)`): `#gameLayout` gained a new
+  `turn` grid row, spanning the opponent/board columns, directly above
+  `oppTop`; `#leftUtilityColumn` (`utility`) now spans all three rows
+  instead of two, so it still runs the full height of the board.
+  `#gameState` was given `grid-area: turn` in place of its old
+  "flex item inside `#centerArea`" rule.
+- **`css/style.css` — Mobile flex column** (`@media (max-width:
+  600px)`, both the primary and the later effective order block):
+  `#gameState` now gets an explicit `order` placing it before
+  `#otherPlayers` (previously it had no order of its own, since it
+  used to be nested inside `#centerArea` instead).
+- **Touch/Mobile Portrait** (`@media (pointer: coarse) and
+  (orientation: portrait)`): no CSS change needed — this tier has
+  always relied on plain DOM source order with no `order` overrides,
+  so moving the markup was sufficient; only the explanatory comment
+  was updated.
+- No duplicate turn state was introduced: `renderCurrentTurn()`/
+  `renderTurnTimer()` in `js/ui/game-ui.js` were not touched, and the
+  opponents' existing `.current-turn` glow (in `renderOtherPlayers()`)
+  remains the only per-seat signal — `#gameState` is still the one
+  shared indicator.
+- **Files changed:** `game.html`, `css/style.css`,
+  `tests/tabletopLayout.test.mjs` (updated the DOM-position assertion
+  to match the new location).
+- Verified against the test suite: 120/121 passing, same one
+  pre-existing unrelated failure (`header markup has a dedicated Party
+  column cell carrying the partyEmoji icon`) — nothing newly broken.
+
+---
+
+**Gameplay UI — Remove Tutorial button from header (1.44.3):**
+Focused header cleanup: removed the Tutorial control from the
+gameplay screen's top-right controls, leaving `[ Help ] [ Pause ]`.
+No header redesign, no gameplay-logic changes, and the Tutorial
+feature itself was not touched.
+
+- **`game.html`:** removed the `#tutorialBtn` `<button>` from
+  `#topRight`. `#topRight` is a plain flex row (`justify-content:
+  flex-end`, no fixed column/grid track per button), so Help and
+  Pause simply close up and stay right-aligned — no empty gap, no
+  layout-shift of `#topCenter`/the central gameplay area.
+- **`js/ui/modal-ui.js`:** left the `#tutorialBtn` click listener in
+  place — it already used the file's established optional-chained
+  no-op pattern (the same convention already documented there for
+  `#aboutBtn`), so it's a harmless no-op on the gameplay page now that
+  the element is gone. Updated the comment to match.
+- **Tutorial system preserved elsewhere:** Home (`index.html`) keeps
+  its own, separate entry point — `#homeHowToPlayBtn` in the secondary
+  nav row — which opens the same `#tutorialModal`/`openTutorial()`
+  untouched. No Tutorial markup, data, state, or i18n keys were
+  deleted.
+- **Files changed:** `game.html`, `js/ui/modal-ui.js`.
+- Verified against the test suite: 120/121 passing, same one
+  pre-existing unrelated failure (`header markup has a dedicated Party
+  column cell carrying the partyEmoji icon`) seen in prior sessions —
+  nothing newly broken.
+
+---
+
+**Gameplay UI — Enlarge player identity (avatar, name, rank icon) (1.44.2):**
+Focused readability fix: increased the size of the player-identity
+elements (avatar, name, rank badge) shown for both the local player
+(`#playerDeckInfo`, above the hand) and opponents (`.other-player-row`,
+in the left/top/right seat slots) on the gameplay screen. No layout
+redesign, no gameplay-logic changes.
+
+- **Local player identity:** `.player-deck-avatar-wrap` 26px → 34px
+  (20px → 26px on ≤600px), `.player-deck-name` 12px → 14px (10px →
+  12px on ≤600px).
+- **Opponent identity:** `.other-avatar` 20px → 26px (16px → 20px on
+  ≤600px, clamp(12px,1.3vw,20px) → clamp(16px,1.6vw,26px) on the
+  Desktop/Tablet tabletop grid); opponent name chip
+  (`.other-player-row .player-label`) 12px → 14px (11px → 13px on the
+  Desktop/Tablet tabletop grid).
+- **Rank badge (shared by both):** `.player-rank-badge` font-size and
+  icon-image size 14px → 18px.
+- Sizes were bumped at every existing breakpoint for these selectors
+  (base, `max-width: 600px`, and the `min-width: 601px and
+  pointer: fine` tabletop-grid squeeze) so the increase holds
+  proportionally across Mobile, Tablet, and Desktop rather than only
+  on one screen size. No new breakpoints were added.
+- No RTL-specific sizing rules existed for these elements (RTL is
+  handled via layout direction elsewhere), so Persian/RTL inherits the
+  same larger sizes automatically. Existing name-ellipsis truncation
+  was left untouched, so longer localized names still degrade
+  gracefully.
+- **Files changed:** `css/style.css` only — no JS, markup, or
+  gameplay-logic changes.
+
+---
+
+**Gameplay screen — Layout Corrections: fixed-height Log, dedicated utility column, turn indicator above player, Leaderboard panel removed (1.44.1):**
+Follow-up correction pass on 1.44.0's Tabletop layout, fixing four
+structural issues without redesigning or reverting the tabletop
+layout itself.
+
+- **Root cause of the Game Log growth bug:** `#gameLog` was a plain
+  CSS Grid item sized by an `auto`-height track. Since that track
+  spanned the *full width* of `#gameLayout`, every new log entry grew
+  the track — which shifted every row below it (the left-seated
+  opponent, the board, the right-seated opponent) down, and, because
+  the left-seated opponent shared `#gameLog`'s own column, put a
+  *player* directly underneath a growing Game Log. Two things fixed
+  this together: (1) `#gameLog` now gets a fixed `flex: 0 0 45%`
+  (never `max-height`, never sized by content) with `overflow-y: auto`
+  on its scrollable body only, so its own box can't grow; (2) the
+  left-seated opponent moved out of Log/Chat's column entirely (see
+  below), so even if it could still grow, nothing else would move.
+- **Dedicated Left Utility Column:** new `#leftUtilityColumn` wraps
+  `#gameLog` and `#chatPanel` only — no player/opponent element is
+  nested inside it, or shares a grid track with it, ever.
+  `.opp-slot[data-slot="left"]` now gets its own `oppLeft` grid area,
+  fully independent of `utility`.
+- **Turn Indicator above the player:** `#gameState` moved (in the DOM)
+  from its own row above the board into `#centerArea`, directly above
+  `#handArea`/`#playerDeckInfo` — literally above the local player's
+  info/hand on every layout now, not just a separate strip near the
+  board. It's still the one shared indicator (already showed "Your
+  Turn" vs "ALICE'S TURN" by name/icon — see `renderCurrentTurn()`),
+  never duplicated per seat; for opponents, the pre-existing
+  `.other-player-row.current-turn` highlight (already applied to their
+  own component) is the equivalent treatment, reused rather than
+  building a second turn-state UI.
+- **Standalone Leaderboard panel removed from the gameplay screen:**
+  `#leaderboardBtn`/`#mobileLeaderboard`/`#mobileLeaderboardInline`
+  deleted from `game.html`. Nothing else needed to change —
+  `js/ui/mobile-ui.js` was already fully null-safe (optional chaining
+  throughout) for a missing button/panel, and `renderLeaderboard()`
+  (`js/ui/leaderboard-ui.js`) already no-ops per-target when a target
+  element doesn't exist. All underlying score/rank data and functions
+  (`getPlayerRankIndexes`, `getRankedPlayers`, `RANK_ICONS`) are
+  untouched and still run every render.
+- **Player rank beside name:** already implemented before this task —
+  both `renderOtherPlayers()`'s opponent badges and
+  `renderPlayerDeckInfo()`'s local-player badge
+  (`#playerDeckRankBadge`) already show a live medal-style rank icon
+  next to the player's name, recomputed from `gameState` every render.
+  Verified this still works after the above changes; nothing rebuilt.
+
+- `game.html` — `#leftUtilityColumn` wraps `#gameLog`+`#chatPanel`;
+  `#gameState` moved inside `#centerArea` above `#handArea`;
+  `#leaderboardBtn`/`#mobileLeaderboard` removed.
+- `css/style.css` — `#gameLayout`'s Desktop/Tablet grid re-shaped to
+  `utility | oppLeft | board | oppRight` columns (`oppTop` spans the
+  latter three); `#gameLog`/`#chatPanel` get fixed `flex-basis` shares
+  of `#leftUtilityColumn` instead of grid areas of their own; removed
+  two now-stale `#gameState { order: -1; }` rules left over from when
+  it was a direct `#gameLayout` child (would otherwise have
+  incorrectly reordered it inside `#centerArea`'s own flex column,
+  above the Queue instead of above the Hand).
+- `js/ui/log-ui.js` — `renderLog()` now renders `gameState.logs` newest
+  entry first (display order only, via `.slice().reverse()` —
+  `gameState.logs` itself is never mutated/reordered); both targets
+  scroll to `0` instead of `scrollHeight` to match.
+- `js/ui/walkthrough.js` + `data/i18n.json` (en/fa/ar/tr) — tutorial
+  step 6 no longer targets the removed Standings button; retargeted to
+  `#railLogBtn` with copy updated to describe Log + the
+  now-beside-the-name rank badge instead.
+- `tests/tabletopLayout.test.mjs` — new/updated coverage: fixed
+  `flex-basis` (not `max-height`) on `#gameLog`, its scrollable body's
+  `overflow-y`/`min-height`, `renderLog()`'s newest-first order
+  (without mutating `gameState.logs`), `#gameState`'s new DOM position,
+  the Leaderboard panel's removal, no opponent slot nested inside
+  `#leftUtilityColumn`, and the re-shaped grid's area names.
+- `tests/desktopPartyTrash.test.mjs` — widened its Desktop-media-block
+  slice length again (`16400` → `19500` chars) for the same reason as
+  1.44.0: the block grew further and some of its target rules fell
+  outside the old slice.
+- `README.md`/`CHANGELOG.md` — version 1.44.0 → 1.44.1.
+
+**Known limitation:** same as 1.44.0 — no live browser in this
+environment, so verified via CSS-source/markup-level tests and manual
+review (rectangular grid-area check, `order`-property scope audit for
+the two removed stale rules, cascade check for the Chat/Standings
+popup split) rather than an actual rendered screenshot or click-through.
+A real visual pass (2/3/4 players, en/fa/ar/tr, several log-entry
+counts including 20+, several viewport heights) is recommended before
+shipping.
+
+---
+
+**Gameplay screen — Tabletop layout: per-side opponents + persistent Log/Chat (1.44.0):**
+Requested as a redesign of the gameplay screen's Desktop/Tablet
+(fine-pointer, ≥601px) composition, following a reference-screenshot
+brief specifying a classic digital-tabletop arrangement. This
+deliberately reverses two earlier decisions on this same breakpoint —
+opponents seated left/top/right of the board instead of one shared
+row (1.36.11 moved *away* from a per-side `#topPlayer`/`#leftPlayer`/
+`#rightPlayer` layout), and Game Log/Chat as persistent panels again
+instead of popups (1.36.12 moved Chat out of a permanent sidebar
+specifically because a fixed `height: 140px` there was cramped). This
+was a deliberate, explicitly confirmed reversal, not an oversight —
+the root causes those two changes fixed are addressed directly rather
+than reintroduced:
+- **Opponent row overflow (1.36.11's motivation):** the old row
+  squeezed however many opponents there were into one shared strip.
+  The new layout gives each opponent exactly one of three fixed grid
+  cells (`#oppSlotLeft`/`#oppSlotTop`/`#oppSlotRight`) — a slot never
+  holds more than one player, so there's nothing left to squeeze.
+- **Cramped Chat panel (1.36.12's motivation):** the old sidebar's
+  Chat had a fixed `height: 140px`. The new `#chatPanel` sits in a
+  real CSS Grid row (`flex: 1` within it) sized by however much room
+  the "chat" grid row actually has, plus its own collapse toggle if a
+  player wants that room back for the board.
+
+Touch/mobile (`pointer: coarse`, and any width ≤600px regardless of
+pointer) is completely unaffected: opponents stay one row, and
+Log/Chat stay popup-only via `#railLogBtn`/`#railChatBtn` — none of
+this is reachable or visible there.
+
+- `js/ui/game-ui.js` — `renderOtherPlayers()` (now exported) assigns
+  each opponent to exactly one of the three fixed slots by seat order
+  and count: 1 opponent → top (face-to-face), 2 → left+right
+  (flanking), 3 → left+top+right. A slot nobody is assigned to is left
+  with zero children.
+- `game.html` — `#otherPlayers` now wraps three fixed
+  `#oppSlotLeft`/`#oppSlotTop`/`#oppSlotRight` containers instead of
+  being a flat, dynamically-populated row. Added the new persistent
+  `#gameLog` panel (`#gameLogContent` body, mirrors `#logModal`'s
+  `#mobileLogContent`). `#chatPanel` gained a `.panel-collapse-btn`
+  alongside its existing mobile-only close button; both it and
+  `#gameLog` are marked `.collapsible-panel`.
+- `js/ui/log-ui.js` — `renderLog()` now writes its one generated
+  markup string into both `#mobileLogContent` (popup, every layout)
+  and `#gameLogContent` (persistent panel, Desktop/Tablet only) — one
+  render, two targets, no duplicated log logic or state.
+- `js/ui/panelCollapse-ui.js` *(new)* — wires the shared
+  `.panel-collapse-btn`/`.collapsed` toggle for `#gameLog`/`#chatPanel`;
+  called from `js/game-main.js` alongside the existing mobile-UI init.
+  Purely presentational — never touches `gameState` or `gameState.logs`.
+- `css/style.css` —
+  - `@media (min-width: 601px) and (pointer: fine)`: `#gameLayout`
+    becomes a CSS Grid (`log`/`oppTop`/`oppLeft`/`turn`/`oppRight`/
+    `board`/`chat` named areas); `#otherPlayers` unwraps via
+    `display: contents` (the same technique already used for
+    `#queuePartyTrashRow`) so its three slots place directly onto that
+    grid; `#gameLog`/`#chatPanel` become real flex-column panels
+    instead of centered popups; `#railLogBtn`/`#railChatBtn` (now
+    redundant) are hidden; `#mobileSideRail` (left holding only the
+    Standings button) becomes a small floating control instead of
+    reserving a grid row for a single button. The pre-existing
+    `#mobileLeaderboard, #chatPanel { position: fixed; ... }` Desktop
+    popup rule is split so `#chatPanel` is no longer part of it (it's
+    no longer a popup at all there) — Standings alone keeps that
+    behavior.
+  - New `.opp-slot`/`.opp-slot:empty` (hides an unassigned slot
+    entirely — no empty seat is ever rendered), `.collapsible-panel`/
+    `.panel-collapse-btn`/`.panel-collapse-body` (generic collapse
+    toggle shared by both new panels), and `#gameLog`'s own base panel
+    styling (`display: none` off the Desktop/Tablet breakpoint — Log's
+    only Mobile surface stays `#logModal`).
+  - RTL note: this uses `grid-template-areas`, which mirrors
+    automatically under `direction: rtl` (already set on
+    `<html dir>` by `js/i18n.js` for `fa`/`ar`) — left/right opponent
+    seating flips correctly for those languages with no extra rule.
+- `data/config.json` — added a `chevronDown` icon glyph (`▾`) for the
+  new collapse toggle, no existing icon fit.
+- `data/i18n.json` — added `panelCollapseToggle` (en/fa/ar/tr) as the
+  toggle button's `aria-label`.
+- `tests/tabletopLayout.test.mjs` *(new)* — opponent slot assignment by
+  count/seat order, empty-slot behavior, `renderLog()` feeding both
+  targets identically, and the Desktop/Tablet grid actually placing
+  each element on its named area.
+- `tests/desktopPartyTrash.test.mjs` — three of its Desktop-media-block
+  slice lengths (`6000`/`9000` chars from the media query's start) were
+  too short to still reach the Party/Trash-flanking-the-Queue rules
+  once this task's new CSS was added ahead of them in the same media
+  block; widened to `16400` so the same assertions still run against
+  the same real rules (no change to what's being asserted).
+
+**Known limitation:** this environment has no live browser, so the
+layout was verified by CSS-source/markup-level tests and manual
+reasoning about the grid (rectangular-area check, cascade/specificity
+audit for the split popup rule above) rather than an actual rendered
+screenshot or click-through at each breakpoint/player-count/language.
+A real visual pass (2/3/4 players, en/fa/ar/tr, common desktop/tablet
+widths) is recommended before shipping.
+
+---
+
 **Style — Achievements redesigned as a vertical list, not a card grid (1.43.7):**
 The Achievement Collection (Profile → Achievements) previously laid
 achievements out as a responsive multi-column card grid

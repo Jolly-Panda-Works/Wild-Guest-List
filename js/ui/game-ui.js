@@ -407,19 +407,47 @@ function wireHandCardDrag(cardEl, card, gameState, player) {
 // card element, just overlays on existing queue slots.
 
 // ── Other players — deck-back style with avatar & deck count ──
-// Always rendered as a flat list of up to 3 `.other-player-slot`
-// elements directly inside #otherPlayers — a single row (see
-// css/style.css's #otherPlayers rules), never a per-side layout. The
-// game seats at most 4 players total, so there are always 1–3 of
-// these regardless of Bot/Human mix; opponents are never positioned
-// differently based on type.
-async function renderOtherPlayers(gameState) {
-    const container = document.getElementById("otherPlayers");
-    if (!container) return;
-    container.innerHTML = "";
+// On touch/mobile, `#otherPlayers` stays exactly what it always was:
+// one horizontal row above the Game Table (its own base CSS rule).
+// On Desktop/Tablet (fine-pointer, ≥601px), `#otherPlayers` becomes
+// `display: contents` and its three fixed children —
+// #oppSlotLeft/#oppSlotTop/#oppSlotRight (see game.html) — place
+// independently onto #gameLayout's tabletop grid, giving a genuine
+// per-side layout (left/top/right of the board) instead of a single
+// row. The game seats at most 4 players total (1–3 opponents), so
+// every opponent count below is exhaustive:
+//   1 opponent  → top    (classic face-to-face 1v1)
+//   2 opponents → left, right (flank the board symmetrically)
+//   3 opponents → left, top, right, in seat order
+// This assignment is purely presentational — seat order (gameState.
+// players array order) still drives it, opponents are never
+// positioned differently based on Bot/Human or difficulty. A slot
+// nobody is assigned to is left with zero children; `.opp-slot:empty
+// { display: none }` (css/style.css) removes it from layout, so no
+// empty seat is ever rendered/reserved on any player count.
+const OPP_SLOT_ORDER = {
+    1: ["top"],
+    2: ["left", "right"],
+    3: ["left", "top", "right"],
+};
+
+export async function renderOtherPlayers(gameState) {
+    const slots = {
+        left:  document.getElementById("oppSlotLeft"),
+        top:   document.getElementById("oppSlotTop"),
+        right: document.getElementById("oppSlotRight"),
+    };
+    // Legacy fallback: if the fixed slot markup isn't present for any
+    // reason, fall back to the old flat container so rendering still
+    // degrades gracefully instead of throwing.
+    const legacyContainer = document.getElementById("otherPlayers");
+    if (!slots.left && !slots.top && !slots.right && !legacyContainer) return;
+
+    Object.values(slots).forEach(slot => { if (slot) slot.innerHTML = ""; });
 
     const others    = gameState.players.filter(p => p.id !== "p1");
     const currentId = gameState.players[gameState.currentPlayer]?.id;
+    const slotOrder = OPP_SLOT_ORDER[others.length] || OPP_SLOT_ORDER[3];
 
     // Rank badges reuse the exact same standings math as the Match
     // Standings/Leaderboard popup (js/game/scoreManager.js), computed
@@ -427,10 +455,15 @@ async function renderOtherPlayers(gameState) {
     // with the popup's.
     const rankIndexes = getPlayerRankIndexes(gameState);
 
-    others.forEach(player => {
+    others.forEach((player, index) => {
+        const slotKey = slotOrder[index] || "top";
+        const target = slots[slotKey] || legacyContainer;
+        if (!target) return;
+
         const box = document.createElement("div");
         box.className = "other-player-slot";
-        container.appendChild(box);
+        box.dataset.slot = slotKey;
+        target.appendChild(box);
 
         const diff   = player.difficulty || AI_DIFFICULTY.EASY;
         const avatar = BOT_AVATARS[diff] || BOT_AVATARS.easy;

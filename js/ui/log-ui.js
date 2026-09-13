@@ -31,7 +31,15 @@ function resolveLogText(entry) {
 }
 
 export function renderLog(gameState) {
-    const buildHTML = () => gameState.logs.map(entry => {
+    // Newest entry first: gameState.logs itself is untouched
+    // (`.slice()` copies before `.reverse()`) — this is a display-order
+    // choice only, not a change to how/where entries get appended.
+    // Both the persistent Game Log panel and the popup show entries
+    // this way now (see the Layout Corrections work order, § Fix Game
+    // Log Height — "new log entries should appear at the TOP"), so
+    // there's still exactly one generated markup string shared by
+    // both targets, not two different orderings to maintain.
+    const buildHTML = () => gameState.logs.slice().reverse().map(entry => {
         const displayName = entry.playerNameKey ? t(entry.playerNameKey) : (entry.playerName ?? "");
         return `
         <div class="log-entry ${entry.playerId}">
@@ -40,15 +48,30 @@ export function renderLog(gameState) {
         </div>`;
     }).join("");
 
-    // #logEntries (a permanent desktop-only sidebar container) no
-    // longer exists — Log's only presentation surface now is the
-    // #logModal popup, opened from #railLogBtn in the universal
-    // Utility Buttons row (#mobileSideRail, every layout now), backed
-    // by #mobileLogContent below. gameState.logs itself, and
-    // everything that appends to it, is untouched.
+    // Two presentation surfaces share this one render, same generated
+    // markup, no duplicated log logic:
+    //  - #mobileLogContent inside #logModal — the popup entry point
+    //    (#railLogBtn), used on every layout, and the ONLY Log surface
+    //    on touch/mobile.
+    //  - #gameLogContent inside #gameLog — the persistent top-left
+    //    panel that exists only on Desktop/Tablet (fine-pointer,
+    //    ≥601px; see css/style.css). `#gameLog` itself stays
+    //    `display: none` off that breakpoint, so this simply writes
+    //    into a hidden, harmless element elsewhere.
+    // gameState.logs itself, and everything that appends to it, is
+    // untouched by either target.
+    const html = buildHTML();
     const mobile = document.getElementById("mobileLogContent");
     if (mobile) {
-        mobile.innerHTML = buildHTML();
-        mobile.scrollTop = mobile.scrollHeight;
+        mobile.innerHTML = html;
+        // Newest entry is now the FIRST child, not the last — scrolled
+        // to the top (not `scrollHeight`) so it's visible without
+        // scrolling, same as the persistent panel below.
+        mobile.scrollTop = 0;
+    }
+    const persistent = document.getElementById("gameLogContent");
+    if (persistent) {
+        persistent.innerHTML = html;
+        persistent.scrollTop = 0;
     }
 }

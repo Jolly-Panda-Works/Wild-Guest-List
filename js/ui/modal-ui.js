@@ -41,6 +41,13 @@ export function initializeModals(){
             ()=> closeModal("aboutModal")
         );
 
+    // game.html's Game Header no longer has its own #tutorialBtn
+    // (removed from the top-right controls — Tutorial/"How to Play" is
+    // still reachable from Home via #homeHowToPlayBtn, see
+    // js/ui/home-ui.js, and #tutorialModal itself is untouched). Left
+    // as a harmless no-op lookup per this file's stated convention
+    // (see the #aboutBtn note above), in case a future header layout
+    // reintroduces an in-game entry point.
     document
         .getElementById("tutorialBtn")
         ?.addEventListener(
