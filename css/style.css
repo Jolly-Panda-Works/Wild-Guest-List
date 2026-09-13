@@ -4195,11 +4195,20 @@ body.gameplay-locked #playerHand .card {
         padding-bottom: 120px;
     }
 
-    /* ── ORDER: utilities → gameState → leaderboard → otherPlayers → tabs → queue → hand ── */
+    /* ── ORDER: utilities → leaderboard(popup, dead) → otherPlayers → tabs → queue/turn/hand ──
+       #gameState and #chatPanel are no longer direct children of
+       #gameLayout at all (see game.html: #gameState moved inside
+       #centerArea directly above #handArea; #chatPanel moved inside
+       the new #leftUtilityColumn wrapper alongside #gameLog) — their
+       old `order` entries here were removed since `order` on an
+       element only affects its position among *its actual parent's*
+       flex children, and leaving a stale `order: -1` on #gameState
+       here would have wrongly reordered it inside #centerArea's own
+       flex column instead (pushing the turn indicator above the
+       Queue, not above the Hand). #chatPanel's old entry is harmless
+       either way once open (`.mobile-open` makes it `position: fixed`,
+       which ignores `order`), but is removed too for accuracy. */
     #mobileSideRail    { order: -2; }
-    #gameState         { order: -1; }
-    #mobileLeaderboard { order: 0; }
-    #chatPanel         { order: 0; }
     #otherPlayers      { order: 1; }
     #mobileTabs        { order: 2; }
     #centerArea        { order: 3; }
@@ -5333,12 +5342,11 @@ body.gameplay-locked #playerHand .card {
         display: none !important;
     }
 
-    /* leaderboard order above mobileTabs */
+    /* leaderboard(popup, dead)/mobileTabs order — #gameState and
+       #chatPanel removed from this list; see the identical note above
+       the other copy of this order block further up this file. */
     #gameLayout { display: flex; flex-direction: column; }
     #mobileSideRail     { order: -2; }
-    #gameState          { order: -1; }
-    #mobileLeaderboard { order: 0; }
-    #chatPanel          { order: 0; }
     #mobileTabs         { order: 1; padding: 6px 12px 4px; }
     #otherPlayers       { order: 2; }
     #centerArea         { order: 3; }
@@ -5526,55 +5534,76 @@ body.gameplay-locked #playerHand .card {
 @media (min-width: 601px) and (pointer: fine) {
 
     /* ── Tabletop layout ────────────────────────────────────────
-       #gameLayout becomes a real CSS Grid so Log/opponents/board/
-       Chat/hand can each occupy their own region instead of all
-       stacking in one column (the single-column base rule, and the
-       old single-row #otherPlayers treatment below it, both stay as
-       the Mobile/touch fallback and are overridden here).
+       #gameLayout becomes a real CSS Grid so the Left Utility Column
+       (Game Log + Chat), opponents, and the board can each occupy
+       their own region instead of all stacking in one column (the
+       single-column base rule, and the old single-row #otherPlayers
+       treatment below it, both stay as the Mobile/touch fallback and
+       are overridden here).
 
        Grid regions (see the areas map):
-         log      — persistent Game Log panel, top-left
-         oppTop   — the single opponent seated "across the table"
-                    when there are 1 or 3 opponents total (see
+         utility  — #leftUtilityColumn (Game Log + Chat, top to
+                    bottom — see that element's own comment in
+                    game.html), spanning BOTH rows as one column. This
+                    is a dedicated column, structurally independent of
+                    every player position: no opponent/player element
+                    is ever placed inside it, specifically so its
+                    height (which changes only with Log/Chat's own
+                    fixed internal split, never with how much content
+                    Log holds — see css rules below) can never affect
+                    where any player sits. #gameState (the turn
+                    indicator) isn't part of this grid at all anymore
+                    — it moved into #centerArea's own internal layout,
+                    directly above the local player's hand (see
+                    game.html).
+         oppTop   — the single opponent seated "across the table" when
+                    there are 1 or 3 opponents total (see
                     OPP_SLOT_ORDER in js/ui/game-ui.js — every slot
-                    holds at most one opponent, never more), spans the center+right columns
-                    so it sits above the board, not squeezed to one
-                    column's width
-         oppLeft  — opponent seated to the left of the board
-         turn     — the existing #gameState turn/timer strip, kept in
-                    its own row so it never overlaps the board below it
-         oppRight — opponent seated to the right; spans the same three
-                    rows oppLeft+board+chat occupy so a tall column is
-                    available regardless of how much oppLeft/chat use
-         board    — #centerArea (Queue + Party/Trash-flanking + Hand),
-                    spans the two remaining rows so the Hand still
-                    lands at the very bottom, per the reference layout
-         chat     — persistent Chat panel, bottom-left
+                    holds at most one opponent, never more), spanning
+                    oppLeft+board+oppRight so it's centered over the
+                    whole main area, not just the board
+         oppLeft  — opponent seated to the left of the board — its own
+                    column, never sharing a track with `utility`
+         board    — #centerArea (Queue + Party/Trash-flanking + Turn
+                    indicator + Hand, stacked internally — see
+                    game.html), same single row as oppLeft/oppRight
+         oppRight — opponent seated to the right — its own column
 
        Every region name above is rectangular across the
        rows/columns it's assigned, which `grid-template-areas`
        requires — see the row-by-row breakdown in this rule's
-       companion comments below (#gameLog/.opp-slot/#chatPanel etc.)
+       companion comments below (#leftUtilityColumn/.opp-slot/etc.)
        for exactly which area each element claims. */
     #gameLayout {
         display: grid;
-        grid-template-columns: minmax(200px, 240px) 1fr minmax(200px, 240px);
-        grid-template-rows: auto auto 1fr auto;
+        grid-template-columns: minmax(200px, 240px) minmax(160px, 200px) 1fr minmax(160px, 200px);
+        grid-template-rows: auto 1fr;
         grid-template-areas:
-            "log      oppTop   oppTop"
-            "oppLeft  turn     oppRight"
-            "oppLeft  board    oppRight"
-            "chat     board    oppRight";
+            "utility oppTop  oppTop  oppTop"
+            "utility oppLeft board   oppRight";
         gap: 14px;
         align-items: stretch;
     }
 
-    /* #mobileTabs/#mobileLeaderboard/#partyArea/#trashArea stay
-       `display: none` (their own base/mobile-open rules, untouched)
-       whenever they're not an open popup, so they never consume a
-       grid cell here — nothing extra to exclude them explicitly.
-       #mobileSideRail is the one exception that's normally visible;
-       see its own rule further below. */
+    /* #mobileTabs/#mobileSideRail/#partyArea/#trashArea stay
+       `display: none` (their own base/mobile-open rules, or the
+       explicit override just below for #mobileSideRail) whenever
+       they're not an open popup, so they never consume a grid cell
+       here — nothing extra to exclude them explicitly. */
+
+    /* Log/Chat now have their own persistent, always-reachable panels
+       (#leftUtilityColumn), so the two rail buttons that used to open
+       them as popups are redundant here. Standings had no persistent
+       equivalent when it was still on this screen — it's been removed
+       from the gameplay screen entirely instead (see game.html and
+       CHANGELOG) — so with both of #mobileSideRail's remaining buttons
+       hidden, there's nothing left in that row to show on this
+       breakpoint at all. */
+    #mobileSideRail,
+    #railLogBtn,
+    #railChatBtn {
+        display: none;
+    }
 
     /* #otherPlayers itself unwraps (same technique already used for
        #queuePartyTrashRow below) so its three fixed slot children —
@@ -5626,42 +5655,83 @@ body.gameplay-locked #playerHand .card {
         justify-content: center;
     }
 
-    #gameState {
-        grid-area: turn;
-    }
-
     #centerArea {
         grid-area: board;
         min-width: 0;
     }
 
-    /* ── Persistent Game Log (top-left) ──────────────────────────
-       Off this breakpoint #gameLog stays `display: none` (see its
-       base rule in the LOG section) — Log is popup-only there. Here
-       it becomes a real flex-column panel, sized by its grid cell,
-       never a fixed/cramped height. */
-    #gameLog {
-        display: flex;
-        grid-area: log;
+    /* #gameState (turn indicator) now lives inside #centerArea,
+       directly above #handArea — see game.html. It's a normal flex
+       item in #centerArea's existing `flex-direction: column` (queue
+       → turn → hand), so it just needs its own compact, centered
+       chrome here; no grid-area of its own anymore. */
+    #gameState {
+        align-self: center;
+        margin: 6px 0;
     }
 
-    /* ── Persistent Chat (bottom-left) ───────────────────────────
+    /* ── Left Utility Column (Game Log + Chat) ───────────────────
+       One grid item spanning both rows, `align-items: stretch`
+       (above) so its height always matches oppTop+board's combined
+       height exactly — never the other way around. Game Log and Chat
+       split that height with a fixed, non-content-driven
+       `flex-basis` each (see their own rules below); the column
+       itself never grows or shrinks based on how much either one
+       holds. */
+    #leftUtilityColumn {
+        display: flex;
+        flex-direction: column;
+        grid-area: utility;
+        min-height: 0;
+        gap: 14px;
+    }
+
+    /* ── Persistent Game Log (top of the utility column) ─────────
+       Off this breakpoint #gameLog stays `display: none` (see its
+       base rule in the LOG section) — Log is popup-only there.
+
+       FIXED HEIGHT, NEVER content-driven: `flex: 0 0 45%` gives this
+       panel a height fixed to 45% of #leftUtilityColumn's own height
+       (itself fixed by the grid — see above), not to how much log
+       text it holds. `min-height: 0` lets it actually shrink below
+       its content's natural size instead of the flex default (fine
+       here since the body scrolls internally — see
+       `.panel-collapse-body` below), and that internal
+       `overflow-y: auto` is what actually handles any number of log
+       entries — 1, 10, or 100 change nothing about this panel's own
+       box, only how much of it needs scrolling. This is what actually
+       fixes the original bug: `#gameLog` used to be a plain grid item
+       sized by an `auto` grid track, so growing its content grew the
+       *track* — and since that track spanned the full grid width, it
+       shifted the left-seated opponent (which used to share that
+       column) and everything below it. Moving that opponent out of
+       this column entirely (see the areas map above) plus this fixed
+       `flex-basis` together mean nothing outside this one panel's own
+       scrollbar can ever move again, regardless of Log content. */
+    #gameLog {
+        display: flex;
+        flex: 0 0 45%;
+        min-height: 0;
+    }
+
+    /* ── Persistent Chat (bottom of the utility column) ──────────
        Overrides #chatPanel's popup rules (display:none/position:fixed
-       — still exactly what Mobile/touch uses) with a real, flexible-
-       height grid panel. This is the direct fix for the reason Chat
-       was pulled out of a permanent sidebar before (CHANGELOG
-       1.36.12: a fixed 140px was "cramped") — `flex: 1` here lets it
-       take whatever room the "chat" row actually has, and it's
+       — still exactly what Mobile/touch uses) with a real, fixed-
+       share-of-the-column panel. This is the direct fix for the
+       reason Chat was pulled out of a permanent sidebar before
+       (CHANGELOG 1.36.12: a fixed 140px was "cramped") — `flex: 1 1
+       55%` here gives it a real, deliberately-sized share of the
+       column's own height (not an arbitrary 140px), and it's
        collapsible on top of that (.collapsible-panel, see the PANEL
        HEADER section) if a player wants the room back. */
     #chatPanel {
         display: flex;
         position: static;
-        grid-area: chat;
         transform: none;
         width: auto;
         max-height: none;
-        flex: 1;
+        flex: 1 1 55%;
+        min-height: 0;
         box-shadow: none;
     }
 
@@ -5678,28 +5748,6 @@ body.gameplay-locked #playerHand .card {
 
     .collapsible-panel .panel-collapse-btn {
         display: flex;
-    }
-
-    /* Log/Chat now have their own persistent, always-reachable panels
-       above, so the two rail buttons that used to open them as popups
-       are redundant here (Standings has no persistent equivalent and
-       stays a popup, so #leaderboardBtn stays visible). */
-    #railLogBtn,
-    #railChatBtn {
-        display: none;
-    }
-
-    /* With Log/Chat's buttons gone, only Standings is left in what
-       was a 3-button row — floated as a small standalone control
-       under the header instead of reserving a grid cell for a
-       now-single-button row. */
-    #mobileSideRail {
-        position: fixed;
-        top: 78px;
-        right: 16px;
-        z-index: 20;
-        margin: 0;
-        width: auto;
     }
 
     /* Content-sized, not equal-width flex-growers. Each of the three

@@ -126,12 +126,14 @@ test("Desktop (min-width: 601px, pointer: fine) re-enables the shared .queue-ico
 
     // Scope the search to that media block only (up to its closing brace
     // at the same nesting level — approximate by taking a generous slice).
-    // 16400: the block grew substantially once the Tabletop-layout
+    // 19500: the block grew substantially once the Tabletop-layout
     // opponents/Log/Chat grid work (game.html/js/ui/game-ui.js) added a
     // large amount of new CSS ahead of this section within the same
-    // `@media (min-width: 601px) and (pointer: fine)` block; the old
-    // 6000/9000 slices no longer reached these rules at all.
-    const scoped = css.slice(desktopMediaIdx, desktopMediaIdx + 16400);
+    // `@media (min-width: 601px) and (pointer: fine)` block, and grew
+    // again with the follow-up Layout Corrections pass (Left Utility
+    // Column + fixed-height Game Log); the old, smaller slices no
+    // longer reached these rules at all.
+    const scoped = css.slice(desktopMediaIdx, desktopMediaIdx + 19500);
 
     assert.match(
         scoped,
@@ -186,7 +188,7 @@ test("renderQueue() reuses the existing party/trash icon assets and adds a notif
 test("Desktop Party/Trash popup is shaped like the Pause popup: same width basis, same border/radius/background/shadow, fixed and taller height", () => {
     const desktopMediaIdx = css.indexOf("@media (min-width: 601px) and (pointer: fine) {");
     assert.ok(desktopMediaIdx !== -1, "expected the existing real-Desktop media scope to exist");
-    const scoped = css.slice(desktopMediaIdx, desktopMediaIdx + 16400);
+    const scoped = css.slice(desktopMediaIdx, desktopMediaIdx + 19500);
 
     const found = findDeclBlock(scoped, "#partyArea,\r\n    #trashArea {", scoped.indexOf("shaped to match the Pause popup"));
     assert.ok(found, "expected a Desktop-scoped #partyArea/#trashArea popup-shape rule");
@@ -207,7 +209,7 @@ test("Desktop Party/Trash popup is shaped like the Pause popup: same width basis
 
 test("Trash icon has extra spacing from the right edge of the Queue row (Party's left-side gap is unchanged)", () => {
     const desktopMediaIdx = css.indexOf("@media (min-width: 601px) and (pointer: fine) {");
-    const scoped = css.slice(desktopMediaIdx, desktopMediaIdx + 16400);
+    const scoped = css.slice(desktopMediaIdx, desktopMediaIdx + 19500);
 
     const found = findDeclBlock(scoped, "#queueTrashIcon {");
     assert.ok(found, "expected a Desktop-scoped #queueTrashIcon rule");

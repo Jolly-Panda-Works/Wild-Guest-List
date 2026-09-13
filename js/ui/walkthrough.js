@@ -151,14 +151,14 @@ function getSteps() {
             boxPos:   mobile ? "above" : "right",
         },
         {   // 6
-            // #mobileLeaderboard is a tap-to-open popup (hidden by
-            // default — see css/style.css and js/ui/mobile-ui.js), so
-            // it can't be highlighted directly while closed. Target the
-            // always-visible Utility Buttons row instead — Standings
-            // (#leaderboardBtn) and Game Log (#railLogBtn) now live in
-            // the same universal row on every layout, not just Mobile.
-            targetId:   "leaderboardBtn",
-            fallbackId: "railLogBtn",
+            // Standings (#leaderboardBtn/#mobileLeaderboard) was
+            // removed from the gameplay screen — every player's rank
+            // now shows directly beside their name instead, so there's
+            // nothing left to point this step at there. Target the
+            // Log entry point in the always-visible Utility Buttons
+            // row instead (#railLogBtn lives in the same universal row
+            // on every layout, not just Mobile).
+            targetId:   "railLogBtn",
             titleKey: "wt6Title", textKey: "wt6Text",
             arrowDir: mobile ? "up" : "left",
             boxPos:   mobile ? "below" : "right",

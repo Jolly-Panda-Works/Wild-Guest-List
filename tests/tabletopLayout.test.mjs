@@ -176,11 +176,13 @@ test("renderOtherPlayers(): re-rendering clears all three slots first (no stale/
 let gameHtml;
 let css;
 let logUiJs;
+let gameUiJsSource;
 
 test.before(async () => {
     gameHtml = await readFile(path.join(ROOT, "game.html"), "utf8");
     css = await readFile(path.join(ROOT, "css/style.css"), "utf8");
     logUiJs = await readFile(path.join(ROOT, "js/ui/log-ui.js"), "utf8");
+    gameUiJsSource = await readFile(path.join(ROOT, "js/ui/game-ui.js"), "utf8");
 });
 
 test("game.html: exactly one persistent #gameLog panel and three fixed opponent slots exist", () => {
@@ -229,31 +231,44 @@ test("log-ui.js: only one buildHTML()-equivalent render path feeds both targets 
     assert.equal(buildCalls, 1, "expected buildHTML() to be invoked exactly once per render, shared by both targets");
 });
 
-// ── 4. Desktop/Tablet grid actually places the new elements ─────
+// ── 4. Desktop/Tablet grid places the Left Utility Column, opponents, and board ─────
 
-test("Desktop/Tablet grid (min-width: 601px, pointer: fine) places Log/opponents/Chat/board on named grid areas", () => {
+test("Desktop/Tablet grid (min-width: 601px, pointer: fine) places the Left Utility Column/opponents/board on named grid areas", () => {
     const desktopMediaIdx = css.indexOf("@media (min-width: 601px) and (pointer: fine) {");
     assert.ok(desktopMediaIdx !== -1, "expected the existing real-Desktop media scope to exist");
-    const scoped = css.slice(desktopMediaIdx, desktopMediaIdx + 16400);
+    const scoped = css.slice(desktopMediaIdx, desktopMediaIdx + 19500);
 
     assert.match(scoped, /#gameLayout\s*\{[^}]*display:\s*grid\s*;/, "expected #gameLayout to become a CSS Grid on Desktop/Tablet");
     assert.match(scoped, /#otherPlayers\s*\{\s*\r?\n\s*display:\s*contents\s*;/, "expected #otherPlayers to unwrap via display: contents so its slots place independently");
     assert.match(scoped, /\.opp-slot\[data-slot="left"\]\s*\{[^}]*grid-area:\s*oppLeft\s*;/);
     assert.match(scoped, /\.opp-slot\[data-slot="top"\]\s*\{[^}]*grid-area:\s*oppTop\s*;/);
     assert.match(scoped, /\.opp-slot\[data-slot="right"\]\s*\{[^}]*grid-area:\s*oppRight\s*;/);
-    assert.match(scoped, /#gameLog\s*\{[^}]*grid-area:\s*log\s*;/);
-    assert.match(scoped, /#chatPanel\s*\{[^}]*grid-area:\s*chat\s*;/);
+    assert.match(scoped, /#leftUtilityColumn\s*\{[^}]*grid-area:\s*utility\s*;/, "expected the Log+Chat wrapper to be its own dedicated grid area");
     assert.match(scoped, /#centerArea\s*\{[^}]*grid-area:\s*board\s*;/);
 });
 
-test("#chatPanel's persistent grid override is not later re-fixed-and-centered by the Standings popup rule in the same block", () => {
+test("game.html: no opponent slot is nested inside #leftUtilityColumn (Log/Chat's height changes can never move a player)", () => {
+    const utilityStart = gameHtml.indexOf('id="leftUtilityColumn"');
+    assert.ok(utilityStart !== -1, "expected #leftUtilityColumn to exist");
+    // #leftUtilityColumn's own closing </div> is the one right after
+    // #chatPanel's closing </div> — slice up to #otherPlayers (the
+    // next sibling section) as a generous, simple upper bound.
+    const otherPlayersStart = gameHtml.indexOf('id="otherPlayers"', utilityStart);
+    const utilityBlock = gameHtml.slice(utilityStart, otherPlayersStart);
+
+    assert.doesNotMatch(utilityBlock, /id="oppSlotLeft"/);
+    assert.doesNotMatch(utilityBlock, /id="oppSlotTop"/);
+    assert.doesNotMatch(utilityBlock, /id="oppSlotRight"/);
+});
+
+test("#chatPanel's persistent panel is not later re-fixed-and-centered by the Standings popup rule in the same block", () => {
     // Regression guard: the pre-existing Desktop popup rule used to be
     // `#mobileLeaderboard, #chatPanel { position: fixed; ... }`. Chat
     // is a persistent panel now, not a popup, so it must not appear in
     // that selector list anymore — otherwise the later rule would win
     // the cascade and silently pull Chat back into a centered popup.
     const desktopMediaIdx = css.indexOf("@media (min-width: 601px) and (pointer: fine) {");
-    const scoped = css.slice(desktopMediaIdx, desktopMediaIdx + 16400);
+    const scoped = css.slice(desktopMediaIdx, desktopMediaIdx + 19500);
     assert.doesNotMatch(
         scoped,
         /#mobileLeaderboard,\s*\r?\n?\s*#chatPanel\s*\{/,
@@ -263,4 +278,61 @@ test("#chatPanel's persistent grid override is not later re-fixed-and-centered b
 
 test(".opp-slot:empty is hidden so no empty opponent seat is ever rendered, on any layout", () => {
     assert.match(css, /\.opp-slot:empty\s*\{\s*\r?\n\s*display:\s*none\s*;/);
+});
+
+// ── 5. Game Log fixed height + internal scroll (Layout Corrections) ─
+
+test("#gameLog gets a fixed, non-content-driven flex-basis on Desktop/Tablet, not an auto-sized/content-driven height", () => {
+    const desktopMediaIdx = css.indexOf("@media (min-width: 601px) and (pointer: fine) {");
+    const scoped = css.slice(desktopMediaIdx, desktopMediaIdx + 19500);
+
+    assert.match(scoped, /#gameLog\s*\{[^}]*flex:\s*0\s+0\s+\d+%\s*;/, "expected #gameLog to have a fixed flex-basis (flex: 0 0 N%), not flex-grow based on content");
+    assert.doesNotMatch(scoped, /#gameLog\s*\{[^}]*max-height\s*:/, "the work order explicitly asked not to solve this with a bare max-height on the panel itself");
+});
+
+test("#gameLog's scrollable body has overflow-y: auto and min-height: 0 (flex child that can actually shrink and scroll)", () => {
+    assert.match(css, /#gameLog \.panel-collapse-body\s*\{[^}]*overflow-y:\s*auto\s*;/s);
+    assert.match(css, /#gameLog \.panel-collapse-body\s*\{[^}]*min-height:\s*0\s*;/s);
+});
+
+test("renderLog(): newest entry renders first (at the top), oldest last — gameState.logs itself is left in its original order", async () => {
+    const { renderLog } = await import("../js/ui/log-ui.js");
+    const gameState = {
+        logs: [
+            { textKey: "logPlayed", params: { card: "Oldest" }, playerId: "p1" },
+            { textKey: "logPlayed", params: { card: "Newest" }, playerId: "p1" },
+        ],
+    };
+    const originalOrder = gameState.logs.map(e => e.params.card).join(",");
+
+    renderLog(gameState);
+
+    const html = elementsById.gameLogContent.innerHTML;
+    assert.ok(html.indexOf("Newest") < html.indexOf("Oldest"), "expected the newest entry to appear before the oldest entry in the rendered markup");
+    assert.equal(gameState.logs.map(e => e.params.card).join(","), originalOrder, "expected gameState.logs itself to be left in its original (append) order — only the rendered markup is reversed");
+});
+
+// ── 6. Turn indicator lives above the local player, not the board ──
+
+test("game.html: #gameState (turn indicator) is nested inside #centerArea, directly before #handArea", () => {
+    const centerAreaIdx = gameHtml.indexOf('id="centerArea"');
+    const handAreaIdx = gameHtml.indexOf('id="handArea"');
+    const gameStateIdx = gameHtml.indexOf('id="gameState"');
+    assert.ok(centerAreaIdx !== -1 && handAreaIdx !== -1 && gameStateIdx !== -1);
+    assert.ok(gameStateIdx > centerAreaIdx, "expected #gameState to be nested inside #centerArea");
+    assert.ok(gameStateIdx < handAreaIdx, "expected #gameState to come before #handArea (i.e. above the player, not below)");
+});
+
+// ── 7. Standalone Leaderboard panel removed from the gameplay screen ─
+
+test("game.html: the standalone Leaderboard button/panel no longer exists on the gameplay screen", () => {
+    assert.doesNotMatch(gameHtml, /id="leaderboardBtn"/);
+    assert.doesNotMatch(gameHtml, /id="mobileLeaderboard"/);
+    assert.doesNotMatch(gameHtml, /id="mobileLeaderboardInline"/);
+});
+
+test("game.html: every player already has a live rank badge beside their name (local player + opponents) — not re-implemented, just verified intact", () => {
+    assert.match(gameHtml, /id="playerDeckRankBadge"/, "expected the local player's existing rank badge slot beside #playerDeckName");
+    const gameUiJs_ = gameUiJsSource;
+    assert.match(gameUiJs_, /getPlayerRankIndexes\(gameState\)/, "expected renderPlayerDeckInfo()/renderOtherPlayers() to keep computing rank live from gameState, never a hard-coded number");
 });

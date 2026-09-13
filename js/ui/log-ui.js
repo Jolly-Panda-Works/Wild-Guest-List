@@ -31,7 +31,15 @@ function resolveLogText(entry) {
 }
 
 export function renderLog(gameState) {
-    const buildHTML = () => gameState.logs.map(entry => {
+    // Newest entry first: gameState.logs itself is untouched
+    // (`.slice()` copies before `.reverse()`) — this is a display-order
+    // choice only, not a change to how/where entries get appended.
+    // Both the persistent Game Log panel and the popup show entries
+    // this way now (see the Layout Corrections work order, § Fix Game
+    // Log Height — "new log entries should appear at the TOP"), so
+    // there's still exactly one generated markup string shared by
+    // both targets, not two different orderings to maintain.
+    const buildHTML = () => gameState.logs.slice().reverse().map(entry => {
         const displayName = entry.playerNameKey ? t(entry.playerNameKey) : (entry.playerName ?? "");
         return `
         <div class="log-entry ${entry.playerId}">
@@ -56,11 +64,14 @@ export function renderLog(gameState) {
     const mobile = document.getElementById("mobileLogContent");
     if (mobile) {
         mobile.innerHTML = html;
-        mobile.scrollTop = mobile.scrollHeight;
+        // Newest entry is now the FIRST child, not the last — scrolled
+        // to the top (not `scrollHeight`) so it's visible without
+        // scrolling, same as the persistent panel below.
+        mobile.scrollTop = 0;
     }
     const persistent = document.getElementById("gameLogContent");
     if (persistent) {
         persistent.innerHTML = html;
-        persistent.scrollTop = persistent.scrollHeight;
+        persistent.scrollTop = 0;
     }
 }
