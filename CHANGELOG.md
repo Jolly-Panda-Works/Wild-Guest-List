@@ -8,6 +8,57 @@ This file was consolidated from a changelog that had grown to live inline inside
 
 ---
 
+**Gameplay UI Fix — Remove drawer icons and improve player rank indicator (1.44.5):**
+Focused UI correction: no gameplay-screen redesign, no gameplay-logic
+changes.
+
+- **Drawer icon removal:** the collapse/expand chevron ("drawer
+  icon") beside the `#gameLog` and `#chatPanel` headers on
+  Desktop/Tablet has been removed completely. That button was the
+  *entire* implementation of the collapse/expand feature for those
+  two persistent panels — inspected `js/ui/panelCollapse-ui.js`
+  (`initPanelCollapse()`) before removing it and confirmed nothing
+  else ever toggled the `.collapsed` class, so removing the button
+  removes the feature cleanly with no leftover state. Removed:
+  - both `<button class="panel-collapse-btn">` elements and the
+    now-meaningless `.collapsible-panel` marker class from
+    `game.html`.
+  - `js/ui/panelCollapse-ui.js` (dead file) and its
+    import/`initPanelCollapse()` call in `js/game-main.js`.
+  - the collapse-specific CSS (`.panel-collapse-btn` and its
+    `:hover`/icon-rotate rules, `.collapsible-panel.collapsed ...`,
+    and the Desktop-only `display: flex` override) from
+    `css/style.css`.
+  - the now-unused `chevronDown` icon key (`data/config.json`) and
+    `panelCollapseToggle` i18n string (all 4 locales,
+    `data/i18n.json`).
+  - `#gameLogContent`/`.panel-collapse-body` themselves were **kept**
+    — they're the structural scroll/flex-sizing wrapper, unrelated to
+    the toggle button, and still needed for the fixed-height Game
+    Log/Chat behavior from 1.44.1.
+- **Rank indicator enlarged:** `.player-rank-badge` (shared by the
+  local player's `#playerDeckRankBadge` and every opponent's badge in
+  `renderOtherPlayers()` — one CSS rule, one data source
+  `js/game/scoreManager.js`, unchanged) went from a fixed `18px` to a
+  single `font-size: clamp(22px, 2.6vw, 32px)`. The icon glyph/image
+  is sized in `em` (`width/height: 1em` on `.player-rank-badge
+  .icon-image`) so it always tracks that one font-size — no
+  per-breakpoint override needed at `max-width: 600px` or
+  `pointer: coarse`, consistent with this project's preferred
+  `em`-driven scaling pattern. No rank data changes: still the same
+  live `getPlayerRankIndexes()`/`getRankIcon()` computation, no
+  hardcoded values, no duplicate ranking state.
+- **Files changed:** `game.html`, `css/style.css`,
+  `js/game-main.js`, `data/config.json`, `data/i18n.json` (+ deleted
+  `js/ui/panelCollapse-ui.js`), `tests/tabletopLayout.test.mjs`,
+  `tests/leaderboardRankBadge.test.mjs`.
+- Verified against the test suite: 121/122 passing, same one
+  pre-existing unrelated failure noted in 1.44.4 above (`header
+  markup has a dedicated Party column cell carrying the partyEmoji
+  icon`) — nothing newly broken.
+
+---
+
 **Gameplay UI — Move Turn Indicator above opponents (1.44.4):**
 Focused layout correction: the Turn Indicator (`#gameState`) now sits
 at the top of the gameplay board, directly above the opponent row,

@@ -137,6 +137,47 @@ test("scoreManager rank->medal mapping: every seat (1st-4th) gets its medal", as
     assert.equal(getRankIcon(4), null);
 });
 
+// ── Gameplay UI Fix: player rank indicator enlarged ──────────────
+// Task: the `.player-rank-badge` shown beside every player's name
+// (both the local player's `#playerDeckRankBadge` and each
+// opponent's badge in renderOtherPlayers()) was too small to read at
+// gameplay distance. Fixed 18px -> a single font-size-driven
+// clamp() (see css/style.css's PLAYER IDENTITY comment), with the
+// icon glyph/image sized in `em` so it always tracks that one
+// font-size — no separate fixed-px override needed at any
+// breakpoint. This guards against a regression back to a small
+// fixed pixel size, and against the icon-image drifting out of sync
+// with the badge's own font-size again.
+test(".player-rank-badge is sized larger than the old fixed 18px, via one clamp() (not a fixed px value)", async () => {
+    const css = await readFile(path.join(ROOT, "css/style.css"), "utf8");
+
+    const badgeMatch = css.match(/\.player-rank-badge\s*\{([^}]*)\}/);
+    assert.ok(badgeMatch, "expected a .player-rank-badge rule in css/style.css");
+    const badgeDecl = badgeMatch[1];
+
+    const fontSizeMatch = badgeDecl.match(/font-size:\s*([^;]+);/);
+    assert.ok(fontSizeMatch, "expected .player-rank-badge to declare font-size");
+    assert.doesNotMatch(
+        fontSizeMatch[1],
+        /^\s*18px\s*$/,
+        "regression guard: .player-rank-badge must not go back to the old, hard-to-read fixed 18px"
+    );
+    assert.match(
+        fontSizeMatch[1],
+        /clamp\(/,
+        "expected a responsive clamp() so the badge scales across Mobile/Tablet/Desktop from one declaration"
+    );
+
+    const iconImgMatch = css.match(/\.player-rank-badge \.icon-image\s*\{([^}]*)\}/);
+    assert.ok(iconImgMatch, "expected a .player-rank-badge .icon-image rule");
+    assert.match(
+        iconImgMatch[1],
+        /width:\s*1em\s*;/,
+        "expected the icon-image to be sized in `em` so it always tracks .player-rank-badge's own font-size"
+    );
+    assert.match(iconImgMatch[1], /height:\s*1em\s*;/);
+});
+
 // ── 3. Standings recompute live from current state — a mid-game
 //    score change reorders who gets which medal, exactly as the
 //    original ticket's live-update requirement describes ──

@@ -4,10 +4,13 @@
 //
 // Task: redesign the gameplay screen into a tabletop-style layout —
 // opponents seated left/top/right of the board (not one shared row),
-// plus a persistent, collapsible Game Log (top-left) and Chat
-// (bottom-left) on Desktop/Tablet (fine-pointer, ≥601px). Touch/mobile
-// keeps its original single-row opponents and popup-only Log/Chat
-// entirely unchanged.
+// plus a persistent Game Log (top-left) and Chat (bottom-left) on
+// Desktop/Tablet (fine-pointer, ≥601px). Touch/mobile keeps its
+// original single-row opponents and popup-only Log/Chat entirely
+// unchanged. Both persistent panels used to carry a collapse/expand
+// "drawer" toggle button; that button (and its `.collapsible-panel`
+// marker class / panelCollapse-ui.js wiring) was removed outright in
+// the Gameplay UI Fix work order — see the dedicated test below.
 //
 // Covers:
 //   1. renderOtherPlayers() (js/ui/game-ui.js) assigns each opponent to
@@ -16,8 +19,8 @@
 //      — and never leaves a slot with more than one opponent, or
 //      renders anything into an unused slot.
 //   2. game.html has exactly one persistent #gameLog panel and three
-//      fixed opponent slot containers, and both #gameLog/#chatPanel
-//      are marked `.collapsible-panel` with a `.panel-collapse-btn`.
+//      fixed opponent slot containers, and neither #gameLog nor
+//      #chatPanel has a collapse/drawer toggle button.
 //   3. renderLog() (js/ui/log-ui.js) writes the same generated markup
 //      into both the popup's #mobileLogContent and the persistent
 //      panel's #gameLogContent — one render, two targets, no
@@ -192,14 +195,20 @@ test("game.html: exactly one persistent #gameLog panel and three fixed opponent 
     assert.match(gameHtml, /id="oppSlotRight"[^>]*data-slot="right"/);
 });
 
-test("game.html: #gameLog and #chatPanel are both collapsible-panel with a collapse toggle button", () => {
+test("game.html: #gameLog and #chatPanel headers have no drawer/collapse toggle button (Gameplay UI Fix — Remove Drawer Icons)", () => {
+    // The collapse/expand chevron ("drawer icon") beside each header
+    // was removed outright, along with the .collapsible-panel marker
+    // class and its dead panelCollapse-ui.js wiring — there is nothing
+    // left to collapse, so neither should appear in the markup.
     const gameLogBlock = gameHtml.slice(gameHtml.indexOf('id="gameLog"'), gameHtml.indexOf('id="gameLog"') + 700);
-    assert.match(gameLogBlock, /class="collapsible-panel"/);
-    assert.match(gameLogBlock, /class="panel-collapse-btn/);
+    assert.doesNotMatch(gameLogBlock, /class="collapsible-panel"/);
+    assert.doesNotMatch(gameLogBlock, /panel-collapse-btn/);
+    assert.match(gameLogBlock, /id="gameLogContent" class="panel-collapse-body"/, "the scrollable body wrapper itself must stay — only the toggle button was removed");
 
     const chatBlock = gameHtml.slice(gameHtml.indexOf('id="chatPanel"'), gameHtml.indexOf('id="chatPanel"') + 700);
-    assert.match(chatBlock, /class="collapsible-panel"/);
-    assert.match(chatBlock, /class="panel-collapse-btn/);
+    assert.doesNotMatch(chatBlock, /class="collapsible-panel"/);
+    assert.doesNotMatch(chatBlock, /panel-collapse-btn/);
+    assert.match(chatBlock, /class="panel-collapse-body"/, "the scrollable body wrapper itself must stay — only the toggle button was removed");
 });
 
 // ── 3. renderLog() feeds both surfaces from one render ───────────

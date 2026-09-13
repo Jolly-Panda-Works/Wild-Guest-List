@@ -1,6 +1,6 @@
 {
     "app": {
-        "version": "1.44.4"
+        "version": "1.44.5"
     },
     "icons": {
         "leaderboard": "assets/img/icons/leaderboard.png",
@@ -75,8 +75,7 @@
         "previewDefend": "🛡️",
         "previewMoveToSlot": "➡️",
         "previewAttach": "🔗",
-        "previewEscape": "🚫",
-        "chevronDown": "▾"
+        "previewEscape": "🚫"
     },
     "branding": {
         "developerLogo": "assets/img/branding/jolly-panda-logo.png",

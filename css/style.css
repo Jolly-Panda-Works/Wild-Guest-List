@@ -5148,45 +5148,6 @@ body.gameplay-locked #playerHand .card {
 
 .panel-close { display: none; }  /* shown only on mobile */
 
-/* Collapse toggle shared by the persistent #gameLog/#chatPanel panels
-   (Desktop/Tablet only — see the `@media (min-width: 601px) and
-   (pointer: fine)` block for where these two actually become visible,
-   persistent panels instead of popups). Hidden everywhere else since
-   there's nothing to collapse when the panel itself is a popup/hidden. */
-.panel-collapse-btn {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(255,255,255,0.08);
-    color: var(--text-main, #fff);
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background .15s ease, transform .2s ease;
-}
-
-.panel-collapse-btn:hover {
-    background: rgba(255,255,255,0.16);
-}
-
-.panel-collapse-btn [data-icon] {
-    transition: transform .2s ease;
-}
-
-/* Chevron flips to point "closed" (up→toward the header) once
-   collapsed, giving a clear affordance for which way the toggle goes
-   next — purely visual, no logic here. */
-.collapsible-panel.collapsed .panel-collapse-btn [data-icon] {
-    transform: rotate(-180deg);
-}
-
-.collapsible-panel.collapsed .panel-collapse-body {
-    display: none;
-}
-
 /* Info tooltip button */
 .panel-info-btn {
     display: inline-flex;
@@ -5736,9 +5697,8 @@ body.gameplay-locked #playerHand .card {
        reason Chat was pulled out of a permanent sidebar before
        (CHANGELOG 1.36.12: a fixed 140px was "cramped") — `flex: 1 1
        55%` here gives it a real, deliberately-sized share of the
-       column's own height (not an arbitrary 140px), and it's
-       collapsible on top of that (.collapsible-panel, see the PANEL
-       HEADER section) if a player wants the room back. */
+       column's own height (not an arbitrary 140px), rather than an
+       arbitrary fixed pixel value. */
     #chatPanel {
         display: flex;
         position: static;
@@ -5759,10 +5719,6 @@ body.gameplay-locked #playerHand .card {
         flex: 1;
         min-height: 0;
         overflow-y: auto;
-    }
-
-    .collapsible-panel .panel-collapse-btn {
-        display: flex;
     }
 
     /* Content-sized, not equal-width flex-growers. Each of the three
@@ -9594,17 +9550,28 @@ body.gameplay-locked #playerHand .card {
     gap: 4px;
 }
 
+/* Sized via a single font-size-driven clamp() rather than per-
+   breakpoint overrides (see AGENTS.md-adjacent project convention of
+   preferring one `em`-based scale over patched fixed-px values at
+   every media query): 18px → clamp(22px, 2.6vw, 32px) is a clear,
+   noticeably larger badge at every viewport width, from small Mobile
+   Landscape up through Desktop, without needing a dedicated override
+   in the `max-width: 600px` or `pointer: coarse` blocks below. The
+   icon glyph/image is sized in `em` so it always tracks this one
+   font-size — bump the badge, and both the emoji-style icon and the
+   `<img class="icon-image">` variant (see js/ui/icon-ui.js) scale
+   together automatically. */
 .player-rank-badge {
     display: inline-flex;
     align-items: center;
     flex-shrink: 0;
-    font-size: 18px;
+    font-size: clamp(22px, 2.6vw, 32px);
     line-height: 1;
 }
 
 .player-rank-badge .icon-image {
-    width: 18px;
-    height: 18px;
+    width: 1em;
+    height: 1em;
     object-fit: contain;
 }
 

@@ -176,14 +176,11 @@
                              scrollbar. Newest-first ordering (also
                              renderLog()) means the newest entry is
                              immediately visible without scrolling. -->
-                        <div id="gameLog" class="collapsible-panel">
+                        <div id="gameLog">
                             <div class="panel-header">
                                 <h3>
                                     <span data-icon="gameLog"></span> <span data-i18n="btnLog">Game Log</span>
                                 </h3>
-                                <button type="button" class="panel-collapse-btn icon-btn" data-i18n-aria-label="panelCollapseToggle" aria-label="Collapse">
-                                    <span data-icon="chevronDown"></span>
-                                </button>
                             </div>
                             <div id="gameLogContent" class="panel-collapse-body"></div>
                         </div>
@@ -199,20 +196,15 @@
                              `flex-basis` (never content-driven — its
                              "Coming Soon" placeholder never grows
                              anyway, but this keeps the split with
-                             #gameLog stable regardless), plus its own
-                             collapse toggle if a player wants the room
-                             back for the board. Chat itself is still a
-                             future feature — content stays the existing
-                             "Coming Soon" placeholder; only
+                             #gameLog stable regardless). Chat itself is
+                             still a future feature — content stays the
+                             existing "Coming Soon" placeholder; only
                              reachability/positioning changed. -->
-                        <div id="chatPanel" class="collapsible-panel">
+                        <div id="chatPanel">
                             <div class="panel-header">
                                 <h3>
                                     <span data-icon="chat"></span> <span data-i18n="chat">Chat</span>
                                 </h3>
-                                <button type="button" class="panel-collapse-btn icon-btn" data-i18n-aria-label="panelCollapseToggle" aria-label="Collapse">
-                                    <span data-icon="chevronDown"></span>
-                                </button>
                                 <button class="panel-close mobile-only-btn icon-btn close"><span data-icon="close"></span></button>
                             </div>
                             <div class="panel-collapse-body">
