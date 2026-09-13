@@ -6,7 +6,7 @@ Play an animal → its ability resolves → the Queue reshuffles → the front o
 
 Built as a **framework-free, build-step-free** static web app — plain HTML/CSS/vanilla JavaScript ES Modules, no game engine, no bundler, no backend.
 
-**Current version:** `1.44.1` — see [`CHANGELOG.md`](CHANGELOG.md) for release history.
+**Current version:** `1.44.2` — see [`CHANGELOG.md`](CHANGELOG.md) for release history.
 
 ---
 

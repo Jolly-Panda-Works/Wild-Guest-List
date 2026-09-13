@@ -8,6 +8,38 @@ This file was consolidated from a changelog that had grown to live inline inside
 
 ---
 
+**Gameplay UI — Enlarge player identity (avatar, name, rank icon) (1.44.2):**
+Focused readability fix: increased the size of the player-identity
+elements (avatar, name, rank badge) shown for both the local player
+(`#playerDeckInfo`, above the hand) and opponents (`.other-player-row`,
+in the left/top/right seat slots) on the gameplay screen. No layout
+redesign, no gameplay-logic changes.
+
+- **Local player identity:** `.player-deck-avatar-wrap` 26px → 34px
+  (20px → 26px on ≤600px), `.player-deck-name` 12px → 14px (10px →
+  12px on ≤600px).
+- **Opponent identity:** `.other-avatar` 20px → 26px (16px → 20px on
+  ≤600px, clamp(12px,1.3vw,20px) → clamp(16px,1.6vw,26px) on the
+  Desktop/Tablet tabletop grid); opponent name chip
+  (`.other-player-row .player-label`) 12px → 14px (11px → 13px on the
+  Desktop/Tablet tabletop grid).
+- **Rank badge (shared by both):** `.player-rank-badge` font-size and
+  icon-image size 14px → 18px.
+- Sizes were bumped at every existing breakpoint for these selectors
+  (base, `max-width: 600px`, and the `min-width: 601px and
+  pointer: fine` tabletop-grid squeeze) so the increase holds
+  proportionally across Mobile, Tablet, and Desktop rather than only
+  on one screen size. No new breakpoints were added.
+- No RTL-specific sizing rules existed for these elements (RTL is
+  handled via layout direction elsewhere), so Persian/RTL inherits the
+  same larger sizes automatically. Existing name-ellipsis truncation
+  was left untouched, so longer localized names still degrade
+  gracefully.
+- **Files changed:** `css/style.css` only — no JS, markup, or
+  gameplay-logic changes.
+
+---
+
 **Gameplay screen — Layout Corrections: fixed-height Log, dedicated utility column, turn indicator above player, Leaderboard panel removed (1.44.1):**
 Follow-up correction pass on 1.44.0's Tabletop layout, fixing four
 structural issues without redesigning or reverting the tabletop
