@@ -8,6 +8,35 @@ This file was consolidated from a changelog that had grown to live inline inside
 
 ---
 
+**Gameplay UI — Remove Tutorial button from header (1.44.3):**
+Focused header cleanup: removed the Tutorial control from the
+gameplay screen's top-right controls, leaving `[ Help ] [ Pause ]`.
+No header redesign, no gameplay-logic changes, and the Tutorial
+feature itself was not touched.
+
+- **`game.html`:** removed the `#tutorialBtn` `<button>` from
+  `#topRight`. `#topRight` is a plain flex row (`justify-content:
+  flex-end`, no fixed column/grid track per button), so Help and
+  Pause simply close up and stay right-aligned — no empty gap, no
+  layout-shift of `#topCenter`/the central gameplay area.
+- **`js/ui/modal-ui.js`:** left the `#tutorialBtn` click listener in
+  place — it already used the file's established optional-chained
+  no-op pattern (the same convention already documented there for
+  `#aboutBtn`), so it's a harmless no-op on the gameplay page now that
+  the element is gone. Updated the comment to match.
+- **Tutorial system preserved elsewhere:** Home (`index.html`) keeps
+  its own, separate entry point — `#homeHowToPlayBtn` in the secondary
+  nav row — which opens the same `#tutorialModal`/`openTutorial()`
+  untouched. No Tutorial markup, data, state, or i18n keys were
+  deleted.
+- **Files changed:** `game.html`, `js/ui/modal-ui.js`.
+- Verified against the test suite: 120/121 passing, same one
+  pre-existing unrelated failure (`header markup has a dedicated Party
+  column cell carrying the partyEmoji icon`) seen in prior sessions —
+  nothing newly broken.
+
+---
+
 **Gameplay UI — Enlarge player identity (avatar, name, rank icon) (1.44.2):**
 Focused readability fix: increased the size of the player-identity
 elements (avatar, name, rank badge) shown for both the local player
